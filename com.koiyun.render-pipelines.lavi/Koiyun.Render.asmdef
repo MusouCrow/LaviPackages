@@ -1,0 +1,18 @@
+{
+    "name": "Koiyun.Render",
+    "rootNamespace": "",
+    "references": [
+        "GUID:116a4d4dbf5c04973bbf517077a062a1",
+        "GUID:be0903cd8e1546f498710afdc59db5eb",
+        "GUID:df380645f10b7bc4b97d4f5eb6303d95"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
