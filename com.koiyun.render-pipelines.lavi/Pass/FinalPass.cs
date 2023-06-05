@@ -1,20 +1,28 @@
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Experimental.Rendering;
 
 namespace Koiyun.Render {
     public class FinalPass : IRenderPass {
+        private Material blitMaterial;
+        private int passIndex;
+
+        public FinalPass() {
+            var shader = Shader.Find("Hidden/Lavi RP/Blit");
+            this.blitMaterial = new Material(shader);
+            this.passIndex = this.blitMaterial.FindPass("CopyColor");
+        }
+
         public bool Setup(ref ScriptableRenderContext context, ref RenderData data) {
             return true;
         }
 
         public void Render(ref ScriptableRenderContext context, ref RenderData data) {
             var cmd = CommandBufferPool.Get("FinalPass");
-
             var tid = RenderConst.CAMERA_TEXTURE_ID;
             var srcRTI = new RenderTargetIdentifier(tid);
-            var dstRTI = new RenderTargetIdentifier(data.camera.targetTexture);
-            cmd.Blit(srcRTI, dstRTI);
+            var dstRTI = new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget);
+            
+            cmd.Blit(srcRTI, dstRTI, this.blitMaterial, this.passIndex);
             
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
