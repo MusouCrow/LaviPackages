@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.VFX;
 
 namespace Koiyun.Render {
     public class SetupPass : IRenderPass {
@@ -18,6 +19,7 @@ namespace Koiyun.Render {
             
             this.SetScreenParams(cmd, ref data);
             this.SetZBufferParams(cmd, ref data);
+            VFXManager.ProcessCameraCommand(data.camera, cmd);
 
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.VFX;
 
 namespace Koiyun.Render {
     public class LaviRenderPipeline : RenderPipeline {
@@ -11,13 +12,12 @@ namespace Koiyun.Render {
         }
 
         protected override void Render(ScriptableRenderContext context, Camera[] cameras) {
-            foreach (var camera in cameras) {
-                this.renderer?.Render(ref context, camera);
-            }
+            
         }
 
         protected override void Render(ScriptableRenderContext context, List<Camera> cameras) {
             foreach (var camera in cameras) {
+                VFXManager.PrepareCamera(camera);
                 this.renderer?.Render(ref context, camera);
             }
         }

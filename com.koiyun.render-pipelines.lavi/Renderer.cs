@@ -17,6 +17,8 @@ namespace Koiyun.Render {
                 new ReadyDrawPass(),
                 new DrawObjectPass(true),
                 new DrawObjectPass(false),
+                new DrawGizmosPass(GizmoSubset.PreImageEffects),
+                new DrawGizmosPass(GizmoSubset.PostImageEffects),
                 new FinalPass()
             };
 
