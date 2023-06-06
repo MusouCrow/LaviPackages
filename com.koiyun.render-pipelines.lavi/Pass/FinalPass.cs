@@ -18,9 +18,10 @@ namespace Koiyun.Render {
 
         public void Render(ref ScriptableRenderContext context, ref RenderData data) {
             var cmd = CommandBufferPool.Get("FinalPass");
-            var tid = RenderConst.CAMERA_TEXTURE_ID;
-            var srcRTI = new RenderTargetIdentifier(tid);
-            var dstRTI = new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget);
+            var srcTID = RenderConst.CAMERA_TEXTURE_ID;
+            var dstTID = BuiltinRenderTextureType.CameraTarget;
+            var srcRTI = new RenderTargetIdentifier(srcTID);
+            var dstRTI = new RenderTargetIdentifier(dstTID);
             
             cmd.Blit(srcRTI, dstRTI, this.blitMaterial, this.passIndex);
             

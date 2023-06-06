@@ -19,7 +19,8 @@ namespace Koiyun.Render {
                 new DrawObjectPass(false),
                 new DrawGizmosPass(GizmoSubset.PreImageEffects),
                 new DrawGizmosPass(GizmoSubset.PostImageEffects),
-                new FinalPass()
+                new FinalPass(),
+                new CopyDepthPass(),
             };
 
             this.culledPasses = new List<IRenderPass>(this.passes.Count);
