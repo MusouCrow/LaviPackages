@@ -27,6 +27,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         public bool overrideCullMode;
         public bool overrideZWrite;
         public bool overrideZTest;
+        public bool shadowCasterPass;
         public string customEditorGUI;
 
         public string RenderType {
@@ -142,6 +143,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             this.DrawCullModeProperty(ref context, onChange, registerUndo);
             this.DrawZWriteProperty(ref context, onChange, registerUndo);
             this.DrawZTestProperty(ref context, onChange, registerUndo);
+            this.DrawShadowCasterPassProperty(ref context, onChange, registerUndo);
 
             this.activeSubTarget.value.GetPropertiesGUI(ref context, onChange, registerUndo);
             
@@ -278,6 +280,20 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             });
         }
 
+        private void DrawShadowCasterPassProperty(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
+            var toggle = new Toggle() {value = this.shadowCasterPass};
+
+            context.AddProperty("Shadow Caster", toggle, (evt) => {
+                if (this.shadowCasterPass == evt.newValue) {
+                    return;
+                }
+
+                registerUndo("Change Shadow Caster");
+                this.shadowCasterPass = evt.newValue;
+                onChange();
+            });
+        }
+
         private void DrawCustomEditorProperty(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
             var field = new TextField() {value = this.customEditorGUI};
             field.RegisterCallback<FocusOutEvent>((s) => {
@@ -297,7 +313,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             {
                 var toggle = new Toggle() {value = this.overrideBlendMode};
 
-                context.AddProperty("Override Blend Mode", toggle, (evt) => {
+                context.AddProperty("> Blend Mode", toggle, (evt) => {
                     if (this.overrideBlendMode == evt.newValue) {
                         return;
                     }
@@ -311,7 +327,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             {
                 var toggle = new Toggle() {value = this.overrideCullMode};
 
-                context.AddProperty("Override Cull Mode", toggle, (evt) => {
+                context.AddProperty("> Cull Mode", toggle, (evt) => {
                     if (this.overrideCullMode == evt.newValue) {
                         return;
                     }
@@ -325,7 +341,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             {
                 var toggle = new Toggle() {value = this.overrideZWrite};
 
-                context.AddProperty("Override Z Write", toggle, (evt) => {
+                context.AddProperty("> Z Write", toggle, (evt) => {
                     if (this.overrideZWrite == evt.newValue) {
                         return;
                     }
@@ -339,7 +355,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             {
                 var toggle = new Toggle() {value = this.overrideZTest};
 
-                context.AddProperty("Override Z Test", toggle, (evt) => {
+                context.AddProperty("> Z Test", toggle, (evt) => {
                     if (this.overrideZTest == evt.newValue) {
                         return;
                     }

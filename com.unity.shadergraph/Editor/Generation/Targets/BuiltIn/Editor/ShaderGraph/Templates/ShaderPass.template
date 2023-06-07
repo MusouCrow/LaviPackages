@@ -37,6 +37,7 @@ $SpecularSetup: #define _SPECULAR_SETUP
 $NormalDropOffTS: #define _NORMAL_DROPOFF_TS 1
 $NormalDropOffOS: #define _NORMAL_DROPOFF_OS 1
 $NormalDropOffWS: #define _NORMAL_DROPOFF_WS 1
+$Attributes.positionOS: #define ATTRIBUTES_NEED_POSITION
 $Attributes.normalOS: #define ATTRIBUTES_NEED_NORMAL
 $Attributes.tangentOS: #define ATTRIBUTES_NEED_TANGENT
 $Attributes.uv0: #define ATTRIBUTES_NEED_TEXCOORD0
