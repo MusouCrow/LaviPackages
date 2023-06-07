@@ -13,9 +13,9 @@ namespace Koiyun.Render {
         public bool Setup(ref ScriptableRenderContext context, ref RenderData data) {
         #if UNITY_EDITOR
             return Handles.ShouldRenderGizmos() && data.camera.sceneViewFilterMode == Camera.SceneViewFilterMode.Off;
+        #else
+            return false;        
         #endif
-            
-            return false;
         }
 
         public void Render(ref ScriptableRenderContext context, ref RenderData data) {
