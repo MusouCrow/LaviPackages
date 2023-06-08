@@ -8,6 +8,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         private static readonly GUID SOURCE_GUID = new GUID("1cee6872c31e642e7ba7a3142abca5eb"); // LaviSubTarget.cs
 
         public bool alphaClip;
+        public bool outlinePass;
         public bool shadowCasterPass;
 
         public ToonSubTarget() {
@@ -39,11 +40,30 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 context.AddBlock(BlockFields.SurfaceDescription.Alpha);
                 context.AddBlock(BlockFields.SurfaceDescription.AlphaClipThreshold);
             }
+
+            if (this.outlinePass) {
+                context.AddBlock(ShaderPropertyUtil.SurfaceDescription.OutlineColor);
+            }
         }
 
         public override void GetPropertiesGUI(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
             this.DrawAlphaClipProperty(ref context, onChange, registerUndo);
+            this.DrawOutlinePassProperty(ref context, onChange, registerUndo);
             this.DrawShadowCasterPassProperty(ref context, onChange, registerUndo);
+        }
+
+        private void DrawOutlinePassProperty(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
+            var toggle = new Toggle() {value = this.outlinePass};
+
+            context.AddProperty("Outline", toggle, (evt) => {
+                if (this.outlinePass == evt.newValue) {
+                    return;
+                }
+
+                registerUndo("Change Outline");
+                this.outlinePass = evt.newValue;
+                onChange();
+            });
         }
 
         private void DrawShadowCasterPassProperty(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {

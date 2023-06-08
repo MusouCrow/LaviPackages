@@ -10,13 +10,15 @@ namespace Koiyun.Render {
 
         public Renderer(LaviRenderPipelineAsset asset) {
             this.asset = asset;
+            var lightModes = new string[] {"Forward", "SRPDefaultUnlit"};
 
             this.passes = new List<IRenderPass>() {
                 new SetupPass(this.asset),
                 new MainLightShadowPass(this.asset),
                 new ReadyDrawPass(),
-                new DrawObjectPass(true),
-                new DrawObjectPass(false),
+                new DrawObjectPass(lightModes, true),
+                new DrawObjectPass(lightModes, true),
+                new DrawObjectPass(new string[] {"Outline"}, true),
                 new DrawGizmosPass(GizmoSubset.PreImageEffects),
                 new DrawGizmosPass(GizmoSubset.PostImageEffects),
                 new FinalPass(),

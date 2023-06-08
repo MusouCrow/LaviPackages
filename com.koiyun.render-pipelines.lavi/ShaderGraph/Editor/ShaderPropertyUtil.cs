@@ -46,5 +46,11 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             
             collector.AddShaderProperty(property);
         }
+
+        [GenerateBlocks]
+        public struct SurfaceDescription {
+            public static BlockFieldDescriptor OutlineColor = new BlockFieldDescriptor(BlockFields.SurfaceDescription.name, "OutlineColor", "Outline Color", "SURFACEDESCRIPTION_OUTLINECOLOR",
+                    new ColorControl(UnityEngine.Color.black, false), ShaderStage.Fragment);
+        }
     }
 }

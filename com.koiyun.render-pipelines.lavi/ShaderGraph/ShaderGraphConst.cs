@@ -7,6 +7,7 @@ namespace Koiyun.Render.ShaderGraph {
         public static string SHADERLIB_CORE = "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Core.hlsl";
         public static string SHADERLIB_FUNCTIONS = "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl";
         public static string SHADERLIB_FORWARD_PASS = "Packages/com.koiyun.render-pipelines.lavi/ShaderGraph/ShaderLibrary/ForwardPass.hlsl";
+        public static string SHADERLIB_OUTLINE_PASS = "Packages/com.koiyun.render-pipelines.lavi/ShaderGraph/ShaderLibrary/OutlinePass.hlsl";
         public static string SHADERLIB_SHADOWCASTER_PASS = "Packages/com.koiyun.render-pipelines.lavi/ShaderGraph/ShaderLibrary/ShadowCasterPass.hlsl";
 
         public static string SRC_BLEND_PROPERTY = "_SrcBlend";

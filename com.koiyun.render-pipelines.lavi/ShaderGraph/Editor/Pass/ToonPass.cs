@@ -8,6 +8,10 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 Forward(subTarget)
             };
 
+            if (subTarget.outlinePass) {
+                passes.Add(Outline(subTarget));
+            }
+
             if (subTarget.shadowCasterPass) {
                 passes.Add(ShadowCaster(subTarget));
             }
@@ -89,6 +93,57 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                     {ShaderGraphConst.SHADERLIB_CORE, IncludeLocation.Pregraph},
                     {ShaderGraphConst.SHADERLIB_FUNCTIONS, IncludeLocation.Pregraph},
                     {ShaderGraphConst.SHADERLIB_FORWARD_PASS, IncludeLocation.Postgraph},
+                },
+            };
+        }
+
+        public static PassDescriptor Outline(ToonSubTarget subTarget) {
+            return new PassDescriptor() {
+                // Definition
+                displayName = "Outline",
+                referenceName = "SHADERPASS_OUTLINE",
+                lightMode = "Outline",
+
+                // Template
+                passTemplatePath = ShaderGraphConst.SHADER_PASS_PATH,
+                sharedTemplateDirectories = new string[] {
+                    ShaderGraphConst.INNER_TEMPLATE_PATH,
+                    ShaderGraphConst.TEMPLATE_PATH
+                },
+
+                // Port Mask
+                validVertexBlocks = new BlockFieldDescriptor[] {},
+                validPixelBlocks = new BlockFieldDescriptor[] {ShaderPropertyUtil.SurfaceDescription.OutlineColor},
+
+                // Fields
+                structs = new StructCollection() {
+                    Structs.Attributes,
+                    LaviStructs.Varyings,
+                    Structs.SurfaceDescriptionInputs,
+                    Structs.VertexDescriptionInputs
+                },
+                requiredFields = new FieldCollection() {
+                    StructFields.Attributes.normalOS
+                },
+                fieldDependencies = new DependencyCollection() {
+                    FieldDependencies.Default
+                },
+
+                // Conditional State
+                renderStates = new RenderStateCollection() {
+                    RenderState.Cull(Cull.Front)
+                },
+                pragmas = new PragmaCollection() {
+                    Pragma.Vertex("Vert"), 
+                    Pragma.Fragment("Frag"), 
+                    Pragma.MultiCompileInstancing
+                },
+                defines = new DefineCollection(),
+                keywords = new KeywordCollection(),
+                includes = new IncludeCollection() {
+                    {ShaderGraphConst.SHADERLIB_CORE, IncludeLocation.Pregraph},
+                    {ShaderGraphConst.SHADERLIB_FUNCTIONS, IncludeLocation.Pregraph},
+                    {ShaderGraphConst.SHADERLIB_OUTLINE_PASS, IncludeLocation.Postgraph},
                 },
             };
         }

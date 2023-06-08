@@ -11,9 +11,9 @@ namespace Koiyun.Render {
             private set;
         }
 
-        public DrawObjectPass(bool isOpaque) {
+        public DrawObjectPass(string[] lightModes, bool isOpaque) {
             this.IsOpaque = isOpaque;
-            this.lightModes = new string[] {"Forward", "SRPDefaultUnlit"};
+            this.lightModes = lightModes;
 
             var renderQueueRange = isOpaque ? RenderQueueRange.opaque : RenderQueueRange.transparent;
             this.filteringSettings = new FilteringSettings(renderQueueRange);
