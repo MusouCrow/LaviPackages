@@ -23,6 +23,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         public CullMode cullMode = CullMode.Back;
         public bool zWrite = true;
         public ZTest zTest = ZTest.LEqual;
+        public StencilType stencil = StencilType.None;
         public bool overrideBlendMode;
         public bool overrideCullMode;
         public bool overrideZWrite;
@@ -141,6 +142,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             this.DrawCullModeProperty(ref context, onChange, registerUndo);
             this.DrawZWriteProperty(ref context, onChange, registerUndo);
             this.DrawZTestProperty(ref context, onChange, registerUndo);
+            this.DrawStencilProperty(ref context, onChange, registerUndo);
             this.DrawOverrideProperty(ref context, onChange, registerUndo);
 
             this.activeSubTarget.value.GetPropertiesGUI(ref context, onChange, registerUndo);
@@ -273,6 +275,22 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
                 registerUndo("Change Z Test");
                 this.zTest = value;
+                onChange();
+            });
+        }
+
+        private void DrawStencilProperty(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
+            var field = new EnumField(StencilType.None) {value = this.stencil};
+            
+            context.AddProperty("Stencil", field, (evt) => {
+                var value = (StencilType)evt.newValue;
+
+                if (this.stencil == value) {
+                    return;
+                }
+
+                registerUndo("Change Stencil");
+                this.stencil = value;
                 onChange();
             });
         }

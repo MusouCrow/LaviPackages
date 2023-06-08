@@ -69,7 +69,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 },
 
                 // Conditional State
-                renderStates = GetRenderState(subTarget.target, true, true, true, true),
+                renderStates = GetRenderState(subTarget.target, true, true, true, true, true, false),
                 pragmas = new PragmaCollection() {
                     Pragma.Vertex("Vert"), 
                     Pragma.Fragment("Frag"), 
@@ -118,7 +118,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 },
 
                 // Conditional State
-                renderStates = GetRenderState(subTarget.target, false, true, false, false),
+                renderStates = GetRenderState(subTarget.target, false, true, false, false, false, true),
                 pragmas = new PragmaCollection() {
                     Pragma.Vertex("Vert"), 
                     Pragma.Fragment("Frag"), 
@@ -134,7 +134,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             };
         }
 
-        private static RenderStateCollection GetRenderState(LaviTarget target, bool blendMode, bool cullMode, bool zWrite, bool zTest) {
+        private static RenderStateCollection GetRenderState(LaviTarget target, bool blendMode, bool cullMode, bool zWrite, bool zTest, bool stencil, bool colorMask) {
             var result = new RenderStateCollection();
             
             if (blendMode) {
@@ -177,6 +177,21 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 else {
                     result.Add(RenderState.ZTest(target.zTest));
                 }
+            }
+
+            if (stencil && target.stencil > StencilType.None) {
+                var value = (int)target.stencil;
+                var desc = new StencilDescriptor() {
+                    Ref = value.ToString(),
+                    Comp = "Always",
+                    Pass = "Replace"
+                };
+
+                result.Add(RenderState.Stencil(desc));
+            }
+
+            if (colorMask) {
+                result.Add(RenderState.ColorMask("ColorMask 0"));
             }
             
             return result;
