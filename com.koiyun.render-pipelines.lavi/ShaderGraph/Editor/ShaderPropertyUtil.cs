@@ -21,6 +21,12 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             stages = KeywordShaderStage.Fragment,
         };
 
+        public static KeywordDescriptor NeedAlphaKeyword = new KeywordDescriptor() {
+            displayName = "Surface Need Alpha",
+            referenceName = "SURFACE_NEED_ALPHA",
+            type = KeywordType.Boolean
+        };
+
         public static void AddFloatProperty(PropertyCollector collector, string referenceName, float defaultValue) {
             var property = new Vector1ShaderProperty() {
                 floatType = FloatType.Default,

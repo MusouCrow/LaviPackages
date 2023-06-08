@@ -27,7 +27,6 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         public bool overrideCullMode;
         public bool overrideZWrite;
         public bool overrideZTest;
-        public bool shadowCasterPass;
         public string customEditorGUI;
 
         public string RenderType {
@@ -71,9 +70,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         public override void Setup(ref TargetSetupContext context) {
             context.AddAssetDependency(SOURCE_GUID, AssetCollection.Flags.SourceDependency);
 
-            if (this.customEditorGUI != "") {
-                context.AddCustomEditorForRenderPipeline(this.customEditorGUI, typeof(LaviRenderPipelineAsset));
-            }
+            var gui = this.customEditorGUI != "" ? this.customEditorGUI : typeof(LaviShaderGUI).FullName;
+            context.AddCustomEditorForRenderPipeline(gui, typeof(LaviRenderPipelineAsset));
 
             TargetUtils.ProcessSubTargetList(ref this.activeSubTarget, ref this.subTargets);
 
@@ -143,11 +141,10 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             this.DrawCullModeProperty(ref context, onChange, registerUndo);
             this.DrawZWriteProperty(ref context, onChange, registerUndo);
             this.DrawZTestProperty(ref context, onChange, registerUndo);
-            this.DrawShadowCasterPassProperty(ref context, onChange, registerUndo);
+            this.DrawOverrideProperty(ref context, onChange, registerUndo);
 
             this.activeSubTarget.value.GetPropertiesGUI(ref context, onChange, registerUndo);
             
-            this.DrawOverrideProperty(ref context, onChange, registerUndo);
             this.DrawCustomEditorProperty(ref context, onChange, registerUndo);
         }
 
@@ -276,20 +273,6 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
                 registerUndo("Change Z Test");
                 this.zTest = value;
-                onChange();
-            });
-        }
-
-        private void DrawShadowCasterPassProperty(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
-            var toggle = new Toggle() {value = this.shadowCasterPass};
-
-            context.AddProperty("Shadow Caster", toggle, (evt) => {
-                if (this.shadowCasterPass == evt.newValue) {
-                    return;
-                }
-
-                registerUndo("Change Shadow Caster");
-                this.shadowCasterPass = evt.newValue;
                 onChange();
             });
         }

@@ -1,14 +1,15 @@
+using System.Collections.Generic;
 using UnityEditor.ShaderGraph;
 
 namespace Koiyun.Render.ShaderGraph.Editor {
     static class ToonPasses {
-        public static SubShaderDescriptor SubShader(LaviTarget target, string renderType, string renderQueue) {
+        public static SubShaderDescriptor SubShader(ToonSubTarget subTarget, string renderType, string renderQueue) {
             var passes = new PassCollection() {
-                Forward(target)
+                Forward(subTarget)
             };
 
-            if (target.shadowCasterPass) {
-                passes.Add(ShadowCaster(target));
+            if (subTarget.shadowCasterPass) {
+                passes.Add(ShadowCaster(subTarget));
             }
             
             return new SubShaderDescriptor() {
@@ -19,14 +20,22 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             };
         }
 
-        public static PassDescriptor Forward(LaviTarget target) {
+        public static PassDescriptor Forward(ToonSubTarget subTarget) {
             var keywords = new KeywordCollection();
             var requiredFields = new FieldCollection();
+            var defines = new DefineCollection();
+            var validPixelBlocks = new List<BlockFieldDescriptor>() {
+                BlockFields.SurfaceDescription.BaseColor
+            };
 
-            if (target.shadowCasterPass) {
+            if (subTarget.target.surfaceType == SurfaceType.Transparent) {
+                validPixelBlocks.Add(BlockFields.SurfaceDescription.Alpha);
+                defines.Add(ShaderPropertyUtil.NeedAlphaKeyword, 1);
+            }
+            
+            if (subTarget.shadowCasterPass) {
                 keywords.Add(ShaderPropertyUtil.MainLightShadowsKeyword);
                 keywords.Add(ShaderPropertyUtil.ShadowSoftKeyword);
-                requiredFields.Add(StructFields.Varyings.positionWS);
             }
 
             return new PassDescriptor() {
@@ -45,7 +54,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
                 // Port Mask
                 validVertexBlocks = new BlockFieldDescriptor[] {},
-                validPixelBlocks = new BlockFieldDescriptor[] {BlockFields.SurfaceDescription.BaseColor},
+                validPixelBlocks = validPixelBlocks.ToArray(),
 
                 // Fields
                 structs = new StructCollection() {
@@ -55,16 +64,18 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                     Structs.VertexDescriptionInputs
                 },
                 requiredFields = requiredFields,
-                fieldDependencies = new DependencyCollection(),
+                fieldDependencies = new DependencyCollection() {
+                    FieldDependencies.Default
+                },
 
                 // Conditional State
-                renderStates = GetRenderState(target, true, true, true, true),
+                renderStates = GetRenderState(subTarget.target, true, true, true, true),
                 pragmas = new PragmaCollection() {
                     Pragma.Vertex("Vert"), 
                     Pragma.Fragment("Frag"), 
                     Pragma.MultiCompileInstancing
                 },
-                defines = new DefineCollection(),
+                defines = defines,
                 keywords = keywords,
                 includes = new IncludeCollection() {
                     {ShaderGraphConst.SHADERLIB_CORE, IncludeLocation.Pregraph},
@@ -74,7 +85,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             };
         }
 
-        public static PassDescriptor ShadowCaster(LaviTarget target) {
+        public static PassDescriptor ShadowCaster(ToonSubTarget subTarget) {
             return new PassDescriptor() {
                 // Definition
                 displayName = "ShadowCaster",
@@ -102,10 +113,12 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 requiredFields = new FieldCollection() {
                     StructFields.Attributes.normalOS
                 },
-                fieldDependencies = new DependencyCollection(),
+                fieldDependencies = new DependencyCollection() {
+                    FieldDependencies.Default
+                },
 
                 // Conditional State
-                renderStates = GetRenderState(target, false, true, false, false),
+                renderStates = GetRenderState(subTarget.target, false, true, false, false),
                 pragmas = new PragmaCollection() {
                     Pragma.Vertex("Vert"), 
                     Pragma.Fragment("Frag"), 

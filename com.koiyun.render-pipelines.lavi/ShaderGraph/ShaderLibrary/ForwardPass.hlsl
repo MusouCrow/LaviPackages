@@ -1,7 +1,6 @@
 #pragma once
 
 #include "./Varyings.hlsl"
-#include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Shadow.hlsl"
 
 PackedVaryings Vert(Attributes input)
 {
@@ -19,12 +18,11 @@ half4 Frag(PackedVaryings packedInput) : SV_TARGET
 
     SurfaceDescription surfaceDescription = BuildSurfaceDescription(unpacked);
 
-    half3 color = surfaceDescription.BaseColor;
+    half4 color = half4(surfaceDescription.BaseColor, 1);
 
-#ifdef _MAIN_LIGHT_SHADOWS
-    float shadowAttenuation = ShadowAttenuation(unpacked.positionWS);
-    color *= shadowAttenuation;
+#ifdef SURFACE_NEED_ALPHA
+    color.a = surfaceDescription.Alpha;
 #endif
 
-    return half4(color, 1);
+    return color;
 }
