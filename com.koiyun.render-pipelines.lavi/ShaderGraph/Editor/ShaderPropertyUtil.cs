@@ -27,6 +27,12 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             type = KeywordType.Boolean
         };
 
+        public static KeywordDescriptor NeedAlphaClipKeyword = new KeywordDescriptor() {
+            displayName = "Surface Need Alpha Clip",
+            referenceName = "SURFACE_NEED_ALPHA_CLIP",
+            type = KeywordType.Boolean
+        };
+
         public static void AddFloatProperty(PropertyCollector collector, string referenceName, float defaultValue) {
             var property = new Vector1ShaderProperty() {
                 floatType = FloatType.Default,

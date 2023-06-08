@@ -24,5 +24,9 @@ half4 Frag(PackedVaryings packedInput) : SV_TARGET
     color.a = surfaceDescription.Alpha;
 #endif
 
+#ifdef SURFACE_NEED_ALPHA_CLIP
+    clip(color.a - surfaceDescription.AlphaClipThreshold);
+#endif
+
     return color;
 }

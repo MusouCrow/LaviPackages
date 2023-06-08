@@ -28,9 +28,17 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 BlockFields.SurfaceDescription.BaseColor
             };
 
-            if (subTarget.target.surfaceType == SurfaceType.Transparent) {
+            var surfaceType = subTarget.target.surfaceType;
+
+            if (surfaceType == SurfaceType.Transparent) {
                 validPixelBlocks.Add(BlockFields.SurfaceDescription.Alpha);
                 defines.Add(ShaderPropertyUtil.NeedAlphaKeyword, 1);
+            }
+            else if (surfaceType == SurfaceType.Opaque && subTarget.alphaClip) {
+                validPixelBlocks.Add(BlockFields.SurfaceDescription.Alpha);
+                validPixelBlocks.Add(BlockFields.SurfaceDescription.AlphaClipThreshold);
+                defines.Add(ShaderPropertyUtil.NeedAlphaKeyword, 1);
+                defines.Add(ShaderPropertyUtil.NeedAlphaClipKeyword, 1);
             }
             
             if (subTarget.shadowCasterPass) {
@@ -86,6 +94,16 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         }
 
         public static PassDescriptor ShadowCaster(ToonSubTarget subTarget) {
+            var defines = new DefineCollection();
+            var validPixelBlocks = new List<BlockFieldDescriptor>();
+
+            if (subTarget.target.surfaceType == SurfaceType.Opaque && subTarget.alphaClip) {
+                validPixelBlocks.Add(BlockFields.SurfaceDescription.Alpha);
+                validPixelBlocks.Add(BlockFields.SurfaceDescription.AlphaClipThreshold);
+                defines.Add(ShaderPropertyUtil.NeedAlphaKeyword, 1);
+                defines.Add(ShaderPropertyUtil.NeedAlphaClipKeyword, 1);
+            }
+
             return new PassDescriptor() {
                 // Definition
                 displayName = "ShadowCaster",
@@ -101,7 +119,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
                 // Port Mask
                 validVertexBlocks = new BlockFieldDescriptor[] {},
-                validPixelBlocks = new BlockFieldDescriptor[] {},
+                validPixelBlocks = validPixelBlocks.ToArray(),
 
                 // Fields
                 structs = new StructCollection() {
@@ -124,7 +142,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                     Pragma.Fragment("Frag"), 
                     Pragma.MultiCompileInstancing
                 },
-                defines = new DefineCollection(),
+                defines = defines,
                 keywords = new KeywordCollection() {},
                 includes = new IncludeCollection() {
                     {ShaderGraphConst.SHADERLIB_CORE, IncludeLocation.Pregraph},
