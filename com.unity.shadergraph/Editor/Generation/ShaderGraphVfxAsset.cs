@@ -26,6 +26,7 @@ namespace UnityEditor.ShaderGraph.Internal
         public int instanceID => texture != null ? texture.GetInstanceID() : 0;
     }
 
+    // KOIYUN
     public sealed class ShaderGraphVfxAsset : ScriptableObject, ISerializationCallbackReceiver
     {
         private class ShaderGraphVfxAssetData : JsonObject
@@ -33,20 +34,12 @@ namespace UnityEditor.ShaderGraph.Internal
             public List<JsonData<AbstractShaderProperty>> m_Properties = new List<JsonData<AbstractShaderProperty>>();
         }
 
-        public const int BaseColorSlotId = 1;
-        public const int MetallicSlotId = 2;
-        public const int SmoothnessSlotId = 3;
-        public const int NormalSlotId = 8;
-        public const int AlphaSlotId = 4;
-        public const int EmissiveSlotId = 5;
-        public const int ColorSlotId = 6;
-        public const int AlphaThresholdSlotId = 7;
+        public const int ColorSlotId = 1;
+        public const int AlphaSlotId = 2;
+        public const int AlphaThresholdSlotId = 3;
 
         [SerializeField]
         public bool generatesWithShaderGraph;
-
-        [SerializeField]
-        public bool lit;
 
         [SerializeField]
         public bool alphaClipping;
