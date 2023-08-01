@@ -21,6 +21,15 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             stages = KeywordShaderStage.Fragment,
         };
 
+        public static KeywordDescriptor AlphaClipKeyword = new KeywordDescriptor() {
+            displayName = "Alpha Clip",
+            referenceName = "_ALPHA_CLIP",
+            type = KeywordType.Boolean,
+            definition = KeywordDefinition.ShaderFeature,
+            scope = KeywordScope.Local,
+            stages = KeywordShaderStage.Fragment,
+        };
+
         public static KeywordDescriptor NeedAlphaKeyword = new KeywordDescriptor() {
             displayName = "Surface Need Alpha",
             referenceName = "SURFACE_NEED_ALPHA",

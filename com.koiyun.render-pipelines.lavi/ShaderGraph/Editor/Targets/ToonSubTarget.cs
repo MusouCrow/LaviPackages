@@ -2,12 +2,14 @@ using System;
 using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEditor.ShaderGraph;
+using UnityEditor.UIElements;
 
 namespace Koiyun.Render.ShaderGraph.Editor {
     class ToonSubTarget : SubTarget<LaviTarget> {
         private static readonly GUID SOURCE_GUID = new GUID("1cee6872c31e642e7ba7a3142abca5eb"); // LaviSubTarget.cs
 
-        public bool alphaClip;
+        // public bool alphaClip;
+        public AlphaClipMode alphaClipMode;
         public bool outlinePass;
         public bool shadowCasterPass;
 
@@ -36,8 +38,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             if (surfaceType == SurfaceType.Transparent) {
                 context.AddBlock(BlockFields.SurfaceDescription.Alpha);
             }
-            else if (surfaceType == SurfaceType.Opaque && this.alphaClip) {
-                context.AddBlock(BlockFields.SurfaceDescription.Alpha);
+            else if (surfaceType == SurfaceType.Opaque && this.alphaClipMode > AlphaClipMode.None) {
                 context.AddBlock(BlockFields.SurfaceDescription.AlphaClipThreshold);
             }
 
@@ -81,15 +82,21 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         }
 
         private void DrawAlphaClipProperty(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
-            var toggle = new Toggle() {value = this.alphaClip};
+            if (this.target.surfaceType == SurfaceType.Transparent) {
+                return;
+            }
+            
+            var field = new EnumField(AlphaClipMode.None) {value = this.alphaClipMode};
 
-            context.AddProperty("Alpha Clip", toggle, (evt) => {
-                if (this.alphaClip == evt.newValue) {
+            context.AddProperty("Alpha Clip", field, (evt) => {
+                var value = (AlphaClipMode)evt.newValue;
+
+                if (this.alphaClipMode == value) {
                     return;
                 }
 
                 registerUndo("Change Alpha Clip");
-                this.alphaClip = evt.newValue;
+                this.alphaClipMode = value;
                 onChange();
             });
         }

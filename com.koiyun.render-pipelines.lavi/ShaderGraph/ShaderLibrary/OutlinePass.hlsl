@@ -92,6 +92,7 @@ half4 Frag(PackedVaryings packedInput) : SV_TARGET
     SurfaceDescription surfaceDescription = BuildSurfaceDescription(unpacked);
 
     half4 color = half4(surfaceDescription.OutlineColor, 1);
+    AlphaClip(surfaceDescription);
 
     return color;
 }

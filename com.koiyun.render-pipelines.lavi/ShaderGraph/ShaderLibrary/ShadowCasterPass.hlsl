@@ -98,10 +98,7 @@ half4 Frag(PackedVaryings packedInput) : SV_TARGET
     UNITY_SETUP_INSTANCE_ID(unpacked);
 
     SurfaceDescription surfaceDescription = BuildSurfaceDescription(unpacked);
-
-#if defined(SURFACE_NEED_ALPHA) && defined(SURFACE_NEED_ALPHA_CLIP)
-    clip(surfaceDescription.Alpha - surfaceDescription.AlphaClipThreshold);
-#endif
+    AlphaClip(surfaceDescription);
 
     return 0;
 }

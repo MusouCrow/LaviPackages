@@ -1,5 +1,7 @@
 #pragma once
 
+#include "./Util.hlsl"
+
 #ifdef FEATURES_GRAPH_VERTEX
     VertexDescription BuildVertexDescription(Attributes input)
     {

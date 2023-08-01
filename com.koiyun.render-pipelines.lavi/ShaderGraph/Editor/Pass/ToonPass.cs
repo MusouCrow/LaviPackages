@@ -38,11 +38,15 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 validPixelBlocks.Add(BlockFields.SurfaceDescription.Alpha);
                 defines.Add(ShaderPropertyUtil.NeedAlphaKeyword, 1);
             }
-            else if (surfaceType == SurfaceType.Opaque && subTarget.alphaClip) {
-                validPixelBlocks.Add(BlockFields.SurfaceDescription.Alpha);
+            else if (surfaceType == SurfaceType.Opaque) {
                 validPixelBlocks.Add(BlockFields.SurfaceDescription.AlphaClipThreshold);
-                defines.Add(ShaderPropertyUtil.NeedAlphaKeyword, 1);
-                defines.Add(ShaderPropertyUtil.NeedAlphaClipKeyword, 1);
+
+                if (subTarget.alphaClipMode == AlphaClipMode.Swtich) {
+                    keywords.Add(ShaderPropertyUtil.AlphaClipKeyword);
+                }
+                else if (subTarget.alphaClipMode == AlphaClipMode.Enabled) {
+                    defines.Add(ShaderPropertyUtil.NeedAlphaClipKeyword, 1);
+                }
             }
             
             if (subTarget.shadowCasterPass) {
@@ -98,6 +102,23 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         }
 
         public static PassDescriptor Outline(ToonSubTarget subTarget) {
+            var defines = new DefineCollection();
+            var keywords = new KeywordCollection();
+            var validPixelBlocks = new List<BlockFieldDescriptor>() {
+                ShaderPropertyUtil.SurfaceDescription.OutlineColor
+            };
+
+            if (subTarget.target.surfaceType == SurfaceType.Opaque) {
+                validPixelBlocks.Add(BlockFields.SurfaceDescription.AlphaClipThreshold);
+
+                if (subTarget.alphaClipMode == AlphaClipMode.Swtich) {
+                    keywords.Add(ShaderPropertyUtil.AlphaClipKeyword);
+                }
+                else if (subTarget.alphaClipMode == AlphaClipMode.Enabled) {
+                    defines.Add(ShaderPropertyUtil.NeedAlphaClipKeyword, 1);
+                }
+            }
+
             return new PassDescriptor() {
                 // Definition
                 displayName = "Outline",
@@ -113,7 +134,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
                 // Port Mask
                 validVertexBlocks = new BlockFieldDescriptor[] {},
-                validPixelBlocks = new BlockFieldDescriptor[] {ShaderPropertyUtil.SurfaceDescription.OutlineColor},
+                validPixelBlocks = validPixelBlocks.ToArray(),
 
                 // Fields
                 structs = new StructCollection() {
@@ -138,8 +159,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                     Pragma.Fragment("Frag"), 
                     Pragma.MultiCompileInstancing
                 },
-                defines = new DefineCollection(),
-                keywords = new KeywordCollection(),
+                defines = defines,
+                keywords = keywords,
                 includes = new IncludeCollection() {
                     {ShaderGraphConst.SHADERLIB_CORE, IncludeLocation.Pregraph},
                     {ShaderGraphConst.SHADERLIB_FUNCTIONS, IncludeLocation.Pregraph},
@@ -150,13 +171,18 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
         public static PassDescriptor ShadowCaster(ToonSubTarget subTarget) {
             var defines = new DefineCollection();
+            var keywords = new KeywordCollection();
             var validPixelBlocks = new List<BlockFieldDescriptor>();
 
-            if (subTarget.target.surfaceType == SurfaceType.Opaque && subTarget.alphaClip) {
-                validPixelBlocks.Add(BlockFields.SurfaceDescription.Alpha);
+            if (subTarget.target.surfaceType == SurfaceType.Opaque) {
                 validPixelBlocks.Add(BlockFields.SurfaceDescription.AlphaClipThreshold);
-                defines.Add(ShaderPropertyUtil.NeedAlphaKeyword, 1);
-                defines.Add(ShaderPropertyUtil.NeedAlphaClipKeyword, 1);
+
+                if (subTarget.alphaClipMode == AlphaClipMode.Swtich) {
+                    keywords.Add(ShaderPropertyUtil.AlphaClipKeyword);
+                }
+                else if (subTarget.alphaClipMode == AlphaClipMode.Enabled) {
+                    defines.Add(ShaderPropertyUtil.NeedAlphaClipKeyword, 1);
+                }
             }
 
             return new PassDescriptor() {
@@ -198,7 +224,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                     Pragma.MultiCompileInstancing
                 },
                 defines = defines,
-                keywords = new KeywordCollection() {},
+                keywords = keywords,
                 includes = new IncludeCollection() {
                     {ShaderGraphConst.SHADERLIB_CORE, IncludeLocation.Pregraph},
                     {ShaderGraphConst.SHADERLIB_FUNCTIONS, IncludeLocation.Pregraph},

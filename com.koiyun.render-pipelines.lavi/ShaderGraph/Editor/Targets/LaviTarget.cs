@@ -50,6 +50,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             }
         }
 
+        public override object saveContext => this.activeSubTarget.value?.saveContext;
+
         public LaviTarget() {
             this.displayName = "Lavivagnar";
             this.subTargets = TargetUtils.GetSubTargets(this);
@@ -80,6 +82,11 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             this.activeSubTarget.value.Setup(ref context);
         }
 
+        public override void OnAfterMultiDeserialize(string json) {
+            TargetUtils.ProcessSubTargetList(ref this.activeSubTarget, ref this.subTargets);
+            this.activeSubTarget.value.target = this;
+        }
+
         public override void GetFields(ref TargetFieldContext context) {
             context.AddField(Fields.GraphVertex);
             context.AddField(Fields.GraphPixel);
@@ -89,26 +96,6 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
         public override void GetActiveBlocks(ref TargetActiveBlockContext context) {
             this.activeSubTarget.value.GetActiveBlocks(ref context);
-        }
-
-        public override void ProcessPreviewMaterial(Material material) {
-            if (this.overrideBlendMode) {
-                this.GetBlend(out var srcBlend, out var dstBlend);
-                material.SetFloat(ShaderGraphConst.SRC_BLEND_PROPERTY, (float)srcBlend);
-                material.SetFloat(ShaderGraphConst.DST_BLEND_PROPERTY, (float)dstBlend);
-            }
-
-            if (this.overrideCullMode) {
-                material.SetFloat(ShaderGraphConst.CULL_PROPERTY, (float)this.cullMode);
-            }
-
-            if (this.overrideZWrite) {
-                material.SetFloat(ShaderGraphConst.ZWRITE_PROPERTY, this.zWrite ? 1 : 0);
-            }
-            
-            if (this.overrideZTest) {
-                material.SetFloat(ShaderGraphConst.ZTEST_PROPERTY, (float)this.zTest);
-            }
         }
 
         public override void CollectShaderProperties(PropertyCollector collector, GenerationMode generationMode) {
@@ -133,6 +120,26 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             }
             
             this.activeSubTarget.value.CollectShaderProperties(collector, generationMode);
+        }
+
+        public override void ProcessPreviewMaterial(Material material) {
+            if (this.overrideBlendMode) {
+                this.GetBlend(out var srcBlend, out var dstBlend);
+                material.SetFloat(ShaderGraphConst.SRC_BLEND_PROPERTY, (float)srcBlend);
+                material.SetFloat(ShaderGraphConst.DST_BLEND_PROPERTY, (float)dstBlend);
+            }
+
+            if (this.overrideCullMode) {
+                material.SetFloat(ShaderGraphConst.CULL_PROPERTY, (float)this.cullMode);
+            }
+
+            if (this.overrideZWrite) {
+                material.SetFloat(ShaderGraphConst.ZWRITE_PROPERTY, this.zWrite ? 1 : 0);
+            }
+            
+            if (this.overrideZTest) {
+                material.SetFloat(ShaderGraphConst.ZTEST_PROPERTY, (float)this.zTest);
+            }
         }
 
         public override void GetPropertiesGUI(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
