@@ -3,24 +3,31 @@ using UnityEngine.Rendering;
 
 namespace Koiyun.Render {
     public class ReadyDrawPass : IRenderPass {
+        private RenderTexutreRegister[] colorRTRs;
+        private RenderTexutreRegister depthRTR;
+        private RenderTargetIdentifier[] colorRTIs;
+        private RenderTargetIdentifier depthRTI;
+
+        public ReadyDrawPass(RenderTexutreRegister[] colorRTRs, RenderTexutreRegister depthRTR) {
+            this.colorRTRs = colorRTRs;
+            this.depthRTR = depthRTR;
+            this.colorRTIs = new RenderTargetIdentifier[this.colorRTRs.Length];
+        }
+
         public bool Setup(ref ScriptableRenderContext context, ref RenderData data) {
             return true;
         }
 
         public void Render(ref ScriptableRenderContext context, ref RenderData data) {
             var cmd = CommandBufferPool.Get("ReadyDrawPass");
-            var colorTID = RenderConst.CAMERA_TEXTURE_ID;
-            var depthTID = RenderConst.CAMERA_DEPTH_TEXTURE_ID;
-            var colorRTI = new RenderTargetIdentifier(colorTID);
-            var depthRTI = new RenderTargetIdentifier(depthTID);
-            var colorRTD = data.cameraRTD;
-            var depthRTD = data.cameraRTD;
-            depthRTD.colorFormat = RenderTextureFormat.Depth;
             
-            cmd.GetTemporaryRT(colorTID, colorRTD, FilterMode.Bilinear);
-            cmd.GetTemporaryRT(depthTID, depthRTD, FilterMode.Bilinear);
+            for (int i = 0; i < this.colorRTIs.Length; i++) {
+                this.colorRTIs[i] = this.ReadyRT(cmd, ref data, ref this.colorRTRs[i]);
+            }
 
-            cmd.SetRenderTarget(colorRTI, depthRTI);
+            this.depthRTI = this.ReadyRT(cmd, ref data, ref this.depthRTR);
+
+            cmd.SetRenderTarget(this.colorRTIs, depthRTI);
             cmd.ClearRenderTarget(true, true, data.camera.backgroundColor.linear);
 
             context.ExecuteCommandBuffer(cmd);
@@ -29,14 +36,23 @@ namespace Koiyun.Render {
 
         public void Clean(ref ScriptableRenderContext context, ref RenderData data) {
             var cmd = CommandBufferPool.Get("ReadyDrawPass");
-            var colorTID = RenderConst.CAMERA_TEXTURE_ID;
-            var depthTID = RenderConst.CAMERA_DEPTH_TEXTURE_ID;
 
-            cmd.ReleaseTemporaryRT(colorTID);
-            cmd.ReleaseTemporaryRT(depthTID);
+            for (int i = 0; i < this.colorRTRs.Length; i++) {
+                cmd.ReleaseTemporaryRT(this.colorRTRs[i].tid);
+            }
 
+            cmd.ReleaseTemporaryRT(this.depthRTR.tid);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
+        }
+
+        private RenderTargetIdentifier ReadyRT(CommandBuffer cmd, ref RenderData data, ref RenderTexutreRegister rtr) {
+            var tid = rtr.tid;
+            var rtd = rtr.HandleRTD(data.cameraRTD);
+            var rti = new RenderTargetIdentifier(tid);
+            cmd.GetTemporaryRT(tid, rtd, FilterMode.Bilinear);
+            
+            return rti;
         }
     }
 }

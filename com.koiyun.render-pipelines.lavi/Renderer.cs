@@ -11,17 +11,34 @@ namespace Koiyun.Render {
         public Renderer(LaviRenderPipelineAsset asset) {
             this.asset = asset;
             var lightModes = new string[] {"Forward", "SRPDefaultUnlit"};
+            var colorRTRs = new RenderTexutreRegister[] {
+                new RenderTexutreRegister() {
+                    tid = RenderConst.CAMERA_COLOR_TEXTURE_ID
+                },
+                new RenderTexutreRegister() {
+                    tid = RenderConst.CAMERA_ITENSITY_TEXTURE_ID
+                }
+            };
+
+            var depthRTR = new RenderTexutreRegister() {
+                tid = RenderConst.CAMERA_DEPTH_TEXTURE_ID,
+                RTDHandler = (RenderTextureDescriptor rtd) => {
+                    rtd.colorFormat = RenderTextureFormat.Depth;
+
+                    return rtd;
+                }
+            };
 
             this.passes = new List<IRenderPass>() {
                 new SetupPass(this.asset),
                 new MainLightShadowPass(this.asset),
-                new ReadyDrawPass(),
+                new ReadyDrawPass(colorRTRs, depthRTR),
                 new DrawObjectPass(lightModes, true),
                 new DrawObjectPass(new string[] {"Outline"}, true),
                 new DrawObjectPass(lightModes, false),
                 new DrawGizmosPass(GizmoSubset.PreImageEffects),
                 new DrawGizmosPass(GizmoSubset.PostImageEffects),
-                new FinalPass(),
+                new FinalPass(RenderConst.CAMERA_COLOR_TEXTURE_ID),
                 new CopyDepthPass(),
             };
 

@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace Koiyun.Render {
     public static class RenderConst {
-        public static int CAMERA_TEXTURE_ID = Shader.PropertyToID("_CameraTexture");
+        public static int CAMERA_COLOR_TEXTURE_ID = Shader.PropertyToID("_CameraColorTexture");
+        public static int CAMERA_ITENSITY_TEXTURE_ID = Shader.PropertyToID("_CameraIntensityTexture");
         public static int CAMERA_DEPTH_TEXTURE_ID = Shader.PropertyToID("_CameraDepthTexture");
         public static int SHADOW_TEXTURE_ID = Shader.PropertyToID("_ShadowTexture");
         public static int SHADOW_TEXUTRE_SIZE_ID = Shader.PropertyToID("_ShadowTexture_TexelSize");

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -15,5 +16,18 @@ namespace Koiyun.Render {
         _1024 = 1024,
         _2048 = 2048,
         _4096 = 4096
+    }
+
+    public struct RenderTexutreRegister {
+        public int tid;
+        public Func<RenderTextureDescriptor, RenderTextureDescriptor> RTDHandler;
+
+        public RenderTextureDescriptor HandleRTD(RenderTextureDescriptor rtd) {
+            if (RTDHandler != null) {
+                return RTDHandler(rtd);
+            }
+
+            return rtd;
+        }
     }
 }
