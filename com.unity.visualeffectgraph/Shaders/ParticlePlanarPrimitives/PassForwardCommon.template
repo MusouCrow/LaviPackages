@@ -15,6 +15,12 @@ struct ps_input
 	#if VFX_NEEDS_COLOR_INTERPOLATOR
 	VFX_OPTIONAL_INTERPOLATION float4 color : COLOR0;
 	#endif
+	
+	// KOIYUN
+	#if VFX_USE_GLOW_CURRENT
+	VFX_OPTIONAL_INTERPOLATION float glow : COLOR1;
+	#endif
+
 	#if USE_SOFT_PARTICLE || USE_ALPHA_TEST || USE_FLIPBOOK_INTERPOLATION || USE_EXPOSURE_WEIGHT || VFX_FEATURE_MOTION_VECTORS_FORWARD
 	// x: inverse soft particles fade distance
 	// y: alpha threshold
@@ -134,8 +140,10 @@ ps_output frag(ps_input i,
 	o.color = VFXTransformFinalColor(o.color);
 	
 	// KOIYUN
-	o.glow = float4(0, 0, 0, o.color.a);
-	
+#if VFX_USE_GLOW_CURRENT
+	o.glow = float4(saturate(i.glow), 0, 0, o.color.a);
+#endif
+
 	/*
 #if VFX_FEATURE_MOTION_VECTORS_FORWARD
 	${VFXComputeOutputMotionVector}
