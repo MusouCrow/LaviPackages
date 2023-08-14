@@ -63,3 +63,9 @@ float4 _ZBufferParams;
 // z = far plane
 // w = 1/far plane
 float4 _ProjectionParams;
+
+struct Output
+{
+    float4 color : SV_Target0;
+    float4 glow : SV_Target1;
+};

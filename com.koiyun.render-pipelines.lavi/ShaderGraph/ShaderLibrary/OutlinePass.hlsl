@@ -84,8 +84,9 @@ PackedVaryings Vert(Attributes input)
     return packedOutput;
 }
 
-half4 Frag(PackedVaryings packedInput) : SV_TARGET
+Output Frag(PackedVaryings packedInput)
 {
+    Output output;
     Varyings unpacked = UnpackVaryings(packedInput);
     UNITY_SETUP_INSTANCE_ID(unpacked);
 
@@ -94,5 +95,8 @@ half4 Frag(PackedVaryings packedInput) : SV_TARGET
     half4 color = half4(surfaceDescription.OutlineColor, 1);
     AlphaClip(surfaceDescription);
 
-    return color;
+    output.color = color;
+    output.glow = float4(0, 0, 0, color.a);
+
+    return output;
 }

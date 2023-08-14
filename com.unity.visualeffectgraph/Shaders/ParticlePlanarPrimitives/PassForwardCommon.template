@@ -50,9 +50,13 @@ struct ps_input
 struct ps_output
 {
 	float4 color : SV_Target0;
+// KOIYUN
+	float4 glow : SV_Target1;
+/*
 #if VFX_FEATURE_MOTION_VECTORS_FORWARD
 	float4 outMotionVector : SV_Target1;
 #endif
+*/
 };
 
 #define VFX_VARYING_PS_INPUTS ps_input
@@ -129,10 +133,16 @@ ps_output frag(ps_input i,
 	o.color.a = saturate(o.color.a);
 	o.color = VFXTransformFinalColor(o.color);
 	
+	// KOIYUN
+	o.glow = float4(0, 0, 0, o.color.a);
+	
+	/*
 #if VFX_FEATURE_MOTION_VECTORS_FORWARD
 	${VFXComputeOutputMotionVector}
 	o.outMotionVector = encodedMotionVector;
 	o.outMotionVector.a = o.color.a < i.VFX_VARYING_ALPHATHRESHOLD ? 0.0f : 1.0f; //Independant clipping for motion vector pass
 #endif
+	*/
+	
 	return o;
 }
