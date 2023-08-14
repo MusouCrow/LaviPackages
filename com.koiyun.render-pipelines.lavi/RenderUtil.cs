@@ -30,7 +30,8 @@ namespace Koiyun.Render {
             var width = (int)(camera.pixelWidth * renderScale);
             var height = (int)(camera.pixelHeight * renderScale);
             var rtd = new RenderTextureDescriptor(width, height);
-            rtd.graphicsFormat = GraphicsFormat.B10G11R11_UFloatPack32;
+            // rtd.graphicsFormat = GraphicsFormat.B10G11R11_UFloatPack32;
+            rtd.graphicsFormat = SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
             rtd.depthBufferBits = 32;
             rtd.msaaSamples = (int)msaaSamples;
             rtd.sRGB = true;
@@ -72,6 +73,15 @@ namespace Koiyun.Render {
             }
             
             return new Vector2(depthBias, normalBias);
+        }
+
+        public static RenderTargetIdentifier ReadyRT(CommandBuffer cmd, ref RenderData data, ref RenderTexutreRegister rtr) {
+            var tid = rtr.tid;
+            var rtd = rtr.HandleRTD(data.cameraRTD);
+            var rti = new RenderTargetIdentifier(tid);
+            cmd.GetTemporaryRT(tid, rtd, FilterMode.Bilinear);
+            
+            return rti;
         }
     }
 }

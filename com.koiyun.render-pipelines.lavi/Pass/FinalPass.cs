@@ -4,15 +4,15 @@ using UnityEngine.Rendering;
 namespace Koiyun.Render {
     public class FinalPass : IRenderPass {
         private int srcTID;
-        private Material blitMaterial;
+        private Material material;
         private int passIndex;
 
-        public FinalPass(int srcTID) {
+        public FinalPass(string shaderName, int srcTID) {
             this.srcTID = srcTID;
 
-            var shader = Shader.Find("Hidden/Lavi RP/Blit");
-            this.blitMaterial = new Material(shader);
-            this.passIndex = this.blitMaterial.FindPass("CopyColor");
+            var shader = Shader.Find(shaderName);
+            this.material = new Material(shader);
+            this.passIndex = this.material.FindPass("CopyColor");
         }
 
         public bool Setup(ref ScriptableRenderContext context, ref RenderData data) {
@@ -26,7 +26,7 @@ namespace Koiyun.Render {
             var srcRTI = new RenderTargetIdentifier(srcTID);
             var dstRTI = new RenderTargetIdentifier(dstTID);
             
-            cmd.Blit(srcRTI, dstRTI, this.blitMaterial, this.passIndex);
+            cmd.Blit(srcRTI, dstRTI, this.material, this.passIndex);
             
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);

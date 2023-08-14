@@ -5,9 +5,11 @@ using UnityEngine.VFX;
 namespace Koiyun.Render {
     public class SetupPass : IRenderPass {
         private LaviRenderPipelineAsset asset;
+        private RenderTexutreRegister postRTR;
         
-        public SetupPass(LaviRenderPipelineAsset asset) {
+        public SetupPass(LaviRenderPipelineAsset asset, RenderTexutreRegister postRTR) {
             this.asset = asset;
+            this.postRTR = postRTR;
         }
 
         public bool Setup(ref ScriptableRenderContext context, ref RenderData data) {
@@ -20,13 +22,18 @@ namespace Koiyun.Render {
             this.SetScreenParams(cmd, ref data);
             this.SetZBufferParams(cmd, ref data);
             VFXManager.ProcessCameraCommand(data.camera, cmd);
+            RenderUtil.ReadyRT(cmd, ref data, ref this.postRTR);
 
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
 
         public void Clean(ref ScriptableRenderContext context, ref RenderData data) {
+            var cmd = CommandBufferPool.Get("SetupPass");
 
+            cmd.ReleaseTemporaryRT(this.postRTR.tid);
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
         }
 
         private void SetScreenParams(CommandBuffer cmd, ref RenderData data) {

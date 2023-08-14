@@ -22,6 +22,8 @@ namespace Koiyun.Render {
         public int tid;
         public Func<RenderTextureDescriptor, RenderTextureDescriptor> RTDHandler;
 
+        public RenderTargetIdentifier RTI => new RenderTargetIdentifier(this.tid);
+
         public RenderTextureDescriptor HandleRTD(RenderTextureDescriptor rtd) {
             if (RTDHandler != null) {
                 return RTDHandler(rtd);

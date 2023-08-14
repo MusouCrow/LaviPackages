@@ -4,6 +4,7 @@ Shader "Hidden/Lavi RP/Blit"
     {
         _MainTex ("Texture", 2D) = "" {}
     }
+    
     SubShader
     {
         Pass
