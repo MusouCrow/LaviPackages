@@ -580,7 +580,7 @@ namespace UnityEditor.VFX
                 // KOIYUN
                 if (this.stencil > 0)
                 {
-                    rs.WriteLine("Stencil { Ref " + (int)this.stencil + " Comp Equal Pass Zero Fail Keep ZFail Keep}");
+                    rs.WriteLine("Stencil { Ref " + (int)this.stencil + " Comp Equal Pass Replace Fail Keep ZFail Keep}");
                 }
 
                 return rs;
