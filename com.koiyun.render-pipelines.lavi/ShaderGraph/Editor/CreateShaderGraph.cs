@@ -10,7 +10,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             target.TrySetActiveSubTarget(typeof(ToonSubTarget));
 
             var blockDescriptors = new BlockFieldDescriptor[] {
-                BlockFields.SurfaceDescription.BaseColor
+                BlockFields.SurfaceDescription.BaseColor,
+                ShaderPropertyUtil.SurfaceDescription.Glow
             };
             
             GraphUtil.CreateNewGraphWithOutputs(new [] {target}, blockDescriptors);

@@ -32,6 +32,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
         public override void GetActiveBlocks(ref TargetActiveBlockContext context) {
             context.AddBlock(BlockFields.SurfaceDescription.BaseColor);
+            context.AddBlock(ShaderPropertyUtil.SurfaceDescription.Glow);
 
             var surfaceType = this.target.surfaceType;
 

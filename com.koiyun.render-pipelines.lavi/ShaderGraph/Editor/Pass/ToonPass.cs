@@ -29,7 +29,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             var requiredFields = new FieldCollection();
             var defines = new DefineCollection();
             var validPixelBlocks = new List<BlockFieldDescriptor>() {
-                BlockFields.SurfaceDescription.BaseColor
+                BlockFields.SurfaceDescription.BaseColor,
+                ShaderPropertyUtil.SurfaceDescription.Glow
             };
 
             var surfaceType = subTarget.target.surfaceType;

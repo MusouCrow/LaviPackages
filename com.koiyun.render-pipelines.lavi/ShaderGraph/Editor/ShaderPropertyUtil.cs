@@ -60,6 +60,9 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         public struct SurfaceDescription {
             public static BlockFieldDescriptor OutlineColor = new BlockFieldDescriptor(BlockFields.SurfaceDescription.name, "OutlineColor", "Outline Color", "SURFACEDESCRIPTION_OUTLINECOLOR",
                     new ColorControl(UnityEngine.Color.black, false), ShaderStage.Fragment);
+            
+            public static BlockFieldDescriptor Glow = new BlockFieldDescriptor(BlockFields.SurfaceDescription.name, "Glow", "Glow", "SURFACEDESCRIPTION_GLOW",
+                    new FloatControl(0), ShaderStage.Fragment);
         }
     }
 }
