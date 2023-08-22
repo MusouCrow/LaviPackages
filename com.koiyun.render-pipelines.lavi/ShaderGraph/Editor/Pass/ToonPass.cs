@@ -120,6 +120,11 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 }
             }
 
+            if (subTarget.shadowCasterPass) {
+                keywords.Add(ShaderPropertyUtil.MainLightShadowsKeyword);
+                keywords.Add(ShaderPropertyUtil.ShadowSoftKeyword);
+            }
+
             return new PassDescriptor() {
                 // Definition
                 displayName = "Outline",
