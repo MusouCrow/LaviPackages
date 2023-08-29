@@ -19,6 +19,8 @@ Shader "Hidden/Lavi RP/Blit"
             #pragma vertex Vert
             #pragma fragment Frag
 
+            #pragma shader_feature_local _POINT_FILTER
+
             #include "./CopyColorPass.hlsl"
 
             ENDHLSL
@@ -36,6 +38,8 @@ Shader "Hidden/Lavi RP/Blit"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
+
+            #pragma shader_feature_local _POINT_FILTER
 
             #include "./CopyDepthPass.hlsl"
 

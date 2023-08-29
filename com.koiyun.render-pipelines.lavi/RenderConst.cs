@@ -15,11 +15,13 @@ namespace Koiyun.Render {
         public static int PROJ_PARAMS_ID = Shader.PropertyToID("_ProjectionParams");
         public static int POST_TEXTURE_ID = Shader.PropertyToID("_PostTexture");
         public static int BLOOM_BLUR_TEXTURE_ID = Shader.PropertyToID("_BloomBlurTexture");
+        public static int PIXEL_TEXTURE_ID = Shader.PropertyToID("_PixelTexture");
         
         public static float SHADOW_BIAS_RADIUS = 2.5f;
 
         public static string MAIN_LIGHT_SHADOW_KEYWORD = "_MAIN_LIGHT_SHADOWS";
         public static string SOFT_SHADOW_KEYWORD = "_SHADOWS_SOFT";
+        public static string POINT_FILTER_KEYWORD = "_POINT_FILTER";
         public static string BLOOM_BLUR_H_TEXTURE_NAME = "_BloomBlurHTexture";
         public static string BLOOM_BLUR_V_TEXTURE_NAME = "_BloomBlurVTexture";
     }

@@ -39,6 +39,20 @@ namespace Koiyun.Render {
                 }
             };
 
+            var pixelRTR = new RenderTexutreRegister() {
+                tid = RenderConst.PIXEL_TEXTURE_ID,
+                RTDHandler = (RenderTextureDescriptor rtd) => {
+                    rtd.width = (int)(rtd.width * 0.75f);
+                    rtd.height = (int)(rtd.height * 0.75f);
+
+                    return rtd;
+                }
+            };
+
+            var finalRTR = new RenderTexutreRegister() {
+                tid = (int)BuiltinRenderTextureType.CameraTarget
+            };
+
             this.passes = new List<IRenderPass>() {
                 new SetupPass(this.asset, postRTR),
                 new MainLightShadowPass(this.asset),
@@ -49,7 +63,11 @@ namespace Koiyun.Render {
                 new DrawGizmosPass(GizmoSubset.PreImageEffects),
                 new DrawGizmosPass(GizmoSubset.PostImageEffects),
                 new BloomPass("Hidden/Lavi RP/Bloom", RenderConst.POST_TEXTURE_ID, RenderConst.CAMERA_COLOR_TEXTURE_ID, RenderConst.CAMERA_GLOW_TEXTURE_ID, 5),
-                new FinalPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID),
+                
+                new CopyColorPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID, pixelRTR, true, false),
+                new CopyColorPass("Hidden/Lavi RP/Blit", RenderConst.PIXEL_TEXTURE_ID, finalRTR, false, true),
+                
+                // new CopyColorPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID, finalRTR, false, false),
                 new CopyDepthPass(),
             };
 

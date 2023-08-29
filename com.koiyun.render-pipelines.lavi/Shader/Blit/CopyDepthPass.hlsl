@@ -4,7 +4,8 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 
 TEXTURE2D_FLOAT(_MainTex);
-SAMPLER(sampler_MainTex);
+SAMPLER(sampler_PointClamp);
+SAMPLER(sampler_LinearClamp);
 
 struct Attributes
 {
@@ -31,7 +32,11 @@ Varyings Vert(Attributes input)
 
 float Frag(Varyings input) : SV_Depth
 {
-    float depth = SAMPLE_DEPTH_TEXTURE(_MainTex, sampler_MainTex, input.uv);
+#ifdef _POINT_FILTER
+    float depth = SAMPLE_DEPTH_TEXTURE(_MainTex, sampler_PointClamp, input.uv);
+#else
+    float depth = SAMPLE_DEPTH_TEXTURE(_MainTex, sampler_LinearClamp, input.uv);
+#endif
 
     return depth;
 }
