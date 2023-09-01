@@ -10,18 +10,27 @@ namespace UnityEditor.Rendering
     public partial class LightUI
     {
         /// <summary>
-        /// Draws the color of a <see cref="ISerializedLight"/>
+        /// Draws the color temperature for a serialized light
         /// </summary>
-        /// <param name="serialized">The light</param>
-        /// <param name="owner">The editor owner</param>
+        /// <param name="serialized">The serizalized light</param>
+        /// <param name="owner">The editor</param>
         public static void DrawColor(ISerializedLight serialized, Editor owner)
         {
             if (GraphicsSettings.lightsUseLinearIntensity && GraphicsSettings.lightsUseColorTemperature)
             {
                 // Use the color temperature bool to create a popup dropdown to choose between the two modes.
-                var colorTemperaturePopupValue = Convert.ToInt32(serialized.settings.useColorTemperature.boolValue);
-                colorTemperaturePopupValue = EditorGUILayout.Popup(Styles.lightAppearance, colorTemperaturePopupValue, Styles.lightAppearanceOptions);
-                serialized.settings.useColorTemperature.boolValue = Convert.ToBoolean(colorTemperaturePopupValue);
+
+                var serializedUseColorTemperature = serialized.settings.useColorTemperature;
+                using (var check = new EditorGUI.ChangeCheckScope())
+                {
+                    var prevMixedValue = EditorGUI.showMixedValue;
+                    EditorGUI.showMixedValue = serializedUseColorTemperature.hasMultipleDifferentValues;
+                    var colorTemperaturePopupValue = Convert.ToInt32(serializedUseColorTemperature.boolValue);
+                    colorTemperaturePopupValue = EditorGUILayout.Popup(Styles.lightAppearance, colorTemperaturePopupValue, Styles.lightAppearanceOptions);
+                    if(check.changed)
+                        serializedUseColorTemperature.boolValue = Convert.ToBoolean(colorTemperaturePopupValue);
+                    EditorGUI.showMixedValue = prevMixedValue;
+                }
 
                 if (serialized.settings.useColorTemperature.boolValue)
                 {
@@ -49,7 +58,7 @@ namespace UnityEditor.Rendering
                     valueRect.width += indent - k_ValueUnitSeparator - k_UnitWidth;
                     Rect unitRect = valueRect;
                     unitRect.x += valueRect.width - indent + k_ValueUnitSeparator;
-                    unitRect.width = k_UnitWidth + .5f;
+                    unitRect.width = k_UnitWidth + k_ValueUnitSeparator;
 
                     EditorGUI.PropertyField(valueRect, serialized.settings.colorTemperature, CoreEditorStyles.empty);
                     EditorGUI.LabelField(unitRect, Styles.lightAppearanceUnits[0]);

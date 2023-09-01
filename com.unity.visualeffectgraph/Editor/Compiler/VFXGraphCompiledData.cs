@@ -21,8 +21,10 @@ namespace UnityEditor.VFX
         public VFXExpressionMapper cpuMapper;
         public VFXExpressionMapper gpuMapper;
         public VFXUniformMapper uniformMapper;
+        public VFXSGInputs SGInputs;
         public ReadOnlyDictionary<VFXExpression, Type> graphicsBufferUsage;
         public VFXMapping[] parameters;
+        public (VFXSlot slot, VFXData data)[] linkedEventOut;
         public int indexInShaderSource;
     }
 
@@ -44,7 +46,10 @@ namespace UnityEditor.VFX
     {
         // 3: Serialize material
         // 4: Bounds helper change
-        public const uint compiledVersion = 4;
+        // 5: HasAttributeBuffer flag
+        // 6: needsComputeBounds needs Sanitization
+        // 7: changes in data serialization and additional mappings added to runtime data (graphValueOffset and parentSystemIndex) 
+        public const uint compiledVersion = 7;
 
         public VFXGraphCompiledData(VFXGraph graph)
         {
@@ -431,17 +436,6 @@ namespace UnityEditor.VFX
             return result;
         }
 
-        private static void CollectParentExpressionRecursively(VFXExpression entry, HashSet<VFXExpression> processed)
-        {
-            if (processed.Contains(entry))
-                return;
-
-            foreach (var parent in entry.parents)
-                CollectParentExpressionRecursively(parent, processed);
-
-            processed.Add(entry);
-        }
-
         private class ProcessChunk
         {
             public int startIndex;
@@ -452,7 +446,7 @@ namespace UnityEditor.VFX
         {
             var allExpressions = new HashSet<VFXExpression>();
             foreach (var expression in expressionPerSpawnToProcess)
-                CollectParentExpressionRecursively(expression, allExpressions);
+                VFXExpression.CollectParentExpressionRecursively(expression, allExpressions);
 
             var expressionIndexes = allExpressions.
                 Where(o => o.Is(VFXExpression.Flags.PerSpawn)) //Filter only per spawn part of graph
@@ -504,7 +498,7 @@ namespace UnityEditor.VFX
             }).ToArray();
         }
 
-        private static VFXEditorTaskDesc[] BuildEditorTaksDescFromBlockSpawner(IEnumerable<VFXBlock> blocks, VFXContextCompiledData contextData, VFXExpressionGraph graph)
+        private static VFXEditorTaskDesc[] BuildEditorTaskDescFromBlockSpawner(IEnumerable<VFXBlock> blocks, VFXContextCompiledData contextData, VFXExpressionGraph graph)
         {
             var taskDescList = new List<VFXEditorTaskDesc>();
 
@@ -572,7 +566,7 @@ namespace UnityEditor.VFX
         }
 
         private static void FillSpawner(Dictionary<VFXContext, SpawnInfo> outContextSpawnToSpawnInfo,
-            Dictionary<VFXContext, uint> outDataToSystemIndex,
+            Dictionary<VFXData, uint> outDataToSystemIndex,
             List<VFXCPUBufferDesc> outCpuBufferDescs,
             List<VFXEditorSystemDesc> outSystemDescs,
             IEnumerable<VFXContext> contexts,
@@ -640,11 +634,11 @@ namespace UnityEditor.VFX
 
                 string nativeName = string.Empty;
                 if (systemNames != null)
-                    nativeName = systemNames.GetUniqueSystemName(spawnContext);
+                    nativeName = systemNames.GetUniqueSystemName(spawnContext.GetData());
                 else
                     throw new InvalidOperationException("system names manager cannot be null");
 
-                outDataToSystemIndex.Add(spawnContext, (uint)outSystemDescs.Count);
+                outDataToSystemIndex.Add(spawnContext.GetData(), (uint)outSystemDescs.Count);
                 contextToCompiledData[spawnContext] = contextData;
 
                 outSystemDescs.Add(new VFXEditorSystemDesc()
@@ -655,7 +649,7 @@ namespace UnityEditor.VFX
                     name = nativeName,
                     flags = VFXSystemFlag.SystemDefault,
                     layer = uint.MaxValue,
-                    tasks = BuildEditorTaksDescFromBlockSpawner(spawnContext.activeFlattenedChildrenWithImplicit, contextData, graph)
+                    tasks = BuildEditorTaskDescFromBlockSpawner(spawnContext.activeFlattenedChildrenWithImplicit, contextData, graph)
                 });
             }
         }
@@ -756,27 +750,27 @@ namespace UnityEditor.VFX
             outEventDesc.AddRange(eventDescTemp);
         }
 
-        private void GenerateShaders(List<GeneratedCodeData> outGeneratedCodeData, VFXExpressionGraph graph, IEnumerable<VFXContext> contexts, Dictionary<VFXContext, VFXContextCompiledData> contextToCompiledData, VFXCompilationMode compilationMode, HashSet<string> dependencies)
+        private void GenerateShaders(List<GeneratedCodeData> outGeneratedCodeData, VFXExpressionGraph graph, IEnumerable<VFXContext> contexts, Dictionary<VFXContext, VFXContextCompiledData> contextToCompiledData, VFXCompilationMode compilationMode, HashSet<string> dependencies, bool enableShaderDebugSymbols)
         {
             Profiler.BeginSample("VFXEditor.GenerateShaders");
             try
             {
                 foreach (var context in contexts)
                 {
-                    var gpuMapper = graph.BuildGPUMapper(context);
-                    var uniformMapper = new VFXUniformMapper(gpuMapper, context.doesGenerateShader);
-
-                    // Add gpu and uniform mapper
                     var contextData = contextToCompiledData[context];
-                    contextData.gpuMapper = gpuMapper;
-                    contextData.uniformMapper = uniformMapper;
+                    if (contextData.uniformMapper == null) // Add gpu and uniform mapper if not done already (dataType != VFXDataParticle)
+                    {
+                        var gpuMapper = graph.BuildGPUMapper(context);
+                        var uniformMapper = new VFXUniformMapper(gpuMapper, context.doesGenerateShader, false);
+                        contextData.gpuMapper = gpuMapper;
+                        contextData.uniformMapper = uniformMapper;
+                    }
                     contextData.graphicsBufferUsage = graph.GraphicsBufferTypeUsage;
                     contextToCompiledData[context] = contextData;
 
                     if (context.doesGenerateShader)
                     {
-                        var generatedContent = VFXCodeGenerator.Build(context, compilationMode, contextData, dependencies);
-
+                        var generatedContent = VFXCodeGenerator.Build(context, compilationMode, contextData, dependencies, enableShaderDebugSymbols);
                         if (generatedContent != null)
                         {
                             outGeneratedCodeData.Add(new GeneratedCodeData()
@@ -787,10 +781,12 @@ namespace UnityEditor.VFX
                                 content = generatedContent
                             });
                         }
+                        else
+                        {
+                            throw new InvalidOperationException($"Code generation failure from context {context.name}");
+                        }
                     }
                 }
-
-                var resource = m_Graph.GetResource();
             }
             finally
             {
@@ -902,7 +898,7 @@ namespace UnityEditor.VFX
                     boundsBufferIndex = bufferDescs.Count;
                     bufferDescs.Add(new VFXGPUBufferDesc() { type = ComputeBufferType.Default, size = 6, stride = 4 });
                 }
-                buffers.boundsBuffers.Add(data, boundsBufferIndex); // TODO Ludovic : Fill the data index and stuff
+                buffers.boundsBuffers.Add(data, boundsBufferIndex);
             }
 
             //Prepare GPU event buffer
@@ -913,7 +909,7 @@ namespace UnityEditor.VFX
                 if (capacity > 0)
                 {
                     eventBufferIndex = bufferDescs.Count;
-                    bufferDescs.Add(new VFXGPUBufferDesc() { type = ComputeBufferType.Append, size = capacity, stride = 4 });
+                    bufferDescs.Add(new VFXGPUBufferDesc() { type = ComputeBufferType.Structured, size = capacity + 2, stride = 4 });
                 }
                 buffers.eventBuffers.Add(data, eventBufferIndex);
             }
@@ -981,10 +977,10 @@ namespace UnityEditor.VFX
             public List<VFXContext> initSystems;
         }
 
-        static IEnumerable<uint> ConvertDataToSystemIndex(IEnumerable<VFXContext> input, Dictionary<VFXContext, uint> contextToSystemIndex)
+        static IEnumerable<uint> ConvertDataToSystemIndex(IEnumerable<VFXContext> input, Dictionary<VFXData, uint> dataToSystemIndex)
         {
-            foreach (var data in input)
-                if (contextToSystemIndex.TryGetValue(data, out var index))
+            foreach (var context in input)
+                if (dataToSystemIndex.TryGetValue(context.GetData(), out var index))
                     yield return index;
         }
 
@@ -997,7 +993,27 @@ namespace UnityEditor.VFX
             m_ExpressionValues = new VFXExpressionValueContainerDesc[] { };
         }
 
-        public void Compile(VFXCompilationMode compilationMode, bool forceShaderValidation)
+        private static IEnumerable<(VFXSlot slot, VFXData data)> ComputeEventListFromSlot(IEnumerable<VFXSlot> slots)
+        {
+            foreach (var slot in slots)
+            {
+                var context = ((VFXModel)slot.owner).GetFirstOfType<VFXContext>();
+                if (context.CanBeCompiled())
+                {
+                    var count = context.outputContexts.Count();
+                    if (count == 0)
+                        throw new InvalidOperationException("Unexpected invalid GPU Event");
+
+                    if (count > 1)
+                        throw new InvalidOperationException("Unexpected multiple GPU Event");
+
+                    var outputContext = context.outputContexts.First().GetData();
+                    yield return (slot, outputContext);
+                }
+            }
+        }
+
+        public void Compile(VFXCompilationMode compilationMode, bool forceShaderValidation, bool enableShaderDebugSymbols)
         {
             // Early out in case: (Not even displaying the popup)
             if (m_Graph.children.Count() < 1 ||         // Graph is empty
@@ -1031,6 +1047,7 @@ namespace UnityEditor.VFX
                 foreach (var c in contexts) // Unflag all contexts
                     c.MarkAsCompiled(false);
 
+
                 IEnumerable<VFXContext> compilableContexts = contexts.Where(c => c.CanBeCompiled()).ToArray();
                 var compilableData = models.OfType<VFXData>().Where(d => d.CanBeCompiled());
 
@@ -1049,6 +1066,9 @@ namespace UnityEditor.VFX
                 EditorUtility.DisplayProgressBar(progressBarTitle, "Process dependencies", 2 / nbSteps);
                 foreach (var data in compilableData)
                     data.ProcessDependencies();
+
+                // Sort the systems by layer so they get updated in the right order. It has to be done after processing the dependencies
+                compilableData = compilableData.OrderBy(d => d.layer);
 
                 EditorUtility.DisplayProgressBar(progressBarTitle, "Compiling expression Graph", 3 / nbSteps);
                 m_ExpressionGraph = new VFXExpressionGraph();
@@ -1075,6 +1095,7 @@ namespace UnityEditor.VFX
                     var contextData = contextToCompiledData[context];
                     contextData.cpuMapper = cpuMapper;
                     contextData.parameters = context.additionalMappings.ToArray();
+                    contextData.linkedEventOut = ComputeEventListFromSlot(context.allLinkedOutputSlot).ToArray();
                     contextToCompiledData[context] = contextData;
                 }
 
@@ -1109,11 +1130,17 @@ namespace UnityEditor.VFX
 
                 var generatedCodeData = new List<GeneratedCodeData>();
 
-                EditorUtility.DisplayProgressBar(progressBarTitle, "Generating shaders", 7 / nbSteps);
-                GenerateShaders(generatedCodeData, m_ExpressionGraph, compilableContexts, contextToCompiledData, compilationMode, sourceDependencies);
+                EditorUtility.DisplayProgressBar(progressBarTitle, "Generating Graph Values layouts", 7 / nbSteps);
+                foreach (var data in compilableData)
+                {
+                    if (data is VFXDataParticle particleData)
+                        particleData.GenerateSystemUniformMapper(m_ExpressionGraph, contextToCompiledData);
+                }
+                EditorUtility.DisplayProgressBar(progressBarTitle, "Generating shaders", 8 / nbSteps);
+                GenerateShaders(generatedCodeData, m_ExpressionGraph, compilableContexts, contextToCompiledData, compilationMode, sourceDependencies, enableShaderDebugSymbols);
 
                 m_Graph.systemNames.Sync(m_Graph);
-                EditorUtility.DisplayProgressBar(progressBarTitle, "Saving shaders", 8 / nbSteps);
+                EditorUtility.DisplayProgressBar(progressBarTitle, "Saving shaders", 9 / nbSteps);
                 VFXShaderSourceDesc[] shaderSources = SaveShaderFiles(m_Graph.visualEffectResource, generatedCodeData, contextToCompiledData, m_Graph.systemNames);
 
                 var bufferDescs = new List<VFXGPUBufferDesc>();
@@ -1121,7 +1148,7 @@ namespace UnityEditor.VFX
                 var cpuBufferDescs = new List<VFXCPUBufferDesc>();
                 var systemDescs = new List<VFXEditorSystemDesc>();
 
-                EditorUtility.DisplayProgressBar(progressBarTitle, "Generating systems", 9 / nbSteps);
+                EditorUtility.DisplayProgressBar(progressBarTitle, "Generating systems", 10 / nbSteps);
                 cpuBufferDescs.Add(new VFXCPUBufferDesc()
                 {
                     //Global attribute descriptor, always first entry in cpuBufferDesc, it can be empty (stride == 0).
@@ -1132,7 +1159,7 @@ namespace UnityEditor.VFX
                 });
 
                 var contextSpawnToSpawnInfo = new Dictionary<VFXContext, SpawnInfo>();
-                var dataToSystemIndex = new Dictionary<VFXContext, uint>();
+                var dataToSystemIndex = new Dictionary<VFXData, uint>();
                 FillSpawner(contextSpawnToSpawnInfo, dataToSystemIndex, cpuBufferDescs, systemDescs, compilableContexts, m_ExpressionGraph, contextToCompiledData, ref subgraphInfos, m_Graph.systemNames);
 
                 var eventDescs = new List<EventDesc>();
@@ -1148,9 +1175,7 @@ namespace UnityEditor.VFX
                     {
                         //^ dataToSystemIndex have already been filled by FillSpawner
                         //TODO: Rework this approach and always use FillDescs after an appropriate ordering of compilableData
-                        //TODO: We should identify context by its VFXData but connected spawn context are sharing the same VFXData (see VFXData.InnerSetData)
-                        foreach (var context in data.owners)
-                            dataToSystemIndex.Add(context, (uint)systemDescs.Count);
+                        dataToSystemIndex.Add(data, (uint)systemDescs.Count);
                     }
 
                     data.FillDescs(VFXGraph.compileReporter,
@@ -1162,6 +1187,7 @@ namespace UnityEditor.VFX
                         contextSpawnToBufferIndex,
                         dependentBuffersData,
                         subgraphInfos.contextEffectiveInputLinks,
+                        dataToSystemIndex,
                         m_Graph.systemNames);
                 }
 
@@ -1176,7 +1202,7 @@ namespace UnityEditor.VFX
                 ShadowCastingMode shadowCastingMode = compilableContexts.OfType<IVFXSubRenderer>().Any(r => r.hasShadowCasting) ? ShadowCastingMode.On : ShadowCastingMode.Off;
                 MotionVectorGenerationMode motionVectorGenerationMode = compilableContexts.OfType<IVFXSubRenderer>().Any(r => r.hasMotionVector) ? MotionVectorGenerationMode.Object : MotionVectorGenerationMode.Camera;
 
-                EditorUtility.DisplayProgressBar(progressBarTitle, "Setting up systems", 10 / nbSteps);
+                EditorUtility.DisplayProgressBar(progressBarTitle, "Setting up systems", 11 / nbSteps);
                 var expressionSheet = new VFXExpressionSheet();
                 expressionSheet.expressions = expressionDescs.ToArray();
                 expressionSheet.expressionsPerSpawnEventAttribute = expressionPerSpawnEventAttributesDescs.ToArray();
@@ -1197,7 +1223,9 @@ namespace UnityEditor.VFX
                         return e.initSystems.Length > 0 || e.startSystems.Length > 0 || e.stopSystems.Length > 0;
                     }).ToArray();
 
-                resource.SetRuntimeData(expressionSheet, systemDescs.ToArray(), vfxEventDesc, bufferDescs.ToArray(), cpuBufferDescs.ToArray(), temporaryBufferDescs.ToArray(), shaderSources, shadowCastingMode, motionVectorGenerationMode, compiledVersion);
+                VFXInstancingDisabledReason instancingDisabledReason = ValidateInstancing(compilableContexts, expressionSheet);
+
+                resource.SetRuntimeData(expressionSheet, systemDescs.ToArray(), vfxEventDesc, bufferDescs.ToArray(), cpuBufferDescs.ToArray(), temporaryBufferDescs.ToArray(), shaderSources, shadowCastingMode, motionVectorGenerationMode, instancingDisabledReason, compiledVersion);
                 m_ExpressionValues = expressionSheet.values;
 
                 foreach (var dep in sourceDependencies)
@@ -1227,6 +1255,9 @@ namespace UnityEditor.VFX
 
         public void UpdateValues()
         {
+            if (m_ExpressionGraph == null)
+                return;
+
             var flatGraph = m_ExpressionGraph.FlattenedExpressions;
             var numFlattenedExpressions = flatGraph.Count;
 
@@ -1269,6 +1300,31 @@ namespace UnityEditor.VFX
             }
 
             m_Graph.visualEffectResource.SetValueSheet(m_ExpressionValues);
+        }
+
+        public VFXInstancingDisabledReason ValidateInstancing(IEnumerable<VFXContext> compilableContexts, VFXExpressionSheet expressionSheet)
+        {
+            VFXInstancingDisabledReason reason = VFXInstancingDisabledReason.None;
+
+            foreach (VFXContext model in compilableContexts)
+            {
+                if (model is VFXOutputEvent)
+                {
+                    reason |= VFXInstancingDisabledReason.OutputEvent;
+                }
+
+                if (model is VFXBasicGPUEvent)
+                {
+                    reason |= VFXInstancingDisabledReason.GPUEvent;
+                }
+
+                if (model is VFXStaticMeshOutput)
+                {
+                    reason |= VFXInstancingDisabledReason.MeshOutput;
+                }
+            }
+
+            return reason;
         }
 
         public VisualEffectResource visualEffectResource

@@ -15,6 +15,8 @@ namespace UnityEditor.VFX.UI
 {
     class VFXDataAnchor : Port, IControlledElement<VFXDataAnchorController>, IEdgeConnectorListener
     {
+        readonly Vector2 portPositionOffset = new Vector2(-4, -20);
+
         VFXDataAnchorController m_Controller;
         Controller IControlledElement.controller
         {
@@ -33,7 +35,7 @@ namespace UnityEditor.VFX.UI
                 if (m_Controller != null)
                 {
                     if (m_Controller.model != null)
-                        m_Controller.model.RefreshErrors(m_Controller.sourceNode.viewController.graph);
+                        m_Controller.model.RefreshErrors();
                     m_Controller.RegisterHandler(this);
                 }
             }
@@ -313,11 +315,25 @@ namespace UnityEditor.VFX.UI
             }
             else if (!exists)
             {
+                var window = VFXViewWindow.GetWindow(view);
+
                 if (direction == Direction.Input || viewController.model.visualEffectObject is VisualEffectSubgraphOperator || viewController.model.visualEffectObject is VisualEffectSubgraphBlock) // no context for subgraph operators.
-                    VFXFilterWindow.Show(VFXViewWindow.currentWindow, Event.current.mousePosition, view.ViewToScreenPosition(Event.current.mousePosition), new VFXNodeProvider(viewController, AddLinkedNode, ProviderFilter, new Type[] { typeof(VFXOperator), typeof(VFXParameter) }));
+                    VFXFilterWindow.Show(window, Event.current.mousePosition, view.ViewToScreenPosition(Event.current.mousePosition), BuildNodeProvider(viewController, new Type[] { typeof(VFXOperator), typeof(VFXParameter) }));
                 else
-                    VFXFilterWindow.Show(VFXViewWindow.currentWindow, Event.current.mousePosition, view.ViewToScreenPosition(Event.current.mousePosition), new VFXNodeProvider(viewController, AddLinkedNode, ProviderFilter, new Type[] { typeof(VFXOperator), typeof(VFXParameter), typeof(VFXContext) }));
+                    VFXFilterWindow.Show(window, Event.current.mousePosition, view.ViewToScreenPosition(Event.current.mousePosition), BuildNodeProvider(viewController, new Type[] { typeof(VFXOperator), typeof(VFXParameter), typeof(VFXContext) }));
             }
+        }
+
+#if VFX_HAS_UNIT_TEST
+        public VFXNodeProvider BuildNodeProviderForInternalTest(VFXViewController viewController, IEnumerable<Type> acceptedType)
+        {
+            return BuildNodeProvider(viewController, acceptedType);
+        }
+#endif
+
+        VFXNodeProvider BuildNodeProvider(VFXViewController viewController, IEnumerable<Type> acceptedType)
+        {
+            return new VFXNodeProvider(viewController, AddLinkedNode, ProviderFilter, acceptedType);
         }
 
         bool ProviderFilter(VFXNodeProvider.Descriptor d)
@@ -367,8 +383,17 @@ namespace UnityEditor.VFX.UI
                     validTypes = op.validTypes;
             }
 
-            var getSlots = direction == Direction.Input ? (System.Func<int, VFXSlot>)container.GetOutputSlot : (System.Func<int, VFXSlot>)container.GetInputSlot;
-            int count = direction == Direction.Input ? container.GetNbOutputSlots() : container.GetNbInputSlots();
+            var getSlots = direction == Direction.Input ? container.GetOutputSlot : (System.Func<int, VFXSlot>)container.GetInputSlot;
+            var count = direction == Direction.Input ? container.GetNbOutputSlots() : container.GetNbInputSlots();
+            // Template containers are not sync initially to save time during loading
+            // For container with no input or output this can be called everytime, but should also be very fast
+            // In VFXLibrary, the initial apply variant is supposed to clear the slot list (see ClearSlots invocation)
+            if (count == 0)
+            {
+                container.ResyncSlots(false);
+                count = direction == Direction.Input ? container.GetNbOutputSlots() : container.GetNbInputSlots();
+            }
+
             for (int i = 0; i < count; ++i)
             {
                 var slot = getSlots(i);
@@ -433,6 +458,7 @@ namespace UnityEditor.VFX.UI
                 {
                     if (viewController.CreateLink(direction == Direction.Input ? controller : port, direction == Direction.Input ? port : controller))
                     {
+                        AlignNodeToLinkedPort(view, port, newNodeController);
                         break;
                     }
                 }
@@ -447,6 +473,15 @@ namespace UnityEditor.VFX.UI
                     }
                 }
             }
+        }
+
+        void AlignNodeToLinkedPort(VFXView view, VFXDataAnchorController port, VFXNodeController nodeController)
+        {
+            var portNode = view.GetDataAnchorByController(port);
+            var connectorElement = portNode.Q<VisualElement>("connector");
+            var newNode = view.GetNodeByController(nodeController);
+            var offset = newNode.worldBound.position - connectorElement.worldBound.position + portPositionOffset;
+            nodeController.model.position += offset / view.scale;
         }
 
         void CopyValueToParameter(VFXParameter parameter)

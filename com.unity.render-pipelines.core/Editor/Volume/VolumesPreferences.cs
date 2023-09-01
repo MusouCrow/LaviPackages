@@ -16,24 +16,16 @@ namespace UnityEditor.Rendering
         }
 
         /// <summary>
-        /// Enum for visibility of gizmos
+        /// Specifies how the gizmos for volumes are being drawn
         /// </summary>
         [Flags]
         public enum VolumeGizmoVisibility
         {
-            /// <summary>
-            /// Wireframe
-            /// </summary>
+            /// <summary> Wireframe </summary>
             Wireframe = 1,
-
-            /// <summary>
-            /// Solid
-            /// </summary>
+            /// <summary> Solid </summary>
             Solid = 2,
-
-            /// <summary>
-            /// Everything
-            /// </summary>
+            /// <summary> Solid with Wireframe </summary>
             Everything = Wireframe | Solid
         }
 
@@ -52,7 +44,7 @@ namespace UnityEditor.Rendering
         }
 
         /// <summary>
-        /// The current option for the visibility
+        /// Returns the current <see cref="VolumeGizmoVisibility"/>
         /// </summary>
         public static VolumeGizmoVisibility volumeGizmosVisibilityOption
         {
@@ -83,19 +75,18 @@ namespace UnityEditor.Rendering
         public static Color volumeGizmoColor => GetColorPrefVolumeGizmoColor();
 
         static List<string> s_SearchKeywords = new() { "Gizmo", "Wireframe", "Visibility" };
-
         /// <summary>
-        /// The keywords
+        /// The list of keywords for user search
         /// </summary>
         public List<string> keywords => s_SearchKeywords;
 
         /// <summary>
-        /// The header
+        /// The header of the panel
         /// </summary>
         public GUIContent header { get; } = EditorGUIUtility.TrTextContent("Volumes");
 
         /// <summary>
-        /// The method that draws the UI
+        /// Renders the Preferences UI for this provider
         /// </summary>
         public void PreferenceGUI()
         {

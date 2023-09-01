@@ -174,8 +174,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             switch (shaderInputToCopy)
             {
                 case AbstractShaderProperty property:
-                    insertIndex = Mathf.Clamp(insertIndex, -1, graphData.properties.Count() - 1);
 
+                    insertIndex = Mathf.Clamp(insertIndex, -1, graphData.properties.Count() - 1);
                     var copiedProperty = (AbstractShaderProperty)graphData.AddCopyOfShaderInput(property, insertIndex);
                     if (copiedProperty != null) // some property types cannot be duplicated (unknown types)
                     {
@@ -198,6 +198,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     // InsertIndex gets passed in relative to the blackboard position of an item overall,
                     // and not relative to the array sizes of the properties/keywords/dropdowns
                     var keywordInsertIndex = insertIndex - graphData.properties.Count();
+
                     keywordInsertIndex = Mathf.Clamp(keywordInsertIndex, -1, graphData.keywords.Count() - 1);
 
                     // Don't duplicate built-in keywords within the same graph
@@ -223,6 +224,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     // InsertIndex gets passed in relative to the blackboard position of an item overall,
                     // and not relative to the array sizes of the properties/keywords/dropdowns
                     var dropdownInsertIndex = insertIndex - graphData.properties.Count() - graphData.keywords.Count();
+
                     dropdownInsertIndex = Mathf.Clamp(dropdownInsertIndex, -1, graphData.dropdowns.Count() - 1);
 
                     var copiedDropdown = (ShaderDropdown)graphData.AddCopyOfShaderInput(shaderDropdown, dropdownInsertIndex);
@@ -416,7 +418,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         BlackboardCategoryController m_DefaultCategoryController = null;
         Dictionary<string, BlackboardCategoryController> m_BlackboardCategoryControllers = new Dictionary<string, BlackboardCategoryController>();
 
-        SGBlackboard m_Blackboard;
+        protected SGBlackboard m_Blackboard;
 
         internal SGBlackboard blackboard
         {
@@ -469,7 +471,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     propertyTypesOrder.isKeyword = false;
                     propertyTypesOrder.deprecatedPropertyName = name;
                     propertyTypesOrder.version = ColorShaderProperty.deprecatedVersion;
-                    ViewModel.propertyNameToAddActionMap.Add("Color (Deprecated)", AddShaderInputAction.AddDeprecatedPropertyAction(propertyTypesOrder));
+                    ViewModel.propertyNameToAddActionMap.Add($"Color (Legacy v0)", AddShaderInputAction.AddDeprecatedPropertyAction(propertyTypesOrder));
                     ViewModel.propertyNameToAddActionMap.Add(name, AddShaderInputAction.AddPropertyAction(shaderInputType));
                 }
                 else
@@ -790,18 +792,31 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_BlackboardCategoryControllers.TryGetValue(categoryGUID, out var blackboardCategoryController);
             if (blackboardCategoryController != null)
             {
-                blackboardCategoryController.Destroy();
+                blackboardCategoryController.Dispose();
                 m_BlackboardCategoryControllers.Remove(categoryGUID);
             }
             else
                 AssertHelpers.Fail("Tried to remove a category that doesn't exist. ");
         }
 
+        public override void Dispose()
+        {
+            if (m_Blackboard == null)
+                return;
+
+            base.Dispose();
+            m_DefaultCategoryController = null;
+            ClearBlackboardCategories();
+
+            m_Blackboard?.Dispose();
+            m_Blackboard = null;
+        }
+
         void ClearBlackboardCategories()
         {
             foreach (var categoryController in m_BlackboardCategoryControllers.Values)
             {
-                categoryController.Destroy();
+                categoryController.Dispose();
             }
             m_BlackboardCategoryControllers.Clear();
         }

@@ -6,6 +6,7 @@ using UnityEngine.InputSystem.EnhancedTouch;
 #endif
 using System;
 using System.Collections;
+using System.Diagnostics;
 using UnityEngine.EventSystems;
 
 namespace UnityEngine.Rendering

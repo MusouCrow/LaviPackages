@@ -4,67 +4,175 @@ All notable changes to this package are documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-
-## [12.1.8] - 2022-11-04
-
-Version Updated
-The version number for this package has increased due to a version update of a related graphics package.
-
-## [12.1.7] - 2022-03-29
+## [Unreleased]
 
 Version Updated
 The version number for this package has increased due to a version update of a related graphics package.
 
+## [14.0.7] - 2023-05-23
 
-## [12.1.6] - 2022-02-09
+This version is compatible with Unity 2022.2.22f1.
 
-Version Updated
-The version number for this package has increased due to a version update of a related graphics package.
-
-## [12.1.5] - 2022-01-14
+### Changed
+- Improved blackboard property drag speed when reordering the blackboard. [SGB-383].
+- Made adjustments to flipbook node to avoid dropping frames on AMD GPU. [SGB-280].
+- Fixed parallax nodes so that they use the default UV Input Slot correctly. [SGB-511].
 
 ### Fixed
-  - Fixed an issue where edges connected to SubGraphNodes would sometimes get lost on upgrading a pre-targets graphs [1379996](https://issuetracker.unity3d.com/product/unity/issues/guid/1379996/)
+- Addressed issue where missing targets were not handled on import. [SGB-1]
+- Addressed various issues with the Swizzle node. [SGB-159] 
+- Addressed issue where duplicate serialized blackboard category children would in subgraphs would brick the ShaderGraph editor. [SGB-378] 
+- Addressed error feedback on import of graphs with invalid or missing targets, allowing them to be modified and saved. [SGB-166][SGB-167]
+- Fixed issue where the Gradient Noise Node was causing implicit truncation warnings. [SGB-469]
+- Fixed issue where custom interpolator previews would provide erroneous results when connecting through a reroute node. [SGB-89]
+- Fixed issue where reroute node would sometimes show the wrong color for its appropriate inputs. [SGB-17]
+- Fixed issue where subgraph gradient blackboard properties could have naming conflicts with parent graphs. [SGB-310]
+- Fixed issue where the view position of the graph editor would sometimes be forgotten when swapping between two open shadergraph editor windows. [SGB-377] 
+- Fixed issue where node searcher would fail to populate when shadergraph was undocked after domain reload. [SGB-439][IN-30581] 
+- Fixed issue where custom mesh selector for master preview would fail to initialize. [SGB-445][IN-30614] 
+- Fixed issue where nodes with dynamic vectors would not correctly cache properties for previews. [SGB-359] 
+- Fixed for [SGB-466] and related issues where nodes with warning or error badges would fail to clean up their resources properly and leave the shader graph editor in an error state.
+- Improved performance of disconnecting nodes in large graphs.
+- Corrected a regression in float preview properties not updating previews. [SGB-526].
+- ShaderGraph styles were not applied correctly when the system locale was set in Turks.
 
+## [14.0.6] - 2023-03-24
 
-Version Updated
-The version number for this package has increased due to a version update of a related graphics package.
+This version is compatible with Unity 2022.2.13f1.
 
-## [12.1.4] - 2021-12-07
-
-### Fixed
-  - Fixed bug with Shader Graph subwindows having their header text overflow when the window is resized smaller than the title [1378203]
-  - Fixed issue where Duplicating/Copy-Pasting last keyword in the blackboard throws an exception [1394378]
-  - Fixed an issue where some graphs with incorrectly formatted data would not display their shader inputs in the blackboard [1384315]
-  - Fixed the behavior of checkerboard node with raytracing
-  - Fixed a ShaderGraph warning when connecting a node using Object Space BiTangent to the vertex stage [1361512] (https://issuetracker.unity3d.com/issues/shader-graph-cross-implicit-truncation-of-vector-type-errors-are-thrown-when-connecting-transform-node-to-vertex-block)
-  - Fixed a validation error in ShaderGraph when using the SimpleNoise node both inside and outside a subgraph [1383046] (https://issuetracker.unity3d.com/issues/validation-error-is-usually-thrown-when-simple-noise-node-is-both-in-a-shadergraph-and-in-a-sub-graph)
-
-## [12.1.3] - 2021-11-17
-
-Version Updated
-The version number for this package has increased due to a version update of a related graphics package.
-
-## [12.1.2] - 2021-10-22
-
-Version Updated
-The version number for this package has increased due to a version update of a related graphics package.
-
-## [12.1.1] - 2021-10-04
+### Changed
+- Sped up rename operations on properties/keywords/dropdowns in large graph.
+- Sped up setting blackboard values in large graphs.
+- The asset postprocessor for shader graph now only performs the majority of its work when a shader-related asset has been changed.
 
 ### Fixed
-  - Fixed a bug that caused the Scene Depth Node in Eye space to not work correctly when using an orthographic camera [1311272].
-  - Fixed missing shader keyword stage during keyword copying.
+- Fixed SRP Batcher compatibility issue with instanced properties.
+- Fixed NullReferenceException when entering Play Mode with an unfocused Shader Graph window/on closing the Shader Graph Window.
 
-## [12.1.0] - 2021-09-23
+## [14.0.5] - 2022-12-12
+
+This version is compatible with Unity 2022.2.4f1.
+
+### Fixed
+- Fixed unity_StereoEyeIndex error when building XR project with URP Fullscreen master node containing Shader.
+- Fixed a number of memory leaks in ShaderGraph where windows and view elements were not disposing of resources properly.
+
+## [14.0.4] - 2022-11-04
+
+This version is compatible with Unity 2022.2.2f1.
+
+### Changed
+- Reduced time taken by code generation when a shader graph asset is imported.
+
+### Fixed
+- Fixed a compilation bug in BiRP Target in some variants with lightmaps.
+- Fixed shader graph incorrectly stripping variants for BiRP shaders that weren't built with shader graph.
+
+## [14.0.3] - 2021-05-09
+
+This version is compatible with Unity 2022.2.0b15.
+
+### Fixed
+- Fixed the sample buffer nodes in ShaderGraph.
+- Set the default value of Normalize Output toggle in Transform Node to **true** to make different node versions consistent.
+
+## [14.0.2] - 2021-02-04
+
+This version is compatible with Unity 2022.2.0a14.
+
+### Fixed
+ - Fixed ShaderGraph pixel and screen coordinates to work correctly with render scale [1387468]
+
+## [14.0.1] - 2021-12-07
 
 ### Added
-  - Adding control of anisotropic settings on inline Sampler state nodes in ShaderGraph.
+ - Added mip sampling modes for 2d textures, 2d texture arrays and 3d textures
 
 ### Fixed
-  - Fixed bug where an exception was thrown on undo operation after adding properties to a category [1348910] (https://fogbugz.unity3d.com/f/cases/1348910/)
-  - Fixed unhandled exception when loading a subgraph with duplicate slots [1369039].
-  - Fixed how graph errors were displayed when variant limits were reached [1355815]
+ - Fixed broken documentation URL for block nodes. [1381488](https://issuetracker.unity3d.com/product/unity/issues/guid/1381488)
+ - Fixed SRP-batching when PVT stacks are bound per material by properly declaring properties for PVT stacks [1372152]
+ - Fixed custom editor GUI support for the BuiltIn Target [1380485](https://issuetracker.unity3d.com/product/unity/issues/guid/1380485/)
+
+## [14.0.0] - 2021-11-17
+
+### Fixed
+ - Fixed issue where Duplicating/Copy-Pasting last keyword in the blackboard throws an exception [1394378]
+ - Fixed an issue where some graphs with incorrectly formatted data would not display their shader inputs in the blackboard [1384315]
+ - Fixed bug with Shader Graph subwindows having their header text overflow when the window is resized smaller than the title [1378203]
+ - Gradient field doesn't support HDR values [Case 1381867](https://issuetracker.unity3d.com/product/unity/issues/guid/1381867/)
+ - Fixed the behavior of checkerboard node with raytracing
+ - Fixed broken documentation URL for block nodes. [1381488](https://issuetracker.unity3d.com/product/unity/issues/guid/1381488)
+ - Fixed an issue where edges connected to SubGraphNodes would sometimes get lost on upgrading a pre-targets graphs [1379996](https://issuetracker.unity3d.com/product/unity/issues/guid/1379996/)
+
+### Added
+ - Added mip sampling modes for 2d textures, 2d texture arrays and 3d textures
+
+## [13.1.2] - 2021-11-05
+
+### Added
+ - Added ability to set "Global" or "Per Material" shader declaration in PVT node settings [1372152]
+ - Show PVT stack names (needed for binding) under the Properties in the Shader Inspector
+
+### Fixed
+ - Fixed a recent regression in ShaderGraph Screen Position behavior on some platforms in Built-in, Universal and HDRP [1369450]
+
+## [13.1.1] - 2021-10-04
+
+### Added
+ - Adding ability to automatically cast Bools to Vector types in ShaderGraph [1359160]
+ - Added ShaderGraph import warning to old nodes and properties, and ability to dismiss the warning if old behavior is desired.
+ - Added normal transforms to the Transform node
+ - Added an automatically generated material subasset on ShaderGraphs.
+
+### Changed
+ - Changed the title suffix on old nodes and properties rom "Deprecated" to "Legacy".
+ - Updated searcher package dependency version to 4.9.1
+ - Renamed the Shader Graph Texel Size node to Texture Size and added two additional output ports that actually output the texel size in addition to the texture size.
+
+### Fixed
+ - Fixed a usability issue where in some cases searcher would suggest one collapsed category of results that user would have to manually expand anyway
+ - Fixed bug that causes search results to not be visible sometimes in the searcher window [1366061]
+ - Fixed bug that causes exceptions to be thrown when using the up/down arrow keys with search list focused [1358016]
+ - Fixed bug that causes some searcher items to be irreversibly collapsed due to expand icon disappearing on collapsing those items [1366074]
+ - Fixed bug that caused incorrect search results with non whitespaced queries for nodes with spaces in their name and for subgraphs [1359158]
+ - Fixed Triplanar ShaderGraph node to handle arbitrary input and output coordinate spaces [1346477] (https://issuetracker.unity3d.com/issues/shader-graph-rotating-gameobject-get-material-stretched-when-using-triplanar-node)
+ - Fixed a bug that Parallax Mapping and Parallax Occlusion Mapping nodes don't use the same channel to sample heightmap by adding drop-downs for channel selecting to both of the nodes. [1347270] (https://fogbugz.unity3d.com/f/cases/1347270/)
+ - Fixed errors in the ShaderGraph Transform node [1368082]
+ - Fixed the Scene Depth node so it returns proper results in Eye space when using an orthographic camera [1311272]
+ - Fixed a bug where node preview doesn't update when a texture is changed in the explorer [1363784](https://issuetracker.unity3d.com/product/unity/issues/guid/1363784/)
+ - Fixed missing shader keyword stage during keyword copying.
+ - Fixed a ShaderGraph warning when connecting a node using Object Space BiTangent to the vertex stage [1361512] (https://issuetracker.unity3d.com/issues/shader-graph-cross-implicit-truncation-of-vector-type-errors-are-thrown-when-connecting-transform-node-to-vertex-block)
+ - Fixed upgrade warnings on SpeedTree8 subgraphs.
+
+## [13.1.0] - 2021-09-24
+
+### Fixed
+ - Fixed bug where an exception was thrown on undo operation after adding properties to a category [1348910] (https://fogbugz.unity3d.com/f/cases/1348910/)
+ - Fixed the sticky-note editable title text size in shader graph not matching the set font size [1357657].
+ - Fixed unhandled exception when loading a subgraph with duplicate slots [1366200] (https://issuetracker.unity3d.com/product/unity/issues/guid/1366200/)
+
+## [13.0.0] - 2021-09-01
+### Changed
+- Remove use of deprecated UNITY_USE_NATIVE_HDR keyword in shaders.
+
+### Added
+ - Adding control of anisotropic settings on inline Sampler state nodes in ShaderGraph.
+
+### Fixed
+ - Fixed bug where it was not possible to switch to Graph Settings tab in Inspector if multiple nodes and an edge was selected [1357648] (https://fogbugz.unity3d.com/f/cases/1357648/)
+ - Fixed an incorrect direction transform from view to world space [1362034] (https://issuetracker.unity3d.com/product/unity/issues/guid/1362034/)
+ - Fixed ShaderGraph HDRP master preview disappearing for a few seconds when graph is modified  [1330289] (https://issuetracker.unity3d.com/issues/shadergraph-hdrp-main-preview-is-invisible-until-moved)
+ - Fixed noise nodes to use a deterministic integer hash, instead of platform dependent floating point hashes [1156544]
+ - Fixed the appearance (wrong text color, and not wrapped) of a warning in Node Settings [1356725] (https://issuetracker.unity3d.com/product/unity/issues/guid/1356725/)
+ - Fixed the ordering of inputs on a SubGraph node to match the properties on the blackboard of the subgraph itself [1354463]
+ - Added more inputs to the Parallax Occlusion Mapping node to handle non-uniformly scaled UVs such as HDRP/Lit POM [1347008].
+ - Fixed the wrong scaling of the main preview window  [1356719] (https://issuetracker.unity3d.com/product/unity/issues/guid/1356719/)
+ - Fixed an issue where ShaderGraph "view shader" commands were opening in individual windows, and blocking Unity from closing [1367188]
+ - Improved screenspace position accuracy in the fragment shader by using VPOS [1352662] (https://issuetracker.unity3d.com/issues/shadergraph-dither-node-results-in-artifacts-when-far-from-origin-caused-by-screen-position-breaking-down)
+ - Fixed the node searcher results to prefer names over synonyms [1366058]
+
+ - Fixed the sticky-note editable title text size in shader graph not matching the set font size [1357657].
+ - Fixed how graph errors were displayed when variant limits were reached [1355815]
 
 ## [12.0.0] - 2021-01-11
 
@@ -101,7 +209,6 @@ The version number for this package has increased due to a version update of a r
   - Added many node synonyms for the Create Node search so that it's easier to find nodes.
 
 ### Changed
- - Updated searcher package dependency version to 4.9.1
 - Properties and Keywords are no longer separated by type on the blackboard. Categories allow for any combination of properties and keywords to be grouped together as the user defines.
 - Vector2/Vector3/Vector4 property types will now be properly represented by a matching Vector2/Vector3/Vector4 UI control in the URP + HDRP Material Inspector as opposed to the fallback Vector4 field that was used for any multi-dimensional vector type in the past.
 - Updated/corrected View Direction documentation
@@ -119,12 +226,6 @@ The version number for this package has increased due to a version update of a r
 - GatherTexture2D and TexelSize nodes now support all shader stages.
 
 ### Fixed
- - Fixed a usability issue where in some cases searcher would suggest one collapsed category of results that user would have to manually expand anyway
- - Fixed bug that causes search results to not be visible sometimes in the searcher window [1366061]
- - Fixed bug that causes exceptions to be thrown when using the up/down arrow keys with search list focused [1358016]
- - Fixed bug that causes some searcher items to be irreversibly collapsed due to expand icon disappearing on collapsing those items [1366074]
- - Fixed bug that caused incorrect search results with non whitespaced queries for nodes with spaces in their name and for subgraphs [1359158]
-- Fixed bug where it was not possible to switch to Graph Settings tab in Inspector if multiple nodes and an edge was selected [1357648] (https://fogbugz.unity3d.com/f/cases/1357648/)
 - Fixed an issue where fog node density was incorrectly calculated.
 - Fixed inspector property header styling
 - Added padding to the blackboard window to prevent overlapping of resize region and scrollbars interfering with user interaction
@@ -202,13 +303,6 @@ The version number for this package has increased due to a version update of a r
 - Fixed a bug with Sprite Targets in ShaderGraph not rendering correctly in game view [1352225]
 - Fixed compilation problems on preview shader when using hybrid renderer v2 and property desc override Hybrid Per Instance
 - Fixed a serialization bug wrt PVT property flags when using subgraphs. This fixes SRP batcher compatibility.
-- Fixed an incorrect direction transform from view to world space [1365186]
-- Fixed the appearance (wrong text color, and not wrapped) of a warning in Node Settings [1365780]
-- Fixed the ordering of inputs on a SubGraph node to match the properties on the blackboard of the subgraph itself [1366052]
-- Fixed Parallax Occlusion Mapping node to handle non-uniformly scaled UVs such as HDRP/Lit POM [1347008].
-- Fixed ShaderGraph HDRP master preview disappearing for a few seconds when graph is modified  [1330289] (https://issuetracker.unity3d.com/issues/shadergraph-hdrp-main-preview-is-invisible-until-moved)
-- Fixed an issue where ShaderGraph "view shader" commands were opening in individual windows, and blocking Unity from closing [1367188]
-- Fixed the node searcher results to prefer names over synonyms [1367706]
 
 ## [11.0.0] - 2020-10-21
 

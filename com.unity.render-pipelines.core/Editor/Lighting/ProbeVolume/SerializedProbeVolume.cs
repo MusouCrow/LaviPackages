@@ -1,16 +1,16 @@
-namespace UnityEditor.Experimental.Rendering
+namespace UnityEditor.Rendering
 {
     internal class SerializedProbeVolume
     {
-        internal SerializedProperty probeVolumeParams;
-
-        internal SerializedProperty globalVolume;
+        internal SerializedProperty mode;
         internal SerializedProperty size;
+        internal SerializedProperty fillEmptySpaces;
         internal SerializedProperty overridesSubdivision;
         internal SerializedProperty highestSubdivisionLevelOverride;
         internal SerializedProperty lowestSubdivisionLevelOverride;
         internal SerializedProperty objectLayerMask;
-        internal SerializedProperty geometryDistanceOffset;
+        internal SerializedProperty minRendererVolumeSize;
+        internal SerializedProperty overrideRendererFilters;
 
         internal SerializedObject serializedObject;
 
@@ -18,13 +18,15 @@ namespace UnityEditor.Experimental.Rendering
         {
             serializedObject = obj;
 
-            globalVolume = serializedObject.FindProperty("globalVolume");
+            mode = serializedObject.FindProperty("mode");
             size = serializedObject.FindProperty("size");
             objectLayerMask = serializedObject.FindProperty("objectLayerMask");
-            geometryDistanceOffset = serializedObject.FindProperty("geometryDistanceOffset");
+            minRendererVolumeSize = serializedObject.FindProperty("minRendererVolumeSize");
+            overrideRendererFilters = serializedObject.FindProperty("overrideRendererFilters");
             highestSubdivisionLevelOverride = serializedObject.FindProperty("highestSubdivLevelOverride");
             lowestSubdivisionLevelOverride = serializedObject.FindProperty("lowestSubdivLevelOverride");
             overridesSubdivision = serializedObject.FindProperty("overridesSubdivLevels");
+            fillEmptySpaces = serializedObject.FindProperty("fillEmptySpaces");
         }
 
         internal void Apply()

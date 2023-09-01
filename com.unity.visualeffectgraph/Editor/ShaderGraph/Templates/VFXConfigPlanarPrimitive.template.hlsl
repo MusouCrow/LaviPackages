@@ -20,7 +20,11 @@ bool GetMeshAndElementIndex(inout VFX_SRP_ATTRIBUTES input, inout AttributesElem
     #if HAS_STRIPS
         id += VFX_GET_INSTANCE_ID(i) * 8192;
         const uint vertexPerStripCount = (PARTICLE_PER_STRIP_COUNT - 1) << 2;
-        const StripData stripData = GetStripDataFromStripIndex(id / vertexPerStripCount, PARTICLE_PER_STRIP_COUNT);
+
+        index = id / vertexPerStripCount; // stripIndex. Needed by VFXInitInstancing
+        $splice(VFXInitInstancing)
+
+        const StripData stripData = GetStripDataFromStripIndex(index, instanceIndex);
         uint relativeIndexInStrip = ((id % vertexPerStripCount) >> 2) + (id & 1); // relative index of particle
 
         uint maxEdgeIndex = relativeIndexInStrip - PARTICLE_IN_EDGE + 1;
@@ -39,14 +43,27 @@ bool GetMeshAndElementIndex(inout VFX_SRP_ATTRIBUTES input, inout AttributesElem
         index = (id >> 3) + VFX_GET_INSTANCE_ID(i) * 1024;
     #endif
 
-    if (ShouldCullElement(index))
+    #if !HAS_STRIPS
+    $splice(VFXInitInstancing)
+    #ifdef UNITY_INSTANCING_ENABLED
+    input.instanceID = unity_InstanceID;
+    #endif
+    #endif
+
+    ContextData contextData = instancingContextData[instanceActiveIndex];
+    uint systemSeed = contextData.systemSeed;
+    uint nbMax = contextData.maxParticleCount;
+
+    if (ShouldCullElement(index, instanceIndex, nbMax))
         return false;
 
     #if VFX_HAS_INDIRECT_DRAW
-    index = indirectBuffer[index];
+    index = indirectBuffer[VFXGetIndirectBufferIndex(index, instanceActiveIndex)];
     #endif
 
     element.index = index;
+    element.instanceIndex = instanceIndex;
+    element.instanceActiveIndex = instanceActiveIndex;
 
     // Configure planar Primitive
     float4 uv = 0;
@@ -60,6 +77,7 @@ bool GetMeshAndElementIndex(inout VFX_SRP_ATTRIBUTES input, inout AttributesElem
         #else
             GetElementData(element);
             const InternalAttributesElement attributes = element.attributes;
+            $splice(VFXLoadGraphValues)
             $splice(VFXLoadTexcoordParameter)
             uv.x = texCoord;
         #endif
@@ -103,6 +121,8 @@ bool GetMeshAndElementIndex(inout VFX_SRP_ATTRIBUTES input, inout AttributesElem
         GetElementData(element);
         const InternalAttributesElement attributes = element.attributes;
 
+        $splice(VFXLoadGraphValues)
+
         // Here we have to explicitly splice in the crop factor.
         $splice(VFXLoadCropFactorParameter)
 
@@ -118,6 +138,10 @@ bool GetMeshAndElementIndex(inout VFX_SRP_ATTRIBUTES input, inout AttributesElem
 #ifdef ATTRIBUTES_NEED_TANGENT
     input.tangentOS = float4(1, 0, 0, 1);
 #endif
+#ifdef ATTRIBUTES_NEED_COLOR
+    input.color = float4(1, 1, 1, 1);
+#endif
+
 #ifdef ATTRIBUTES_NEED_TEXCOORD0
     input.uv0 = uv;
 #endif

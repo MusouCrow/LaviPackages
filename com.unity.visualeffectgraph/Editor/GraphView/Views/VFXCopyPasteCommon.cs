@@ -90,6 +90,7 @@ namespace UnityEditor.VFX.UI
             public string[] expandedInputs;
             public string[] expandedOutputs;
             public int indexInClipboard;
+            public bool activationSlotValue;
         }
 
 
@@ -139,6 +140,7 @@ namespace UnityEditor.VFX.UI
             public string[] enumValue;
             public string tooltip;
             public bool isOutput;
+            public VFXCoordinateSpace space;
             public ParameterNode[] nodes;
         }
 

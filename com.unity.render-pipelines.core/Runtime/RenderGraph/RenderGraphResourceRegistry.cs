@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RendererUtils;
 
 // Typedefs for the in-engine RendererList API (to avoid conflicts with the experimental version)
-using CoreRendererList = UnityEngine.Rendering.RendererUtils.RendererList;
+using CoreRendererList = UnityEngine.Rendering.RendererList;
 using CoreRendererListDesc = UnityEngine.Rendering.RendererUtils.RendererListDesc;
 
 namespace UnityEngine.Experimental.Rendering.RenderGraphModule
@@ -106,13 +106,8 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
 
             var texResource = GetTextureResource(handle.handle);
             var resource = texResource.graphicsResource;
-            if (resource == null)
-            {
-                if (handle.fallBackResource != TextureHandle.nullHandle.handle)
-                    return GetTextureResource(handle.fallBackResource).graphicsResource;
-                else if (!texResource.imported)
-                    throw new InvalidOperationException($"Trying to use a texture ({texResource.GetName()}) that was already released or not yet created. Make sure you declare it for reading in your pass or you don't read it before it's been written to at least once.");
-            }
+            if (resource == null && !texResource.imported)
+                throw new InvalidOperationException($"Trying to use a texture ({texResource.GetName()}) that was already released or not yet created. Make sure you declare it for reading in your pass or you don't read it before it's been written to at least once.");
 
             return resource;
         }
@@ -301,6 +296,18 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
             return new TextureHandle(textureIndex, shared: true);
         }
 
+        internal void RefreshSharedTextureDesc(TextureHandle texture, in TextureDesc desc)
+        {
+            if (!IsRenderGraphResourceShared(RenderGraphResourceType.Texture, texture.handle))
+            {
+                throw new InvalidOperationException($"Trying to refresh texture {texture} that is not a shared resource.");
+            }
+
+            var texResource = GetTextureResource(texture.handle);
+            texResource.ReleaseGraphicsResource();
+            texResource.desc = desc;
+        }
+
         internal void ReleaseSharedTexture(TextureHandle texture)
         {
             var texResources = m_RenderGraphResources[(int)RenderGraphResourceType.Texture];
@@ -341,12 +348,17 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
             return new TextureHandle(newHandle);
         }
 
-        internal int GetTextureResourceCount()
+        internal int GetResourceCount(RenderGraphResourceType type)
         {
-            return m_RenderGraphResources[(int)RenderGraphResourceType.Texture].resourceArray.size;
+            return m_RenderGraphResources[(int)type].resourceArray.size;
         }
 
-        TextureResource GetTextureResource(in ResourceHandle handle)
+        internal int GetTextureResourceCount()
+        {
+            return GetResourceCount(RenderGraphResourceType.Texture);
+        }
+
+        internal TextureResource GetTextureResource(in ResourceHandle handle)
         {
             return m_RenderGraphResources[(int)RenderGraphResourceType.Texture].resourceArray[handle] as TextureResource;
         }
@@ -354,12 +366,6 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         internal TextureDesc GetTextureResourceDesc(in ResourceHandle handle)
         {
             return (m_RenderGraphResources[(int)RenderGraphResourceType.Texture].resourceArray[handle] as TextureResource).desc;
-        }
-
-        internal void ForceTextureClear(in ResourceHandle handle, Color clearColor)
-        {
-            GetTextureResource(handle).desc.clearBuffer = true;
-            GetTextureResource(handle).desc.clearColor = clearColor;
         }
 
         internal RendererListHandle CreateRendererList(in CoreRendererListDesc desc)
@@ -397,7 +403,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
 
         internal int GetComputeBufferResourceCount()
         {
-            return m_RenderGraphResources[(int)RenderGraphResourceType.ComputeBuffer].resourceArray.size;
+            return GetResourceCount(RenderGraphResourceType.ComputeBuffer);
         }
 
         ComputeBufferResource GetComputeBufferResource(in ResourceHandle handle)
@@ -448,6 +454,10 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
                 m_RenderGraphResources[type].createResourceCallback?.Invoke(rgContext, resource);
             }
         }
+        internal void CreatePooledResource(RenderGraphContext rgContext, ResourceHandle handle)
+        {
+            CreatePooledResource(rgContext, handle.iType, handle.index);
+        }
 
         void CreateTextureCallback(RenderGraphContext rgContext, IRenderGraphResource res)
         {
@@ -488,6 +498,11 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
 
                 resource.ReleasePooledGraphicsResource(m_CurrentFrameIndex);
             }
+        }
+
+        internal void ReleasePooledResource(RenderGraphContext rgContext, ResourceHandle handle)
+        {
+            ReleasePooledResource(rgContext, handle.iType, handle.index);
         }
 
         void ReleaseTextureCallback(RenderGraphContext rgContext, IRenderGraphResource res)

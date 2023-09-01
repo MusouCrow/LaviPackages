@@ -57,10 +57,12 @@ namespace UnityEditor.VFX
     {
         const string kGeneralFoldoutStatePreferenceName = "VFX.VisualEffectEditor.Foldout.General";
         const string kRendererFoldoutStatePreferenceName = "VFX.VisualEffectEditor.Foldout.Renderer";
+        const string kInstancingFoldoutStatePreferenceName = "VFX.VisualEffectEditor.Foldout.Instancing";
         const string kPropertyFoldoutStatePreferenceName = "VFX.VisualEffectEditor.Foldout.Properties";
 
         bool showGeneralCategory;
         bool showRendererCategory;
+        bool showInstancingCategory;
         bool showPropertyCategory;
 
         protected SerializedProperty m_VisualEffectAsset;
@@ -69,6 +71,7 @@ namespace UnityEditor.VFX
         SerializedProperty m_InitialEventNameOverriden;
         SerializedProperty m_RandomSeed;
         SerializedProperty m_VFXPropertySheet;
+        SerializedProperty m_AllowInstancing;
 
         RendererEditor m_RendererEditor;
 
@@ -92,6 +95,7 @@ namespace UnityEditor.VFX
             m_SingleSerializedObject = targets.Length == 1 ? serializedObject : new SerializedObject(targets[0]);
             showPropertyCategory = EditorPrefs.GetBool(kPropertyFoldoutStatePreferenceName, true);
             showRendererCategory = EditorPrefs.GetBool(kRendererFoldoutStatePreferenceName, true);
+            showInstancingCategory = EditorPrefs.GetBool(kInstancingFoldoutStatePreferenceName, true);
             showGeneralCategory = EditorPrefs.GetBool(kGeneralFoldoutStatePreferenceName, true);
 
             m_OtherSerializedObjects = targets.Skip(1).Select(x => new SerializedObject(x)).ToArray();
@@ -102,6 +106,7 @@ namespace UnityEditor.VFX
             m_InitialEventNameOverriden = serializedObject.FindProperty("m_InitialEventNameOverriden");
             m_VisualEffectAsset = serializedObject.FindProperty("m_Asset");
             m_VFXPropertySheet = m_SingleSerializedObject.FindProperty("m_PropertySheet");
+            m_AllowInstancing = serializedObject.FindProperty("m_AllowInstancing");
 
             var renderers = targets.Cast<Component>().Select(t => t.GetComponent<VFXRenderer>()).ToArray();
             m_RendererEditor = new RendererEditor(renderers);
@@ -464,48 +469,54 @@ namespace UnityEditor.VFX
             if (effects.Count == 0)
                 return;
 
-            var buttonWidth = GUILayout.Width(52);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Contents.GetIcon(Contents.Icon.Stop), buttonWidth))
+            if (GUILayout.Button(Contents.GetIcon(Contents.Icon.Stop), Contents.sceneViewButtonWidth))
             {
                 effects.ForEach(x => x.ControlStop());
             }
             if (effects.All(x => x.pause))
             {
-                if (GUILayout.Button(Contents.GetIcon(Contents.Icon.Play), buttonWidth))
+                if (GUILayout.Button(Contents.GetIcon(Contents.Icon.Play), Contents.sceneViewButtonWidth))
                 {
                     effects.ForEach(x => x.ControlPlayPause());
                 }
             }
             else
             {
-                if (GUILayout.Button(Contents.GetIcon(Contents.Icon.Pause), buttonWidth))
+                if (GUILayout.Button(Contents.GetIcon(Contents.Icon.Pause), Contents.sceneViewButtonWidth))
                 {
                     effects.ForEach(x => x.ControlPlayPause());
                 }
             }
 
 
-            if (GUILayout.Button(Contents.GetIcon(Contents.Icon.Step), buttonWidth))
+            if (GUILayout.Button(Contents.GetIcon(Contents.Icon.Step), Contents.sceneViewButtonWidth))
             {
                 effects.ForEach(x => x.ControlStep());
             }
-            if (GUILayout.Button(Contents.GetIcon(Contents.Icon.Restart), buttonWidth))
+            if (GUILayout.Button(Contents.GetIcon(Contents.Icon.Restart), Contents.sceneViewButtonWidth))
             {
                 effects.ForEach(x => x.ControlRestart());
             }
             GUILayout.EndHorizontal();
 
-
-            var playRates = effects.Select(x => x.playRate).Distinct().ToArray();
-            float playRate = playRates[0];
+            float playRate = effects[0].playRate;
+            bool mixedValues = false;
+            for (int i = 1; i < effects.Count; i++)
+            {
+                if (Math.Abs(effects[i].playRate - playRate) > 1e-5)
+                {
+                    mixedValues = true;
+                    break;
+                }
+            }
 
             float playRateValue = playRate * VisualEffectControl.playRateToValue;
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Contents.playRate, GUILayout.Width(46));
-            EditorGUI.showMixedValue = playRates.Length > 1;
-            var newPlayRateVal = EditorGUILayout.PowerSlider("", (float)Math.Round(playRateValue), VisualEffectControl.minSlider, VisualEffectControl.maxSlider, VisualEffectControl.sliderPower, GUILayout.Width(124));
+            GUILayout.Label(Contents.playRate, Contents.playRateWidth);
+            EditorGUI.showMixedValue = mixedValues;
+            var newPlayRateVal = EditorGUILayout.PowerSlider("", (float)Math.Round(playRateValue), VisualEffectControl.minSlider, VisualEffectControl.maxSlider, VisualEffectControl.sliderPower, Contents.powerSliderWidth);
             EditorGUI.showMixedValue = false;
             if (playRate >= 0 && GUI.changed)
             {
@@ -513,7 +524,7 @@ namespace UnityEditor.VFX
             }
 
             var eventType = Event.current.type;
-            if (EditorGUILayout.DropdownButton(Contents.setPlayRate, FocusType.Passive, GUILayout.Width(40)))
+            if (EditorGUILayout.DropdownButton(Contents.setPlayRate, FocusType.Passive, Contents.playRateDropdownWidth))
             {
                 GenericMenu menu = new GenericMenu();
                 foreach (var value in VisualEffectControl.setPlaybackValues)
@@ -529,19 +540,19 @@ namespace UnityEditor.VFX
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Show Bounds", GUILayout.Width(192));
-            VisualEffectUtility.renderBounds = EditorGUILayout.Toggle(VisualEffectUtility.renderBounds, GUILayout.Width(18));
+            GUILayout.Label("Show Bounds", Contents.showToggleLabelsWidth);
+            VisualEffectUtility.renderBounds = EditorGUILayout.Toggle(VisualEffectUtility.renderBounds, Contents.showToggleWidth);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Show Event Tester", GUILayout.Width(192));
-            VFXEventTesterWindow.visible = EditorGUILayout.Toggle(VFXEventTesterWindow.visible, GUILayout.Width(18));
+            GUILayout.Label("Show Event Tester", Contents.showToggleLabelsWidth);
+            VFXEventTesterWindow.visible = EditorGUILayout.Toggle(VFXEventTesterWindow.visible, Contents.showToggleWidth);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(new GUIContent("Play()")))
+            if (GUILayout.Button(Contents.play))
                 effects.ForEach(x => x.Play());
-            if (GUILayout.Button(new GUIContent("Stop()")))
+            if (GUILayout.Button(Contents.stop))
                 effects.ForEach(x => x.Stop());
             GUILayout.EndHorizontal();
         }
@@ -622,7 +633,7 @@ namespace UnityEditor.VFX
         {
         }
 
-        public static bool ShowHeader(GUIContent nameContent, bool displayFoldout, bool foldoutState)
+        public static bool ShowHeader(GUIContent nameContent, bool displayFoldout, bool foldoutState, string preferenceName = null)
         {
             float height = Styles.categoryHeader.CalcHeight(nameContent, 4000) + 3;
 
@@ -643,6 +654,11 @@ namespace UnityEditor.VFX
             }
 
             EditorGUI.indentLevel = result ? 1 : 0;
+
+            if (preferenceName != null && result != foldoutState)
+            {
+                EditorPrefs.SetBool(preferenceName, result);
+            }
 
             return result;
         }
@@ -758,12 +774,8 @@ namespace UnityEditor.VFX
         public override void OnInspectorGUI()
         {
             GUILayout.Space(6);
-            bool newShowGeneralCategory = ShowHeader(Contents.headerGeneral, true, showGeneralCategory);
-            if (newShowGeneralCategory != showGeneralCategory)
-            {
-                EditorPrefs.SetBool(kGeneralFoldoutStatePreferenceName, newShowGeneralCategory);
-                showGeneralCategory = newShowGeneralCategory;
-            }
+            showGeneralCategory = ShowHeader(Contents.headerGeneral, true, showGeneralCategory, kGeneralFoldoutStatePreferenceName);
+
             m_SingleSerializedObject.Update();
             if (m_OtherSerializedObjects != null) // copy the set value to all multi selection by hand, because it might not be at the same array index or already present in the property sheet
             {
@@ -796,6 +808,7 @@ namespace UnityEditor.VFX
                     InitialEventField(resource);
 
                 DrawRendererProperties();
+                DrawInstancingProperties();
                 DrawParameters(resource);
             }
             EditorGUI.indentLevel = 0;
@@ -849,12 +862,7 @@ namespace UnityEditor.VFX
 
                 if (graph.m_ParameterInfo != null)
                 {
-                    bool newShowParameterCategory = ShowHeader(Contents.headerProperties, true, showPropertyCategory);
-                    if (newShowParameterCategory != showPropertyCategory)
-                    {
-                        EditorPrefs.SetBool(kPropertyFoldoutStatePreferenceName, newShowParameterCategory);
-                        showPropertyCategory = newShowParameterCategory;
-                    }
+                    showPropertyCategory = ShowHeader(Contents.headerProperties, true, showPropertyCategory, kPropertyFoldoutStatePreferenceName);
 
                     if (showPropertyCategory)
                     {
@@ -963,7 +971,6 @@ namespace UnityEditor.VFX
 
                                 //< Actual display
                                 GUIContent nameContent = GetGUIContent(parameter.name, parameter.tooltip);
-                                EditorGUI.BeginChangeCheck();
 
                                 bool wasOverriden = actualDisplayedPropertyOverridden.boolValue;
 
@@ -1152,15 +1159,30 @@ namespace UnityEditor.VFX
 
         private void DrawRendererProperties()
         {
-            bool newShowRendererCategory = ShowHeader(Contents.headerRenderer, true, showRendererCategory);
-            if (newShowRendererCategory != showRendererCategory)
-            {
-                EditorPrefs.SetBool(kRendererFoldoutStatePreferenceName, newShowRendererCategory);
-                showRendererCategory = newShowRendererCategory;
-            }
+            showRendererCategory = ShowHeader(Contents.headerRenderer, true, showRendererCategory, kRendererFoldoutStatePreferenceName);
 
             if (showRendererCategory)
                 m_RendererEditor.OnInspectorGUI();
+        }
+
+        private void DrawInstancingProperties()
+        {
+            showInstancingCategory = ShowHeader(Contents.headerInstancing, true, showInstancingCategory, kInstancingFoldoutStatePreferenceName);
+
+            if (showInstancingCategory)
+            {
+                EditorGUI.BeginChangeCheck();
+                EditorGUILayout.PropertyField(m_AllowInstancing, Contents.allowInstancing);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    serializedObject.ApplyModifiedProperties();
+
+                    foreach (var visualEffect in targets.OfType<VisualEffect>())
+                    {
+                        visualEffect.RecreateData();
+                    }
+                }
+            }
         }
 
         internal class RendererEditor
@@ -1218,6 +1240,8 @@ namespace UnityEditor.VFX
                 }
                 return null;
             }
+
+            public SerializedObject SerializedRenderers => m_SerializedRenderers;
 
             public static readonly Action<GUIContent, SerializedProperty, GUIStyle, GUIStyle> s_fnGetSortingLayerField = GetSortingLayerField();
 
@@ -1414,6 +1438,7 @@ namespace UnityEditor.VFX
             public static readonly GUIContent headerGeneral = EditorGUIUtility.TrTextContent("General");
             public static readonly GUIContent headerProperties = EditorGUIUtility.TrTextContent("Properties");
             public static readonly GUIContent headerRenderer = EditorGUIUtility.TrTextContent("Renderer");
+            public static readonly GUIContent headerInstancing = EditorGUIUtility.TrTextContent("Instancing");
 
             public static readonly GUIContent assetPath = EditorGUIUtility.TrTextContent("Asset Template", "Sets the Visual Effect Graph asset to be used in this component.");
             public static readonly GUIContent randomSeed = EditorGUIUtility.TrTextContent("Random Seed", "Sets the value used when determining the randomness of the graph. Using the same seed will make the Visual Effect play identically each time.");
@@ -1424,8 +1449,18 @@ namespace UnityEditor.VFX
             public static readonly GUIContent resetInitialEvent = EditorGUIUtility.TrTextContent("Default");
             public static readonly GUIContent setPlayRate = EditorGUIUtility.TrTextContent("Set");
             public static readonly GUIContent playRate = EditorGUIUtility.TrTextContent("Rate");
+            public static readonly GUILayoutOption playRateWidth = GUILayout.Width(46);
+            public static readonly GUILayoutOption showToggleLabelsWidth = GUILayout.Width(192);
+            public static readonly GUILayoutOption showToggleWidth = GUILayout.Width(18);
+            public static readonly GUILayoutOption powerSliderWidth = GUILayout.Width(124);
+            public static readonly GUILayoutOption sceneViewButtonWidth = GUILayout.Width(52);
+            public static readonly GUILayoutOption playRateDropdownWidth = GUILayout.Width(40);
+
+            public static readonly GUIContent allowInstancing = EditorGUIUtility.TrTextContent("Allow Instancing", "When enabled, the effect will try to be batched with other of the same type.");
 
             public static readonly GUIContent graphInBundle = EditorGUIUtility.TrTextContent("Exposed properties are hidden in the Inspector when Visual Effect Assets are stored in Asset Bundles.");
+            public static readonly GUIContent play = new GUIContent("Play()");
+            public static readonly GUIContent stop = new GUIContent("Stop()");
 
             static readonly GUIContent[] m_Icons;
 

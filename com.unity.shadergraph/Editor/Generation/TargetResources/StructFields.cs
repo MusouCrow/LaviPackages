@@ -53,8 +53,6 @@ namespace UnityEditor.ShaderGraph
                 subscriptOptions: StructFieldOptions.Optional);
             public static FieldDescriptor color = new FieldDescriptor(Varyings.name, "color", "VARYINGS_NEED_COLOR", ShaderValueType.Float4,
                 subscriptOptions: StructFieldOptions.Optional);
-            public static FieldDescriptor viewDirectionWS = new FieldDescriptor(Varyings.name, "viewDirectionWS", "VARYINGS_NEED_VIEWDIRECTION_WS", ShaderValueType.Float3,
-                subscriptOptions: StructFieldOptions.Optional);
             public static FieldDescriptor screenPosition = new FieldDescriptor(Varyings.name, "screenPosition", "VARYINGS_NEED_SCREENPOSITION", ShaderValueType.Float4,
                 subscriptOptions: StructFieldOptions.Optional);
             public static FieldDescriptor instanceID = new FieldDescriptor(Varyings.name, "instanceID", "", ShaderValueType.Uint,
@@ -63,6 +61,11 @@ namespace UnityEditor.ShaderGraph
                 "FRONT_FACE_SEMANTIC", "defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)", StructFieldOptions.Generated & StructFieldOptions.Optional);
             public static FieldDescriptor vertexID = new FieldDescriptor(Varyings.name, "vertexID", "VARYINGS_NEED_VERTEXID", ShaderValueType.Uint,
                 "CUSTOM_VERTEX_ID", subscriptOptions: StructFieldOptions.Optional);
+            public static FieldDescriptor stereoTargetEyeIndexAsRTArrayIdx = new FieldDescriptor(Varyings.name, "stereoTargetEyeIndexAsRTArrayIdx", "", ShaderValueType.Uint,
+                 "SV_RenderTargetArrayIndex", "(defined(UNITY_STEREO_INSTANCING_ENABLED))", StructFieldOptions.Generated);
+            public static FieldDescriptor stereoTargetEyeIndexAsBlendIdx0 = new FieldDescriptor(Varyings.name, "stereoTargetEyeIndexAsBlendIdx0", "", ShaderValueType.Uint,
+                "BLENDINDICES0", "(defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))");
+
 
             // VFX
             public static FieldDescriptor worldToElement0 = new FieldDescriptor(Varyings.name, "worldToElement0", "VARYINGS_NEED_WORLD_TO_ELEMENT", ShaderValueType.Float4, subscriptOptions: StructFieldOptions.Optional, interpolation: "nointerpolation");
@@ -137,6 +140,11 @@ namespace UnityEditor.ShaderGraph
 
             public static FieldDescriptor ScreenPosition = new FieldDescriptor(VertexDescriptionInputs.name, "ScreenPosition", "", ShaderValueType.Float4,
                 subscriptOptions: StructFieldOptions.Optional);
+            public static FieldDescriptor NDCPosition = new FieldDescriptor(VertexDescriptionInputs.name, "NDCPosition", "", ShaderValueType.Float2,
+                subscriptOptions: StructFieldOptions.Optional);
+            public static FieldDescriptor PixelPosition = new FieldDescriptor(VertexDescriptionInputs.name, "PixelPosition", "", ShaderValueType.Float2,
+                subscriptOptions: StructFieldOptions.Optional);
+
             public static FieldDescriptor uv0 = new FieldDescriptor(VertexDescriptionInputs.name, "uv0", "", ShaderValueType.Float4,
                 subscriptOptions: StructFieldOptions.Optional);
             public static FieldDescriptor uv1 = new FieldDescriptor(VertexDescriptionInputs.name, "uv1", "", ShaderValueType.Float4,
@@ -222,6 +230,11 @@ namespace UnityEditor.ShaderGraph
 
             public static FieldDescriptor ScreenPosition = new FieldDescriptor(SurfaceDescriptionInputs.name, "ScreenPosition", "", ShaderValueType.Float4,
                 subscriptOptions: StructFieldOptions.Optional);
+            public static FieldDescriptor NDCPosition = new FieldDescriptor(SurfaceDescriptionInputs.name, "NDCPosition", "", ShaderValueType.Float2,
+                subscriptOptions: StructFieldOptions.Optional);
+            public static FieldDescriptor PixelPosition = new FieldDescriptor(SurfaceDescriptionInputs.name, "PixelPosition", "", ShaderValueType.Float2,
+                subscriptOptions: StructFieldOptions.Optional);
+
             public static FieldDescriptor uv0 = new FieldDescriptor(SurfaceDescriptionInputs.name, "uv0", "", ShaderValueType.Float4,
                 subscriptOptions: StructFieldOptions.Optional);
             public static FieldDescriptor uv1 = new FieldDescriptor(SurfaceDescriptionInputs.name, "uv1", "", ShaderValueType.Float4,

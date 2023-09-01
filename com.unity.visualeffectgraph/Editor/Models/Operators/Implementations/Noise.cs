@@ -7,19 +7,14 @@ namespace UnityEditor.VFX.Operator
 {
     class NoiseVariantProvider : VariantProvider
     {
-        protected override sealed Dictionary<string, object[]> variants
+        protected sealed override Dictionary<string, object[]> variants { get; } = new Dictionary<string, object[]>
         {
-            get
-            {
-                return new Dictionary<string, object[]>
-                {
-                    { "type", Enum.GetValues(typeof(NoiseBase.NoiseType)).Cast<object>().ToArray() },
-                    { "dimensions", Enum.GetValues(typeof(Noise.DimensionCount)).Cast<object>().ToArray() }
-                };
-            }
-        }
+            {"type", Enum.GetValues(typeof(NoiseBase.NoiseType)).Cast<object>().ToArray()},
+            {"dimensions", Enum.GetValues(typeof(Noise.DimensionCount)).Cast<object>().ToArray()}
+        };
     }
 
+    [VFXHelpURL("Operator-CellularNoise")]
     [VFXInfo(category = "Noise", variantProvider = typeof(NoiseVariantProvider))]
     class Noise : NoiseBase
     {

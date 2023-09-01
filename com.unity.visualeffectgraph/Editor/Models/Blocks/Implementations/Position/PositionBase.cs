@@ -6,14 +6,10 @@ namespace UnityEditor.VFX.Block
 {
     class PositionBaseProvider : VariantProvider
     {
-        public override IEnumerable<IEnumerable<KeyValuePair<string, object>>> ComputeVariants()
+        public override IEnumerable<Variant> ComputeVariants()
         {
-            var compositions = new[] { AttributeCompositionMode.Overwrite };
-
-            foreach (var composition in compositions)
-            {
-                yield return new[] { new KeyValuePair<string, object>("compositionPosition", composition) };
-            }
+            return new[] { AttributeCompositionMode.Overwrite }
+                .Select(x => new Variant(new[] { new KeyValuePair<string, object>("compositionPosition", x) }, new[] { VFXBlockUtility.GetNameString(x) }));
         }
     }
     abstract class PositionBase : VFXBlock
@@ -49,6 +45,12 @@ namespace UnityEditor.VFX.Block
             public float blendPosition = 1.0f;
         }
 
+        public class CustomPropertiesBlendAxes
+        {
+            [Range(0.0f, 1.0f), Tooltip("Set the blending value for axisX/Y/Z attributes.")]
+            public float blendAxes = 1.0f;
+        }
+
         public class CustomPropertiesBlendDirection
         {
             [Range(0.0f, 1.0f), Tooltip("Set the blending value for direction attribute.")]
@@ -57,6 +59,9 @@ namespace UnityEditor.VFX.Block
 
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), Tooltip("Specifies what operation to perform on Position. The input value can overwrite, add to, multiply with, or blend with the existing attribute value.")]
         public AttributeCompositionMode compositionPosition = AttributeCompositionMode.Add;
+
+        [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), Tooltip("Specifies what operation to perform on AxisX/Y/Z. The input value can overwrite, add to, multiply with, or blend with the existing attribute value.")]
+        public AttributeCompositionMode compositionAxes = AttributeCompositionMode.Overwrite;
 
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), Tooltip("Specifies what operation to perform on Direction. The input value can overwrite, add to, multiply with, or blend with the existing attribute value.")]
         public AttributeCompositionMode compositionDirection = AttributeCompositionMode.Overwrite;
@@ -72,6 +77,9 @@ namespace UnityEditor.VFX.Block
         public override VFXDataType compatibleData { get { return VFXDataType.Particle; } }
 
         protected virtual bool needDirectionWrite { get { return false; } }
+
+        protected virtual bool needAxesWrite { get { return false; } }
+
         protected virtual bool supportsVolumeSpawning { get { return true; } }
 
         public override IEnumerable<VFXAttributeInfo> attributes
@@ -80,8 +88,17 @@ namespace UnityEditor.VFX.Block
             {
                 yield return new VFXAttributeInfo(VFXAttribute.Position, compositionPosition == AttributeCompositionMode.Overwrite ? VFXAttributeMode.Write : VFXAttributeMode.ReadWrite);
                 yield return new VFXAttributeInfo(VFXAttribute.Seed, VFXAttributeMode.ReadWrite);
+
                 if (needDirectionWrite)
                     yield return new VFXAttributeInfo(VFXAttribute.Direction, compositionDirection == AttributeCompositionMode.Overwrite ? VFXAttributeMode.Write : VFXAttributeMode.ReadWrite);
+
+                if (needAxesWrite)
+                {
+                    var readWriteMode = compositionAxes == AttributeCompositionMode.Overwrite ? VFXAttributeMode.Write : VFXAttributeMode.ReadWrite;
+                    yield return new VFXAttributeInfo(VFXAttribute.AxisX, readWriteMode);
+                    yield return new VFXAttributeInfo(VFXAttribute.AxisY, readWriteMode);
+                    yield return new VFXAttributeInfo(VFXAttribute.AxisZ, readWriteMode);
+                }
             }
         }
 
@@ -111,17 +128,20 @@ namespace UnityEditor.VFX.Block
                 if (supportsVolumeSpawning)
                 {
                     if (positionMode == PositionMode.ThicknessAbsolute || positionMode == PositionMode.ThicknessRelative)
-                        properties = properties.Concat(PropertiesFromType("ThicknessProperties"));
+                        properties = properties.Concat(PropertiesFromType(nameof(ThicknessProperties)));
                 }
 
                 if (spawnMode == SpawnMode.Custom)
                     properties = properties.Concat(PropertiesFromType("CustomProperties"));
 
                 if (compositionPosition == AttributeCompositionMode.Blend)
-                    properties = properties.Concat(PropertiesFromType("CustomPropertiesBlendPosition"));
+                    properties = properties.Concat(PropertiesFromType(nameof(CustomPropertiesBlendPosition)));
 
-                if (compositionDirection == AttributeCompositionMode.Blend)
-                    properties = properties.Concat(PropertiesFromType("CustomPropertiesBlendDirection"));
+                if (needAxesWrite && compositionAxes == AttributeCompositionMode.Blend)
+                    properties = properties.Concat(PropertiesFromType(nameof(CustomPropertiesBlendAxes)));
+
+                if (needDirectionWrite && compositionDirection == AttributeCompositionMode.Blend)
+                    properties = properties.Concat(PropertiesFromType(nameof(CustomPropertiesBlendDirection)));
 
                 return properties;
             }
@@ -132,10 +152,13 @@ namespace UnityEditor.VFX.Block
             get
             {
                 if (!supportsVolumeSpawning)
-                    yield return "positionMode";
+                    yield return nameof(positionMode);
 
                 if (!needDirectionWrite)
-                    yield return "compositionDirection";
+                    yield return nameof(compositionDirection);
+
+                if (!needAxesWrite)
+                    yield return nameof(compositionAxes);
 
                 foreach (var setting in base.filteredOutSettings)
                     yield return setting;

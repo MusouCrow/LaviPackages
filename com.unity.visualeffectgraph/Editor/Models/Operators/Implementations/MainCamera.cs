@@ -1,10 +1,8 @@
-using System;
-using System.Linq;
-using UnityEngine;
 using UnityEngine.VFX;
 
 namespace UnityEditor.VFX.Operator
 {
+    [VFXHelpURL("Operator-MainCamera")]
     [VFXInfo(category = "BuiltIn")]
     class MainCamera : VFXOperator
     {
@@ -20,7 +18,7 @@ namespace UnityEditor.VFX.Operator
             if (slot.spaceable && slot.property.type == typeof(CameraType))
                 return VFXCoordinateSpace.World;
 
-            return (VFXCoordinateSpace)int.MaxValue;
+            return VFXCoordinateSpace.None;
         }
 
         protected override sealed VFXExpression[] BuildExpression(VFXExpression[] inputExpression)
@@ -33,10 +31,11 @@ namespace UnityEditor.VFX.Operator
             VFXExpression orthographicSize = new VFXExpressionGetOrthographicSizeFromMainCamera();
             VFXExpression aspectRatio = new VFXExpressionExtractAspectRatioFromMainCamera();
             VFXExpression pixelDimensions = new VFXExpressionExtractPixelDimensionsFromMainCamera();
+            VFXExpression lensShift = new VFXExpressionExtractLensShiftFromMainCamera();
             VFXExpression depthBuffer = new VFXExpressionGetBufferFromMainCamera(VFXCameraBufferTypes.Depth);
             VFXExpression colorBuffer = new VFXExpressionGetBufferFromMainCamera(VFXCameraBufferTypes.Color);
 
-            return new[] { matrix, orthographic, fov, nearPlane, farPlane, orthographicSize, aspectRatio, pixelDimensions, depthBuffer, colorBuffer };
+            return new[] { matrix, orthographic, fov, nearPlane, farPlane, orthographicSize, aspectRatio, pixelDimensions, lensShift, depthBuffer, colorBuffer };
         }
     }
 }

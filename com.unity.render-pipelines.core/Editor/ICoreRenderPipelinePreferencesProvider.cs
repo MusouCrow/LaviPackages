@@ -9,17 +9,17 @@ namespace UnityEditor.Rendering
     public interface ICoreRenderPipelinePreferencesProvider
     {
         /// <summary>
-        /// The list of keywords
+        /// The list of keywords for user search
         /// </summary>
         List<string> keywords { get; }
 
         /// <summary>
-        /// The header of the preferences
+        /// The header of the panel
         /// </summary>
         GUIContent header { get; }
 
         /// <summary>
-        /// The main method to render the user interface
+        /// Renders the Preferences UI for this provider
         /// </summary>
         void PreferenceGUI();
     }

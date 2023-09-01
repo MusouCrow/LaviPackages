@@ -152,8 +152,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_PathLabelTextField = this.Q<TextField>("subTitleTextField");
             m_PathLabelTextField.value = ViewModel.subtitle;
             m_PathLabelTextField.visible = false;
-            m_PathLabelTextField.Q("unity-text-input").RegisterCallback<FocusOutEvent>(e => { OnEditPathTextFinished(); });
-            m_PathLabelTextField.Q("unity-text-input").RegisterCallback<KeyDownEvent>(OnPathTextFieldKeyPressed);
+            m_PathLabelTextField.Q("unity-text-input").RegisterCallback<FocusOutEvent>(e => { OnEditPathTextFinished(); }, TrickleDown.TrickleDown);
+            m_PathLabelTextField.Q("unity-text-input").RegisterCallback<KeyDownEvent>(OnPathTextFieldKeyPressed, TrickleDown.TrickleDown);
 
             // These callbacks make sure the scroll boundary regions and drag indicator don't show up user is not dragging/dropping properties/categories
             RegisterCallback<MouseUpEvent>(OnMouseUpEvent);
@@ -448,10 +448,24 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void OnFieldDragUpdate(DragUpdatedEvent dragUpdatedEvent)
         {
+            // how far is the mouse into the drag boundary.
+            float dragCoeff
+                = m_ScrollToTop ? 1 - dragUpdatedEvent.localMousePosition.y / m_ScrollBoundaryBottom.contentRect.height
+                : m_ScrollToBottom ? dragUpdatedEvent.localMousePosition.y / m_ScrollBoundaryBottom.contentRect.height
+                : 0;
+
+            dragCoeff = Mathf.Clamp(dragCoeff, .15f, .85f);
+
+            // factor in fixed base speed and relative to % of total scrollable height.
+            float dragSpeed = dragCoeff * k_DraggedPropertyScrollSpeed * (scrollableHeight / 100f);
+
+            // Lastly, make sure the drag speed can't ever get too slow.
+            dragSpeed = Mathf.Max(dragSpeed, k_DraggedPropertyScrollSpeed);
+
             if (m_ScrollToTop)
-                m_ScrollView.scrollOffset = new Vector2(m_ScrollView.scrollOffset.x, Mathf.Clamp(m_ScrollView.scrollOffset.y - k_DraggedPropertyScrollSpeed, 0, scrollableHeight));
+                m_ScrollView.scrollOffset = new Vector2(m_ScrollView.scrollOffset.x, Mathf.Clamp(m_ScrollView.scrollOffset.y - dragSpeed, 0, scrollableHeight));
             else if (m_ScrollToBottom)
-                m_ScrollView.scrollOffset = new Vector2(m_ScrollView.scrollOffset.x, Mathf.Clamp(m_ScrollView.scrollOffset.y + k_DraggedPropertyScrollSpeed, 0, scrollableHeight));
+                m_ScrollView.scrollOffset = new Vector2(m_ScrollView.scrollOffset.x, Mathf.Clamp(m_ScrollView.scrollOffset.y + dragSpeed, 0, scrollableHeight));
         }
 
         void InitializeAddBlackboardItemMenu()
@@ -577,6 +591,36 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             m_SubTitleLabel.text = BlackboardUtils.FormatPath(newPath);
             m_EditPathCancelled = false;
+        }
+
+        public override void Dispose()
+        {
+            m_PathLabelTextField.Q("unity-text-input").UnregisterCallback<FocusOutEvent>(e => { OnEditPathTextFinished(); }, TrickleDown.TrickleDown);
+            m_PathLabelTextField.Q("unity-text-input").UnregisterCallback<KeyDownEvent>(OnPathTextFieldKeyPressed, TrickleDown.TrickleDown);
+            UnregisterCallback<MouseUpEvent>(OnMouseUpEvent);
+            UnregisterCallback<DragExitedEvent>(OnDragExitedEvent);
+            UnregisterCallback<DragUpdatedEvent>(OnDragUpdatedEvent);
+            UnregisterCallback<DragPerformEvent>(OnDragPerformEvent);
+            UnregisterCallback<DragLeaveEvent>(OnDragLeaveEvent);
+            UnregisterCallback<DragExitedEvent>(OnDragExitedEvent);
+            UnregisterCallback<MouseEnterEvent>(OnMouseEnterEvent);
+            m_ScrollBoundaryTop.UnregisterCallback<MouseEnterEvent>(ScrollRegionTopEnter);
+            m_ScrollBoundaryTop.UnregisterCallback<DragUpdatedEvent>(OnFieldDragUpdate);
+            m_ScrollBoundaryTop.UnregisterCallback<MouseLeaveEvent>(ScrollRegionTopLeave);
+            m_ScrollBoundaryBottom.UnregisterCallback<MouseEnterEvent>(ScrollRegionBottomEnter);
+            m_ScrollBoundaryBottom.UnregisterCallback<DragUpdatedEvent>(OnFieldDragUpdate);
+            m_ScrollBoundaryBottom.UnregisterCallback<MouseLeaveEvent>(ScrollRegionBottomLeave);
+
+            m_BlackboardCategories.Clear();
+            m_ViewModel = null;
+            m_DragIndicator = null;
+            m_Controller = null;
+            m_AddBlackboardItemMenu = null;
+            addItemRequested = null;
+            m_BottomResizer = null;
+            m_ScrollBoundaryBottom = null;
+            m_ScrollBoundaryTop = null;
+            m_PathLabelTextField = null;
         }
     }
 }

@@ -216,6 +216,13 @@ namespace UnityEngine.Rendering
             BeforePost,
 
             /// <summary>
+            /// Indicates that upscaling should happen after depth of field but before other post processing.
+            /// This means that everything runs at the source resolution during rasterization and depth of field, and other post processes
+            /// will run at full resolution. More performant alternative for temporal upscalers at the expense of reduced image quality.
+            /// </summary>
+            AfterDepthOfField,
+
+            /// <summary>
             /// Indicates that upscaling must happen after post processing.
             /// This means that everything in the frame runs at the source resolution, and upscaling happens after
             /// the final pass. This is ideal for spatial upscalers.
@@ -282,9 +289,9 @@ namespace UnityEngine.Rendering
         }
 
         /// <summary>
-        /// Gets the scale
+        /// Gets the resolved scale
         /// </summary>
-        /// <returns>The resolved scale</returns>
+        /// <returns>The resolved scale in form of <see cref="Vector2"/></returns>
         public Vector2 GetResolvedScale()
         {
             if (!m_Enabled || !m_CurrentCameraRequest)
@@ -309,7 +316,7 @@ namespace UnityEngine.Rendering
         /// <param name="inputResolution">The input width x height resolution in pixels.</param>
         /// <param name="outputResolution">The output width x height resolution in pixels.</param>
         /// <param name="forceApply">False by default. If true, we ignore the useMipBias setting and return a mip bias regardless.</param>
-        /// <returns>The calculated value</returns>
+        /// <returns>The calculated mip bias</returns>
         public float CalculateMipBias(Vector2Int inputResolution, Vector2Int outputResolution, bool forceApply = false)
         {
             if (!m_UseMipBias && !forceApply)
@@ -390,8 +397,7 @@ namespace UnityEngine.Rendering
         /// Call this function also to switch context between cameras (will set the current camera as active).
         /// Passing a null camera has the same effect as calling Update without the camera parameter.
         /// </summary>
-        /// <param name="camera">Camera used to select a specific instance tied to this DynamicResolutionHandler instance.
-        /// </param>
+        /// <param name="camera">Camera used to select a specific instance tied to this DynamicResolutionHandler instance.</param>
         /// <param name="settings">(optional) The settings that are to be used by the dynamic resolution system. passing null for the settings will result in the last update's settings used.</param>
         /// <param name="OnResolutionChange">An action that will be called every time the dynamic resolution system triggers a change in resolution.</param>
         public static void UpdateAndUseCamera(Camera camera, GlobalDynamicResolutionSettings? settings = null, Action OnResolutionChange = null)

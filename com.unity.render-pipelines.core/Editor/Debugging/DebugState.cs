@@ -104,7 +104,9 @@ namespace UnityEditor.Rendering
             {
                 int hash = 13;
                 hash = hash * 23 + m_QueryPath.GetHashCode();
-                hash = hash * 23 + value.GetHashCode();
+                if (value != null)
+                    hash = hash * 23 + value.GetHashCode();
+                
                 return hash;
             }
         }
@@ -138,7 +140,7 @@ namespace UnityEditor.Rendering
     /// Enums Debug State.
     /// </summary>
     [Serializable, DebugState(typeof(DebugUI.EnumField), typeof(DebugUI.HistoryEnumField))]
-    public sealed class DebugStateEnum : DebugState<int>, ISerializationCallbackReceiver
+    public sealed class DebugStateEnum : DebugState<int>
     {
         DebugUI.EnumField m_EnumField;
 
@@ -153,27 +155,19 @@ namespace UnityEditor.Rendering
             base.SetValue(value, field);
         }
 
-        void UpdateValue()
+        /// <summary>
+        /// On Enable method from <see cref="ScriptableObject"/>
+        /// </summary>
+        public override void OnEnable()
         {
-            if (m_EnumField != null)
-            {
-                base.SetValue(value, m_EnumField);
-                // There might be cases that the value does not map the index, look for the correct index
-                var newCurrentIndex = Array.IndexOf(m_EnumField.enumValues, value);
-                if (m_EnumField.currentIndex != newCurrentIndex)
-                    m_EnumField.currentIndex = newCurrentIndex;
-            }
+            base.OnEnable();
+
+            if (m_EnumField == null)
+                return;
+
+            m_EnumField.SetValue(value);
+            base.SetValue(value, m_EnumField);
         }
-
-        /// <summary>
-        /// On Before Serialize Callback
-        /// </summary>
-        public void OnBeforeSerialize() => UpdateValue();
-
-        /// <summary>
-        /// On After Deserialize Callback
-        /// </summary>
-        public void OnAfterDeserialize() => UpdateValue();
     }
 
     /// <summary>
@@ -181,6 +175,12 @@ namespace UnityEditor.Rendering
     /// </summary>
     [Serializable, DebugState(typeof(DebugUI.IntField))]
     public sealed class DebugStateInt : DebugState<int> { }
+
+    /// <summary>
+    /// Object Debug State.
+    /// </summary>
+    [Serializable, DebugState(typeof(DebugUI.ObjectPopupField))]
+    public sealed class DebugStateObject : DebugState<UnityEngine.Object> { }
 
     /// <summary>
     /// Flags Debug State.

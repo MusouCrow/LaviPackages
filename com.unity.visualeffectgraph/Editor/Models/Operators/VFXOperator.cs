@@ -81,7 +81,18 @@ namespace UnityEditor.VFX
 
             if (cause == InvalidationCause.kConnectionChanged)
             {
-                ResyncSlots(true);
+                if (model is VFXSlot slot && slot.direction == VFXSlot.Direction.kInput)
+                    ResyncSlots(true);
+            }
+
+            if (cause == InvalidationCause.kParamChanged ||
+                cause == InvalidationCause.kExpressionValueInvalidated)
+            {
+                if (model is VFXSlot && ((VFXSlot)model).direction == VFXSlot.Direction.kInput)
+                {
+                    foreach (var slot in outputSlots)
+                        slot.Invalidate(InvalidationCause.kExpressionValueInvalidated);
+                }
             }
 
             base.OnInvalidate(model, cause);
@@ -90,22 +101,18 @@ namespace UnityEditor.VFX
         public override VFXCoordinateSpace GetOutputSpaceFromSlot(VFXSlot outputSlot)
         {
             /* Most common case : space is the maximal output space from input slot */
-            var space = (VFXCoordinateSpace)int.MaxValue;
+            var space = VFXCoordinateSpace.None;
             foreach (var inputSlot in inputSlots)
             {
                 if (inputSlot.spaceable)
                 {
                     var currentSpace = inputSlot.space;
-                    if (space == (VFXCoordinateSpace)int.MaxValue
-                        || space < currentSpace)
+                    if (space == VFXCoordinateSpace.None || (currentSpace != VFXCoordinateSpace.None && space < currentSpace))
                     {
                         space = currentSpace;
                     }
                 }
             }
-            if (space == (VFXCoordinateSpace)int.MaxValue)
-                space = outputSlot.space;
-
             return space;
         }
 

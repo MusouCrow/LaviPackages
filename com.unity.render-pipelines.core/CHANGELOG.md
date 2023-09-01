@@ -4,66 +4,178 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-
-## [12.1.8] - 2022-11-04
-
-Version Updated
-The version number for this package has increased due to a version update of a related graphics package.
-
-## [12.1.7] - 2022-03-29
+## [Unreleased]
 
 Version Updated
 The version number for this package has increased due to a version update of a related graphics package.
 
+## [14.0.7] - 2023-05-23
 
-## [12.1.6] - 2022-02-09
-
-Version Updated
-The version number for this package has increased due to a version update of a related graphics package.
-
-## [12.1.5] - 2022-01-14
-
-### Added
-- Added common support code for FSR
+This version is compatible with Unity 2022.2.22f1.
 
 ### Fixed
-- Fixed undo in for `DebugUI.EnumFields` on the rendering debugger. (case 1386964)
-- Fixed unnecessary memory allocation inside FSR's RCAS shader constants helper function.
+- Fixed Decal Projector Editor fields so they are now saved when editing a prefab.
+- Revert Property for animation curves on Volume Components
+- Fixed an IES Importer issue producing incorrect results.
+- Crash on keywords::LocalKeywordState::ResetWithSpace when shader contains Grab Pass.
+- Fixed SRPs not being able to build using mode -nographics and -batchmode, since lens flare global texture prevents this from happening.
+
+## [14.0.6] - 2023-03-24
+
+This version is compatible with Unity 2022.2.13f1.
+
+### Fixed
+- Fixed a Render Graph bug where culled passes would be delegated to releasing a resource, resulting in unwanted leaking.
+
+## [14.0.5] - 2022-12-12
+
+This version is compatible with Unity 2022.2.4f1.
+
+### Changed
+- Allow VolumeComponent BoolParameter UI to display enabled/disabled dropdown instead of checkboxes.
+
+### Fixed
+- Fixed Light Editor didn't apply changes to SerializedObject.
+- Added Local mode to fit Probe Volumes to scene.
+- Fixed recalculating of apv probe positions.
+- Fixed virtual offset pushing probes outside of geometry.
+
+## [14.0.4] - 2022-11-04
+
+This version is compatible with Unity 2022.2.2f1.
+
+### Added
+- Extension method to fetch the Render Pipeline assets from a BuildTarget.
+- New XRSystem API to allow SRPs override the XR built-in stereo matrices.
+
+### Changed
+- Improved performance of APV baking.
+- Allow setting order for panels on the rendering debugger.
+
+### Fixed
+- Fixed the reset of APV volume placement when using multi selection.
+- Fixed an issue so that APV dilated data not being written back to disk.
+- Fixed realtime subdivision so it culls empty cells.
+- Hid the warning on the reflection probe if you disable APV.
+- Fixed so that data isn't cleared for probes to be dilated into, to avoid bright colored splotches.
+- Fixed probes so that the max distance between then are respected.
+- Fixed uninitialized memory for virtual offset.
+- Fixed NaN when you bake high intensity lights.
+- Fixed the APV touchup volume test so it uses OBB instead of AABB.
+- Fixed null reference when you enable the Camera in a project with multiple SRPs installed.
+- Volume Component Editor Foldouts states are now stored by type instead of by position.
+- Fixed SerializedObjectNotCreatableException on Volume Component Editors.
+- Fixed null reference exception when settings null Render Pipeline Global settings on the Settings provider.
+- Fixed swapping Volume Component in a Volume profile with mixed pipeline Volume Components.
+- Default Volume Profile can now be recovered when it is being deleted from the project folder.
+- Fixed editor drawer for Value tuples in the Rendering Debugger.
+- Fixed an issue where FreeCamera would print an error when using old InputSystem.
+- Fixed missing subdivision label when looking at APV realtime subdivision preview.
+- Fixed shadow cascade editor so the snatches now appear and the gradient appearance is improved.
+- Fixed global probe volumes not fitting to all objects.
+- Fixed dropdowns for multiple editors.
+
+## [14.0.3] - 2021-05-09
+
+This version is compatible with Unity 2022.2.0b15.
+
+### Fixed
+- Added Shader Stripping Watcher so you get notifications when a Shader Variant is stripped.
+
+## [14.0.2] - 2021-02-04
+
+This version is compatible with Unity 2022.2.0a14.
+
+### Added
+- Added new extension `TryRemoveElementsInRange` to remove a range of elements from a `IList`.
+- Added error on ResourceReloader when attempting to use [ReloadGroup] on ScriptableObject.
+- Added Screen Coordinates Override shader utilities.
+- Added API to blend between baking states for Probe Volumes.
+- Aded explicit control over scenario blending factor and a debug mode for visualization.
+
+### Fixed
 - Fixed texture gather macros for GLCore and moved them from target 4.6 to target 4.5.
 - Fixed cubemap array macros for GLCore.
+- Fixed regression on ResourceReloader due to change for supporting built-in resources.
+- Fixed issue with debug markers in Unity Profiler in deep profiler mode
+
+## [14.0.1] - 2021-12-07
+
+### Added
+- Linear version of function that sets FSR RCAS shader constants
+- `DebugUI.ObjectPopupField` to render a list of `UnityEngine.Objects` as a popup on the Rendering Debugger.
+- Add probe volume influence weight parameter
+- Added support for multiple Baking States to Prove Volumes.
+- Hidding Volume Components not available for the current pipeline on the Volume Profile Inspector.
+
+### Changed
+- Volume Component editor are now specified by `CustomEditorAttribute` instead of `VolumeComponentEditorAttribute`.
+
+### Fixed
+- The Volume Panel on the Rendering Debugger was not corretly showing cameras when they were added or deleted.
+- Fixed issue in DynamicResolutionHandler when camera request was turned off at runtime, the ScalableBufferManager would leak state and not unset DRS state (case 1383093).
+- Fixed undo in for `DebugUI.EnumFields` on the rendering debugger. (case 1386964)
+- Fixed `DebugUI.Enum` fields collapsing their parent `DebugUI.Foldout`
+- Fixed IES profile importer handling of overflow (outside 0-1 range) of attenutation splines values.
+- Fixed issue with Probe Volume Baking window incorrectly displaying the icon for probe volumes in scenes that don't contain probe volumes.
+- Fixed unnecessary memory allocation inside FSR's RCAS shader constants helper function.
+- Fixed the issue with the special Turkish i, when looking for the m_IsGlobal property in VolumeEditor. (case 1276892)
+
+## [14.0.0] - 2021-11-17
+
+### Added
+- Context menu on Volume Parameters to restore them to their default values.
+
+### Fixed
+- Fixed XR support in CoreUtils.DrawFullscreen function.
 
 ### Changed
 - Removed FSR_ENABLE_16BIT option from FSRCommon.hlsl. The 16-bit FSR implementation is now automatically enabled when supported by the target platform.
 
-## [12.1.4] - 2021-12-07
+## [13.1.2] - 2021-11-05
+
+### Added
+- Added function to allocate RTHandles using `RenderTextureDescriptor`.
+- Added `vrUsage` support for RTHandles allocation.
 
 ### Fixed
+- Fixed issue when changing volume profiles at runtime with a script (case 1364256).
 - Fixed XR support in CoreUtils.DrawFullscreen function.
 - Fixed an issue causing Render Graph execution errors after a random amount of time.
-- Fixed issue in DynamicResolutionHandler when camera request was turned off at runtime, the ScalableBufferManager would leak state and not unset DRS state (case 1383093).
-- Fixed the issue with the special Turkish i, when looking for the m_IsGlobal property in VolumeEditor. (case 1276892)
-- Fixed IES profile importer handling of overflow (outside 0-1 range) of attenutation splines values.
 
-## [12.1.3] - 2021-11-17
+## [13.1.1] - 2021-10-04
+
+### Added
+- Added support for high performant unsafe (uint only) Radix, Merge and Insertion sort algorithms on CoreUnsafeUtils.
+- Added DebugFrameTiming class that can be used by render pipelines to display CPU/GPU frame timings and bottlenecks in Rendering Debugger.
+- Added new DebugUI widget types: ProgressBarValue and ValueTuple
+- Added common support code for FSR.
+- Added new `RenderPipelineGlobalSettingsProvider` to help adding a settings panel for editing global settings.
+- Added blending for curves in post processing volumes.
+- New extension for Render Pipeline Global Settings for shader variants settings -> `IShaderVariantsSettings`.
+
+## [13.1.0] - 2021-09-24
+
+### Added
+- Debug Panels Framework See `IDebugDisplaySettingsQuery`.
+
+### Fixed
+- Fixed keyword and float property upgrading in SpeedTree8MaterialUpgrader
+
+## [13.0.0] - 2021-09-01
+
 Version Updated
 The version number for this package has increased due to a version update of a related graphics package.
 
-## [12.1.2] - 2021-10-22
-
-### Fixed
-- Fixed serialization of DebugStateFlags, the internal Enum was not being serialized.
-- Fixed issue when changing volume profiles at runtime with a script (case 1364256).
-
-## [12.1.1] - 2021-10-04
+### Added
+- New `IVolumeDebugSettings` interface and `VolumeDebugSettings<T>` class that stores the information for the Volumes Debug Panel.
+- Added AMD FidelityFX shaders which were originally in HDRP
+- Added support for high performant unsafe (uint only) Radix, Merge and Insertion sort algorithms on CoreUnsafeUtils.
 
 ### Fixed
 - Fixed black pixel issue in AMD FidelityFX RCAS implementation
 - Fixed a critical issue on android devices & lens flares. Accidentally creating a 16 bit texture was causing gpus not supporting them to fail.
-
-## [12.1.0] - 2021-09-23
-
-Version Updated
-The version number for this package has increased due to a version update of a related graphics package.
+- Fixed serialization of DebugStateFlags, the internal Enum was not being serialized.
 
 ## [12.0.0] - 2021-01-11
 
@@ -107,6 +219,7 @@ The version number for this package has increased due to a version update of a r
 - Added UNITY_PREV_MATRIX_M and UNITY_PREV_MATRIX_I_M shader macros to support instanced motion vector rendering
 - Added new API to customize the rtHandleProperties of a particular RTHandle. This is a temporary work around to assist with viewport setup of Custom post process when dealing with DLSS or TAAU
 - Added `IAdditionalData` interface to identify the additional datas on the core package.
+- Added new API to draw color temperature for Lights.
 
 ### Fixed
 - Help boxes with fix buttons do not crop the label.
@@ -142,7 +255,6 @@ The version number for this package has increased due to a version update of a r
 - Fixed potentially conflicting runtime Rendering Debugger UI command by adding an option to disable runtime UI altogether (1345783).
 - Fixed Lens Flare position for celestial at very far camera distances. It now locks correctly into the celestial position regardless of camera distance (1363291)
 - Fixed issues caused by automatically added EventSystem component, required to support Rendering Debugger Runtime UI input. (1361901)
-- Fixed API to draw color temperature for Lights.
 
 ### Changed
 - Improved the warning messages for Volumes and their Colliders.

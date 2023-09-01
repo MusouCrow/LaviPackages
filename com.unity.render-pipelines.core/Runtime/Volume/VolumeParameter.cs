@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace UnityEngine.Rendering
 {
@@ -15,7 +16,7 @@ namespace UnityEngine.Rendering
     /// The base class for all parameters types stored in a <see cref="VolumeComponent"/>.
     /// </summary>
     /// <seealso cref="VolumeParameter{T}"/>
-    public abstract class VolumeParameter
+    public abstract class VolumeParameter : ICloneable
     {
         /// <summary>
         /// A beautified string for debugger output. This is set on a <c>DebuggerDisplay</c> on every
@@ -108,6 +109,13 @@ namespace UnityEngine.Rendering
         /// Override this method to free all allocated resources
         /// </summary>
         public virtual void Release() { }
+
+        /// <summary>
+        /// Clones the current instance of the <see cref="VolumeParameter"/>
+        /// </summary>
+        /// <returns>A new created instance with the same values as the current instance of <see cref="VolumeParameter"/></returns>
+
+        public abstract object Clone();
     }
 
     /// <summary>
@@ -184,7 +192,7 @@ namespace UnityEngine.Rendering
         internal override void Interp(VolumeParameter from, VolumeParameter to, float t)
         {
             // Note: this is relatively unsafe (assumes that from and to are both holding type T)
-            Interp(from.GetValue<T>(), to.GetValue<T>(), t);
+            Interp((from as VolumeParameter<T>).value, (to as VolumeParameter<T>).value, t);
         }
 
         /// <summary>
@@ -218,9 +226,10 @@ namespace UnityEngine.Rendering
         /// Sets the value of this parameter to the value in <paramref name="parameter"/>.
         /// </summary>
         /// <param name="parameter">The <see cref="VolumeParameter"/> to copy the value from.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override void SetValue(VolumeParameter parameter)
         {
-            m_Value = parameter.GetValue<T>();
+            m_Value = ((VolumeParameter<T>)parameter).m_Value;
         }
 
         /// <summary>
@@ -298,6 +307,12 @@ namespace UnityEngine.Rendering
             return Equals((VolumeParameter<T>)obj);
         }
 
+        /// <inheritdoc/>
+        public override object Clone()
+        {
+            return new VolumeParameter<T>(GetValue<T>(), overrideState);
+        }
+
         /// <summary>
         /// Explicitly downcast a <see cref="VolumeParameter{T}"/> to a value of type
         /// <typeparamref name="T"/>.
@@ -329,7 +344,38 @@ namespace UnityEngine.Rendering
         /// <param name="value">The initial value to store in the parameter</param>
         /// <param name="overrideState">The initial override state for the parameter</param>
         public BoolParameter(bool value, bool overrideState = false)
-            : base(value, overrideState) { }
+            : base(value, overrideState)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="BoolParameter"/> instance.
+        /// </summary>
+        /// <param name="value">The initial value to store in the parameter</param>
+        /// <param name="displayType">The display type to use for the parameter</param>
+        /// <param name="overrideState">The initial override state for the parameter</param>
+        public BoolParameter(bool value, DisplayType displayType, bool overrideState = false)
+            : base(value, overrideState)
+        {
+            this.displayType = displayType;
+        }
+
+        /// <summary>
+        /// Boolean widget type.
+        /// </summary>
+        public enum DisplayType
+        {
+            /// <summary> Display boolean parameter as checkbox. </summary>
+            Checkbox,
+            /// <summary> Display boolean parameter as enum popup with Disabled/Enabled options. </summary>
+            EnumPopup
+        }
+
+        /// <summary>
+        /// Type of widget used to display the <see cref="BoolParameter"/> in the UI.
+        /// </summary>
+        [NonSerialized]
+        public DisplayType displayType = DisplayType.Checkbox;
     }
 
     /// <summary>
@@ -1802,6 +1848,47 @@ namespace UnityEngine.Rendering
         public AnimationCurveParameter(AnimationCurve value, bool overrideState = false)
             : base(value, overrideState) { }
 
-        // TODO: Curve interpolation
+        /// <summary>
+        /// Interpolates between two AnimationCurve values. Note that it will overwrite the values in lhsCurve,
+        /// whereas rhsCurve data will be unchanged. Thus, it is legal to call it as:
+        ///     stateParam.Interp(stateParam, toParam, interpFactor);
+        /// However, It should NOT be called when the lhsCurve parameter needs to be preserved. But the current
+        /// framework modifies it anyway in VolumeComponent.Override for all types of VolumeParameters
+        /// </summary>
+        /// <param name="lhsCurve">The start value.</param>
+        /// <param name="rhsCurve">The end value.</param>
+        /// <param name="t">The interpolation factor in range [0,1].</param>
+        public override void Interp(AnimationCurve lhsCurve, AnimationCurve rhsCurve, float t)
+        {
+            m_Value = lhsCurve;
+            KeyframeUtility.InterpAnimationCurve(ref m_Value, rhsCurve, t);
+        }
+
+        /// <inheritdoc/>
+        public override void SetValue(VolumeParameter parameter)
+        {
+            m_Value.CopyFrom(((AnimationCurveParameter)parameter).m_Value);
+        }
+
+        /// <inheritdoc/>
+        public override object Clone()
+        {
+            return new AnimationCurveParameter(new AnimationCurve(GetValue<AnimationCurve>().keys), overrideState);
+        }
+    }
+
+    /// <summary>
+    /// A <see cref="VolumeParameter"/> that holds a <c>bool</c> value.
+    /// </summary>
+    [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
+    public class MaterialParameter : VolumeParameter<Material>
+    {
+        /// <summary>
+        /// Creates a new <see cref="MaterialParameter"/> instance.
+        /// </summary>
+        /// <param name="value">The initial value to store in the parameter</param>
+        /// <param name="overrideState">The initial override state for the parameter</param>
+        public MaterialParameter(Material value, bool overrideState = false)
+            : base(value, overrideState) { }
     }
 }

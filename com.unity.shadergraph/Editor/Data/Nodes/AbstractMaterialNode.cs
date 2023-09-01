@@ -45,6 +45,8 @@ namespace UnityEditor.ShaderGraph
 
         OnNodeModified m_OnModified;
 
+        Action m_UnregisterAll;
+
         public GroupData group
         {
             get => m_Group;
@@ -61,6 +63,9 @@ namespace UnityEditor.ShaderGraph
         public void RegisterCallback(OnNodeModified callback)
         {
             m_OnModified += callback;
+
+            // Setup so we can unregister this callback later at teardown time
+            m_UnregisterAll += () => m_OnModified -= callback;
         }
 
         public void UnregisterCallback(OnNodeModified callback)
@@ -72,6 +77,7 @@ namespace UnityEditor.ShaderGraph
         {
             if (m_OnModified != null)
                 m_OnModified(this, scope);
+            NodeValidation.HandleValidationExtensions(this);
         }
 
         public string name
@@ -148,6 +154,10 @@ namespace UnityEditor.ShaderGraph
                 Dirty(ModificationScope.Node);
             }
         }
+
+        [SerializeField]
+        protected int m_DismissedVersion = 0;
+        public int dismissedUpdateVersion { get => m_DismissedVersion; set => m_DismissedVersion = value; }
 
         // by default, if this returns null, the system will allow creation of any previous version
         public virtual IEnumerable<int> allowedNodeVersions => null;
@@ -498,17 +508,25 @@ namespace UnityEditor.ShaderGraph
             switch (inputTypesDistinct.Count)
             {
                 case 0:
+                    // nothing connected -- use Vec1 by default
                     return ConcreteSlotValueType.Vector1;
                 case 1:
                     if (SlotValueHelper.AreCompatible(SlotValueType.DynamicVector, inputTypesDistinct.First()))
+                    {
+                        if (inputTypesDistinct.First() == ConcreteSlotValueType.Boolean)
+                            return ConcreteSlotValueType.Vector1;
                         return inputTypesDistinct.First();
+                    }
                     break;
                 default:
                     // find the 'minumum' channel width excluding 1 as it can promote
-                    inputTypesDistinct.RemoveAll(x => x == ConcreteSlotValueType.Vector1);
+                    inputTypesDistinct.RemoveAll(x => (x == ConcreteSlotValueType.Vector1) || (x == ConcreteSlotValueType.Boolean));
                     var ordered = inputTypesDistinct.OrderByDescending(x => x);
                     if (ordered.Any())
-                        return ordered.FirstOrDefault();
+                    {
+                        var first = ordered.FirstOrDefault();
+                        return first;
+                    }
                     break;
             }
             return ConcreteSlotValueType.Vector1;
@@ -713,11 +731,15 @@ namespace UnityEditor.ShaderGraph
 
                 UpdatePrecision(inputSlots);
                 EvaluateDynamicMaterialSlots(inputSlots, outputSlots);
+                Dirty(ModificationScope.Topological);
             }
         }
 
         public virtual void ValidateNode()
         {
+            if ((sgVersion < latestVersion) && (dismissedUpdateVersion < latestVersion))
+                owner.messageManager?.AddOrAppendError(owner, objectId, new ShaderMessage("There is a newer version of this node available. Inspect node for details.", Rendering.ShaderCompilerMessageSeverity.Warning));
+            NodeValidation.HandleValidationExtensions(this);
         }
 
         public virtual bool canCutNode => true;
@@ -743,7 +765,7 @@ namespace UnityEditor.ShaderGraph
         }
 
         protected string GetRayTracingError() => $@"
-            #if defined(SHADER_STAGE_RAY_TRACING)
+            #if defined(SHADER_STAGE_RAY_TRACING) && defined(RAYTRACING_SHADER_GRAPH_DEFAULT)
             #error '{name}' node is not supported in ray tracing, please provide an alternate implementation, relying for instance on the 'Raytracing Quality' keyword
             #endif";
 
@@ -782,7 +804,7 @@ namespace UnityEditor.ShaderGraph
             var slot = FindSlot<MaterialSlot>(slotId);
             if (slot == null)
                 throw new ArgumentException(string.Format("Attempting to use MaterialSlot({0}) on node of type {1} where this slot can not be found", slotId, this), "slotId");
-            return string.Format("_{0}_{1}_{2}", GetVariableNameForNode(), NodeUtils.GetHLSLSafeName(slot.shaderOutputName), unchecked((uint)slotId));
+            return string.Format("_{0}_{1}_{2}_{3}", GetVariableNameForNode(), NodeUtils.GetHLSLSafeName(slot.shaderOutputName), unchecked((uint)slotId), slot.concreteValueType.ToPropertyType().ToString());
         }
 
         public string GetConnnectionStateVariableNameForSlot(int slotId)
@@ -972,6 +994,15 @@ namespace UnityEditor.ShaderGraph
             {
                 slot.OnBeforeSerialize();
             }
+        }
+
+        public virtual void Dispose()
+        {
+            foreach (var slot in m_Slots)
+                slot.value.Dispose();
+
+            m_UnregisterAll?.Invoke();
+            m_UnregisterAll = null;
         }
     }
 }

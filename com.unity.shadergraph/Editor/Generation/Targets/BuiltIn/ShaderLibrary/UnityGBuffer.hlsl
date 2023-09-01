@@ -226,7 +226,7 @@ BRDFData BRDFDataFromGbuffer(half4 gbuffer0, half4 gbuffer1, half4 gbuffer2)
         // Specular setup
         reflectivity = ReflectivitySpecular(specular);
         oneMinusReflectivity = 1.0h - reflectivity;
-        brdfDiffuse = albedo * (half3(1.0h, 1.0h, 1.0h) - specular);
+        brdfDiffuse = albedo * oneMinusReflectivity;
         brdfSpecular = specular;
     }
     else
@@ -250,7 +250,7 @@ InputData InputDataFromGbufferAndWorldPosition(half4 gbuffer2, float3 wsPos)
     inputData.positionWS = wsPos;
     inputData.normalWS = normalize(UnpackNormal(gbuffer2.xyz)); // normalize() is required because terrain shaders use additive blending for normals (not unit-length anymore)
 
-    inputData.viewDirectionWS = SafeNormalize(GetWorldSpaceViewDir(wsPos.xyz));
+    inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(wsPos.xyz);
 
     // TODO: pass this info?
     inputData.shadowCoord     = (float4)0;

@@ -24,6 +24,8 @@ namespace UnityEngine.Rendering
         static Mesh s_TriangleMesh;
         static Mesh s_QuadMesh;
 
+        static LocalKeyword s_DecodeHdrKeyword;
+
         static class BlitShaderIDs
         {
             public static readonly int _BlitTexture = Shader.PropertyToID("_BlitTexture");
@@ -33,6 +35,7 @@ namespace UnityEngine.Rendering
             public static readonly int _BlitMipLevel = Shader.PropertyToID("_BlitMipLevel");
             public static readonly int _BlitTextureSize = Shader.PropertyToID("_BlitTextureSize");
             public static readonly int _BlitPaddingSize = Shader.PropertyToID("_BlitPaddingSize");
+            public static readonly int _BlitDecodeInstructions = Shader.PropertyToID("_BlitDecodeInstructions");
             public static readonly int _InputDepth = Shader.PropertyToID("_InputDepthTexture");
         }
 
@@ -43,8 +46,19 @@ namespace UnityEngine.Rendering
         /// <param name="blitColorAndDepthPS"></param> Blit shader
         public static void Initialize(Shader blitPS, Shader blitColorAndDepthPS)
         {
+            if (s_Blit != null)
+            {
+                throw new Exception("Blitter is already initialized. Please only initialize the blitter once or you will leak engine resources. If you need to re-initialize the blitter with different shaders destroy & recreate it.");
+            }
+
+            // NOTE NOTE NOTE NOTE NOTE NOTE
+            // If you create something here you must also destroy it in Cleanup()
+            // or it will leak during enter/leave play mode cycles
+            // NOTE NOTE NOTE NOTE NOTE NOTE
             s_Blit = CoreUtils.CreateEngineMaterial(blitPS);
             s_BlitColorAndDepth = CoreUtils.CreateEngineMaterial(blitColorAndDepthPS);
+
+            s_DecodeHdrKeyword = new LocalKeyword(blitPS, "BLIT_DECODE_HDR");
 
             // With texture array enabled, we still need the normal blit version for other systems like atlas
             if (TextureXR.useTexArray)
@@ -145,8 +159,17 @@ namespace UnityEngine.Rendering
         public static void Cleanup()
         {
             CoreUtils.Destroy(s_Blit);
+            s_Blit = null;
+            CoreUtils.Destroy(s_BlitColorAndDepth);
+            s_BlitColorAndDepth = null;
             CoreUtils.Destroy(s_BlitTexArray);
+            s_BlitTexArray = null;
             CoreUtils.Destroy(s_BlitTexArraySingleSlice);
+            s_BlitTexArraySingleSlice = null;
+            CoreUtils.Destroy(s_TriangleMesh);
+            s_TriangleMesh = null;
+            CoreUtils.Destroy(s_QuadMesh);
+            s_QuadMesh = null;
         }
 
         /// <summary>
@@ -240,6 +263,69 @@ namespace UnityEngine.Rendering
         }
 
         /// <summary>
+        /// Blit a RTHandle texture
+        /// </summary>
+        /// <param name="cmd">Command Buffer used for rendering.</param>
+        /// <param name="source">Source render target.</param>
+        /// <param name="scaleBias">Scale and bias for sampling the input texture.</param>
+        /// <param name="material">Material to invoke when blitting.</param>
+        /// <param name="pass">Pass idx within the material to invoke.</param>
+        public static void BlitTexture(CommandBuffer cmd, RenderTargetIdentifier source, Vector4 scaleBias, Material material, int pass)
+        {
+            s_PropertyBlock.SetVector(BlitShaderIDs._BlitScaleBias, scaleBias);
+            // Unfortunately there is no function bind a RenderTargetIdentifier with a property block so we have to bind it globally.
+            cmd.SetGlobalTexture(BlitShaderIDs._BlitTexture, source);
+            DrawTriangle(cmd, material, pass);
+        }
+
+        /// <summary>
+        /// Blit a Texture with a specified material. The reference name "_BlitTexture" will be used to bind the input texture.
+        /// </summary>
+        /// <param name="cmd">Command Buffer used for rendering.</param>
+        /// <param name="source">Source render target.</param>
+        /// <param name="destination">Destination render target.</param>
+        /// <param name="material">Material to invoke when blitting.</param>
+        /// <param name="pass">Pass idx within the material to invoke.</param>
+        public static void BlitTexture(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier destination, Material material, int pass)
+        {
+            // Unfortunately there is no function bind a RenderTargetIdentifier with a property block so we have to bind it globally.
+            cmd.SetGlobalTexture(BlitShaderIDs._BlitTexture, source);
+            cmd.SetRenderTarget(destination);
+            DrawTriangle(cmd, material, pass);
+        }
+
+        /// <summary>
+        /// Blit a Texture with a specified material. The reference name "_BlitTexture" will be used to bind the input texture.
+        /// </summary>
+        /// <param name="cmd">Command Buffer used for rendering.</param>
+        /// <param name="source">Source render target.</param>
+        /// <param name="destination">Destination render target.</param>
+        /// <param name="loadAction">Load action.</param>
+        /// <param name="storeAction">Store action.</param>
+        /// <param name="material">Material to invoke when blitting.</param>
+        /// <param name="pass">Pass idx within the material to invoke.</param>
+        public static void BlitTexture(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier destination, RenderBufferLoadAction loadAction, RenderBufferStoreAction storeAction, Material material, int pass)
+        {
+            // Unfortunately there is no function bind a RenderTargetIdentifier with a property block so we have to bind it globally.
+            cmd.SetGlobalTexture(BlitShaderIDs._BlitTexture, source);
+            cmd.SetRenderTarget(destination, loadAction, storeAction);
+            DrawTriangle(cmd, material, pass);
+        }
+
+        /// <summary>
+        /// Blit a Texture with a given Material. Unity uses the reference name `_BlitTexture` to bind the input texture. Set the destination parameter before using this method.
+        /// </summary>
+        /// <param name="cmd">Command Buffer used for rendering.</param>
+        /// <param name="scaleBias">Scale and bias values for sampling the input texture.</param>
+        /// <param name="material">Material to invoke when blitting.</param>
+        /// <param name="pass">Pass index within the Material to invoke.</param>
+        public static void BlitTexture(CommandBuffer cmd, Vector4 scaleBias, Material material, int pass)
+        {
+            s_PropertyBlock.SetVector(BlitShaderIDs._BlitScaleBias, scaleBias);
+            DrawTriangle(cmd, material, pass);
+        }
+
+        /// <summary>
         /// Blit a RTHandle to another RTHandle.
         /// This will properly account for partial usage (in term of resolution) of the texture for the current viewport.
         /// </summary>
@@ -250,7 +336,7 @@ namespace UnityEngine.Rendering
         /// <param name="bilinear">Enable bilinear filtering.</param>
         public static void BlitCameraTexture(CommandBuffer cmd, RTHandle source, RTHandle destination, float mipLevel = 0.0f, bool bilinear = false)
         {
-            Vector2 viewportScale = new Vector2(source.rtHandleProperties.rtHandleScale.x, source.rtHandleProperties.rtHandleScale.y);
+            Vector2 viewportScale = source.useScaling ? new Vector2(source.rtHandleProperties.rtHandleScale.x, source.rtHandleProperties.rtHandleScale.y) : Vector2.one;
             // Will set the correct camera viewport as well.
             CoreUtils.SetRenderTarget(cmd, destination);
             BlitTexture(cmd, source, viewportScale, mipLevel, bilinear);
@@ -267,7 +353,7 @@ namespace UnityEngine.Rendering
         /// <param name="bilinear">Enable bilinear filtering.</param>
         public static void BlitCameraTexture2D(CommandBuffer cmd, RTHandle source, RTHandle destination, float mipLevel = 0.0f, bool bilinear = false)
         {
-            Vector2 viewportScale = new Vector2(source.rtHandleProperties.rtHandleScale.x, source.rtHandleProperties.rtHandleScale.y);
+            Vector2 viewportScale = source.useScaling ? new Vector2(source.rtHandleProperties.rtHandleScale.x, source.rtHandleProperties.rtHandleScale.y) : Vector2.one;
             // Will set the correct camera viewport as well.
             CoreUtils.SetRenderTarget(cmd, destination);
             BlitTexture2D(cmd, source, viewportScale, mipLevel, bilinear);
@@ -285,9 +371,29 @@ namespace UnityEngine.Rendering
         /// <param name="pass">pass to use of the provided material</param>
         public static void BlitCameraTexture(CommandBuffer cmd, RTHandle source, RTHandle destination, Material material, int pass)
         {
-            Vector2 viewportScale = new Vector2(source.rtHandleProperties.rtHandleScale.x, source.rtHandleProperties.rtHandleScale.y);
+            Vector2 viewportScale = source.useScaling ? new Vector2(source.rtHandleProperties.rtHandleScale.x, source.rtHandleProperties.rtHandleScale.y) : Vector2.one;
             // Will set the correct camera viewport as well.
             CoreUtils.SetRenderTarget(cmd, destination);
+            BlitTexture(cmd, source, viewportScale, material, pass);
+        }
+
+        /// <summary>
+        /// Blit a RTHandle to another RTHandle.
+        /// This will properly account for partial usage (in term of resolution) of the texture for the current viewport.
+        /// This overloads allows the user to override the default blit shader
+        /// </summary>
+        /// <param name="cmd">Command Buffer used for rendering.</param>
+        /// <param name="source">Source RTHandle.</param>
+        /// <param name="destination">Destination RTHandle.</param>
+        /// <param name="loadAction">Load action.</param>
+        /// <param name="storeAction">Store action.</param>
+        /// <param name="material">The material to use when blitting</param>
+        /// <param name="pass">pass to use of the provided material</param>
+        public static void BlitCameraTexture(CommandBuffer cmd, RTHandle source, RTHandle destination, RenderBufferLoadAction loadAction, RenderBufferStoreAction storeAction, Material material, int pass)
+        {
+            Vector2 viewportScale = source.useScaling ? new Vector2(source.rtHandleProperties.rtHandleScale.x, source.rtHandleProperties.rtHandleScale.y) : Vector2.one;
+            // Will set the correct camera viewport as well.
+            CoreUtils.SetRenderTarget(cmd, destination, loadAction, storeAction, ClearFlag.None, Color.clear);
             BlitTexture(cmd, source, viewportScale, material, pass);
         }
 
@@ -322,7 +428,7 @@ namespace UnityEngine.Rendering
         /// <param name="bilinear">Enable bilinear filtering.</param>
         public static void BlitCameraTexture(CommandBuffer cmd, RTHandle source, RTHandle destination, Rect destViewport, float mipLevel = 0.0f, bool bilinear = false)
         {
-            Vector2 viewportScale = new Vector2(source.rtHandleProperties.rtHandleScale.x, source.rtHandleProperties.rtHandleScale.y);
+            Vector2 viewportScale = source.useScaling ? new Vector2(source.rtHandleProperties.rtHandleScale.x, source.rtHandleProperties.rtHandleScale.y) : Vector2.one;
             CoreUtils.SetRenderTarget(cmd, destination);
             cmd.SetViewport(destViewport);
             BlitTexture(cmd, source, viewportScale, mipLevel, bilinear);
@@ -455,6 +561,38 @@ namespace UnityEngine.Rendering
             s_PropertyBlock.SetVector(BlitShaderIDs._BlitScaleBias, new Vector4(1, 1, 0, 0));
             s_PropertyBlock.SetVector(BlitShaderIDs._BlitScaleBiasRt, scaleBiasRT);
             DrawQuad(cmd, GetBlitMaterial(source.dimension), 14);
+        }
+
+        /// <summary>
+        /// Blit a cube texture into 2d texture as octahedral quad with padding. (projection)
+        /// </summary>
+        /// <param name="cmd">Command buffer used for rendering.</param>
+        /// <param name="source">Source cube texture.</param>
+        /// <param name="textureSize">Source texture size.</param>
+        /// <param name="mipLevelTex">Mip level to sample.</param>
+        /// <param name="scaleBiasRT">Scale and bias for the output texture.</param>
+        /// <param name="bilinear">Enable bilinear filtering.</param>
+        /// <param name="paddingInPixels">Padding in pixels.</param>
+        /// <param name="decodeInstructions">Decode instruction.</param>
+        public static void BlitCubeToOctahedral2DQuadWithPadding(CommandBuffer cmd, Texture source, Vector2 textureSize, Vector4 scaleBiasRT, int mipLevelTex, bool bilinear, int paddingInPixels, Vector4? decodeInstructions = null)
+        {
+            var material = GetBlitMaterial(source.dimension);
+
+            s_PropertyBlock.SetTexture(BlitShaderIDs._BlitCubeTexture, source);
+            s_PropertyBlock.SetFloat(BlitShaderIDs._BlitMipLevel, mipLevelTex);
+            s_PropertyBlock.SetVector(BlitShaderIDs._BlitScaleBias, new Vector4(1, 1, 0, 0));
+            s_PropertyBlock.SetVector(BlitShaderIDs._BlitScaleBiasRt, scaleBiasRT);
+            s_PropertyBlock.SetVector(BlitShaderIDs._BlitTextureSize, textureSize);
+            s_PropertyBlock.SetInt(BlitShaderIDs._BlitPaddingSize, paddingInPixels);
+
+            cmd.SetKeyword(material, s_DecodeHdrKeyword, decodeInstructions.HasValue);
+            if (decodeInstructions.HasValue)
+            {
+                s_PropertyBlock.SetVector(BlitShaderIDs._BlitDecodeInstructions, decodeInstructions.Value);
+            }
+
+            DrawQuad(cmd, material, bilinear ? 22 : 21);
+            cmd.SetKeyword(material, s_DecodeHdrKeyword, false);
         }
 
         /// <summary>

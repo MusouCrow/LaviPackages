@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.Rendering
 {
@@ -432,9 +433,11 @@ namespace UnityEditor.Rendering
         /// <param name="flags">Material Upgrader flags.</param>
         public static void Upgrade(Material material, MaterialUpgrader upgrader, UpgradeFlags flags)
         {
-            var upgraders = new List<MaterialUpgrader>();
-            upgraders.Add(upgrader);
-            Upgrade(material, upgraders, flags);
+            using (ListPool<MaterialUpgrader>.Get(out List<MaterialUpgrader> upgraders))
+            {
+                upgraders.Add(upgrader);
+                Upgrade(material, upgraders, flags);
+            }
         }
 
         /// <summary>
@@ -445,7 +448,7 @@ namespace UnityEditor.Rendering
         /// <param name="flags">Material Upgrader flags.</param>
         public static void Upgrade(Material material, List<MaterialUpgrader> upgraders, UpgradeFlags flags)
         {
-            string message = String.Empty;
+            string message = string.Empty;
             if (Upgrade(material, upgraders, flags, ref message))
                 return;
 

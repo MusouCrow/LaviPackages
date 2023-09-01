@@ -68,11 +68,15 @@ namespace UnityEngine.Rendering
             lowResTransparencyMinimumThreshold = 0.0f,
             rayTracingHalfResThreshold = 50.0f,
 
-            //Defaults for dlss
+            // Defaults for dlss
             enableDLSS = false,
             DLSSUseOptimalSettings = true,
             DLSSPerfQualitySetting = 0,
-            DLSSSharpness = 0.5f
+            DLSSSharpness = 0.5f,
+            DLSSInjectionPoint = DynamicResolutionHandler.UpsamplerScheduleType.BeforePost,
+
+            fsrOverrideSharpness = false,
+            fsrSharpness = FSRUtils.kDefaultSharpnessLinear
         };
 
         /// <summary>Select whether the dynamic resolution is enabled or not.</summary>
@@ -86,6 +90,9 @@ namespace UnityEngine.Rendering
         /// <summary>Opaque quality setting of NVIDIA Deep Learning Super Sampling (DLSS). Use the system enum UnityEngine.NVIDIA.DLSSQuality to set the quality.</summary>
         public uint DLSSPerfQualitySetting;
 
+        /// <summary>The injection point at which to apply DLSS upscaling.</summary>
+        public DynamicResolutionHandler.UpsamplerScheduleType DLSSInjectionPoint;
+
         /// <summary>Toggle NVIDIA Deep Learning Super Sampling (DLSS) automatic recommendation system for scaling and sharpness.
         /// If this is on, the manually established scale callback for Dynamic Resolution Scaling is ignored. The sharpness setting of DLSS is also ignored.
         /// </summary>
@@ -94,6 +101,15 @@ namespace UnityEngine.Rendering
         /// <summary>Pixel sharpness of NVIDIA Deep Leraning Super Sampling (DLSS).</summary>
         [Range(0, 1)]
         public float DLSSSharpness;
+
+        /// <summary>Toggle sharpness override for AMD FidelityFX Super Resolution (FSR).
+        /// If this is on, a sharpness value specified by the user will be used instead of the default.
+        /// </summary>
+        public bool fsrOverrideSharpness;
+
+        /// <summary>Pixel sharpness of AMD FidelityFX Super Resolution (FSR).</summary>
+        [Range(0, 1)]
+        public float fsrSharpness;
 
         /// <summary>The maximum resolution percentage that dynamic resolution can reach.</summary>
         public float maxPercentage;

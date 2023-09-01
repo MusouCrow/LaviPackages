@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEditor.UIElements;
+
 
 using Action = System.Action;
 
-using FloatField = UnityEditor.VFX.UI.VFXLabeledField<UnityEditor.UIElements.FloatField, float>;
+using FloatField = UnityEditor.VFX.UI.VFXLabeledField<UnityEngine.UIElements.FloatField, float>;
 
 namespace UnityEditor.VFX.UI
 {
@@ -26,8 +26,8 @@ namespace UnityEditor.VFX.UI
                     newField.control.AddToClassList("fieldContainer");
                     newField.RegisterCallback<ChangeEvent<float>>(OnFloatValueChanged);
 
-                    newField.onValueDragFinished = t => ValueDragFinished();
-                    newField.onValueDragStarted = t => ValueDragStarted();
+                    newField.SetOnValueDragFinished(t => ValueDragFinished());
+                    newField.SetOnValueDragStarted(t => ValueDragStarted());
                 }
             }
         }

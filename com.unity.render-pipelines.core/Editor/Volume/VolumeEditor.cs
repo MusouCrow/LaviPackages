@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
-using UnityEditor.PackageManager;
+using UnityEditor.Rendering.Analytics;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 
 namespace UnityEditor.Rendering
@@ -13,11 +12,7 @@ namespace UnityEditor.Rendering
         static class Styles
         {
             public static readonly GUIContent mode = EditorGUIUtility.TrTextContent("Mode", "This property defines whether the Volume is Global or Local. Global: Volumes affect the Camera everywhere in the Scene. Local: Volumes affect the Camera if the Camera is within the bounds of the Collider.");
-            public static readonly GUIContent[] modes =
-            {
-                EditorGUIUtility.TrTextContent("Global"),
-                EditorGUIUtility.TrTextContent("Local")
-            };
+            public static readonly GUIContent[] modes = { EditorGUIUtility.TrTextContent("Global"), EditorGUIUtility.TrTextContent("Local") };
 
             public static readonly GUIContent addBoxCollider = EditorGUIUtility.TrTextContent("Add a Box Collider");
             public static readonly GUIContent sphereBoxCollider = EditorGUIUtility.TrTextContent("Add a Sphere Collider");
@@ -71,10 +66,11 @@ namespace UnityEditor.Rendering
         {
             m_ComponentList.Clear();
 
-            asset?.Sanitize();
-
             if (asset != null)
+            {
+                asset.Sanitize();
                 m_ComponentList.Init(asset, new SerializedObject(asset));
+            }
         }
 
         private void AddOverride()
@@ -157,7 +153,12 @@ namespace UnityEditor.Rendering
             }
 
             EditorGUILayout.PropertyField(m_Weight);
-            EditorGUILayout.PropertyField(m_Priority);
+            bool priorityHasChanged = false;
+            using (var scope = new EditorGUI.ChangeCheckScope())
+            {
+                EditorGUILayout.PropertyField(m_Priority);
+                priorityHasChanged = scope.changed;
+            }
 
             bool assetHasChanged = false;
             bool showCopy = m_Profile.objectReferenceValue != null;
@@ -173,26 +174,33 @@ namespace UnityEditor.Rendering
             var buttonNewRect = new Rect(fieldRect.xMax, lineRect.y, buttonWidth, lineRect.height);
             var buttonCopyRect = new Rect(buttonNewRect.xMax, lineRect.y, buttonWidth, lineRect.height);
 
-            GUIContent guiContent = actualTarget.HasInstantiatedProfile() ? Styles.profileInstance : Styles.profile;
 
-            EditorGUI.PrefixLabel(labelRect, guiContent);
-
-            using (new EditorGUI.PropertyScope(fieldRect, GUIContent.none, m_Profile))
             using (var scope = new EditorGUI.ChangeCheckScope())
             {
-                var profile = actualTarget.HasInstantiatedProfile()
-                    ? actualTarget.profile
-                    : m_Profile.objectReferenceValue;
-
-                VolumeProfile editedProfile =
-                    (VolumeProfile)EditorGUI.ObjectField(fieldRect, profile, typeof(VolumeProfile), false);
+                var isProfileInstance = actualTarget.HasInstantiatedProfile();
+                VolumeProfile editedProfile;
+                if (isProfileInstance)
+                {
+                    var prevMixedValueState = EditorGUI.showMixedValue;
+                    EditorGUI.showMixedValue = m_Profile.hasMultipleDifferentValues;
+                    EditorGUI.PrefixLabel(labelRect, Styles.profileInstance);
+                    editedProfile = (VolumeProfile)EditorGUI.ObjectField(fieldRect, actualTarget.profile, typeof(VolumeProfile), false);
+                    EditorGUI.showMixedValue = prevMixedValueState;
+                }
+                else
+                {
+                    fieldRect = new Rect(labelRect.x, labelRect.y, labelRect.width + fieldRect.width, fieldRect.height);
+                    EditorGUI.ObjectField(fieldRect, m_Profile, Styles.profile);
+                    editedProfile = (VolumeProfile)m_Profile.objectReferenceValue;
+                }
                 if (scope.changed)
                 {
                     assetHasChanged = true;
-                    m_Profile.objectReferenceValue = editedProfile;
-
-                    if (actualTarget.HasInstantiatedProfile()) // Clear the instantiated profile, from now on we're using shared again
+                    if (isProfileInstance)
+                        // Clear the instantiated profile, from now on we're using shared again
                         actualTarget.profile = null;
+                    else
+                        m_Profile.objectReferenceValue = editedProfile;
                 }
             }
 
@@ -202,7 +210,7 @@ namespace UnityEditor.Rendering
                 {
                     // By default, try to put assets in a folder next to the currently active
                     // scene file. If the user isn't a scene, put them in root instead.
-                    var targetName = actualTarget.name;
+                    var targetName = actualTarget.name + " Profile";
                     var scene = actualTarget.gameObject.scene;
                     var asset = VolumeProfileFactory.CreateVolumeProfile(scene, targetName);
                     m_Profile.objectReferenceValue = asset;
@@ -210,17 +218,19 @@ namespace UnityEditor.Rendering
                     assetHasChanged = true;
                 }
 
-                guiContent = actualTarget.HasInstantiatedProfile() ? Styles.saveLabel : Styles.cloneLabel;
+                GUIContent guiContent = actualTarget.HasInstantiatedProfile() ? Styles.saveLabel : Styles.cloneLabel;
                 if (showCopy && GUI.Button(buttonCopyRect, guiContent, EditorStyles.miniButtonRight))
                 {
                     // Duplicate the currently assigned profile and save it as a new profile
                     var origin = profileRef;
                     var path = AssetDatabase.GetAssetPath(m_Profile.objectReferenceValue);
 
-                    path = IsAssetInReadOnlyPackage(path)
+                    path = CoreEditorUtils.IsAssetInReadOnlyPackage(path)
+
                         // We may be in a read only package, in that case we need to clone the volume profile in an
                         // editable area, such as the root of the project.
                         ? AssetDatabase.GenerateUniqueAssetPath(Path.Combine("Assets", Path.GetFileName(path)))
+
                         // Otherwise, duplicate next to original asset.
                         : AssetDatabase.GenerateUniqueAssetPath(path);
 
@@ -269,17 +279,26 @@ namespace UnityEditor.Rendering
                 }
             }
 
-            serializedObject.ApplyModifiedProperties();
+            if (actualTarget.sharedProfile == null && m_Profile.objectReferenceValue != null)
+            {
+                if (Event.current.type != EventType.Layout)
+                {
+                    actualTarget.sharedProfile = (VolumeProfile)m_Profile.objectReferenceValue;
+                    if (actualTarget.HasInstantiatedProfile())
+                        actualTarget.profile = null;
+                    RefreshEffectListEditor(actualTarget.sharedProfile);
+                }
+            }
+	        serializedObject.ApplyModifiedProperties();
+
+            if (assetHasChanged)
+                VolumeProfileUsageAnalytic.Send(actualTarget, (VolumeProfile)m_Profile.objectReferenceValue);
+
+            if (priorityHasChanged)
+                VolumePriorityUsageAnalytic.Send(actualTarget);
 
             if (m_Profile.objectReferenceValue == null)
                 EditorGUILayout.HelpBox(Styles.noVolumeMessage, MessageType.Info);
-        }
-
-        static bool IsAssetInReadOnlyPackage(string path)
-        {
-            Assert.IsNotNull(path);
-            var info = PackageManager.PackageInfo.FindForAssetPath(path);
-            return info != null && (info.source != PackageSource.Local && info.source != PackageSource.Embedded);
         }
     }
 }

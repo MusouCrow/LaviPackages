@@ -6,7 +6,8 @@ using UnityEngine.VFX;
 
 namespace UnityEditor.VFX.Operator
 {
-    [VFXInfo(category = "Sampling", variantProvider = typeof(SampleMeshProvider), experimental = true)]
+    [VFXHelpURL("Operator-MeshVertexCount")]
+    [VFXInfo(category = "Sampling", variantProvider = typeof(SampleMeshProvider))]
     class MeshVertexCount : VFXOperator
     {
         override public string name
@@ -14,9 +15,9 @@ namespace UnityEditor.VFX.Operator
             get
             {
                 if (source == SampleMesh.SourceType.Mesh)
-                    return "Mesh Vertex Count";
+                    return "Get Mesh Vertex Count";
                 else
-                    return "Skinned Mesh Vertex Count";
+                    return "Get Skinned Mesh Vertex Count";
             }
         }
 

@@ -83,7 +83,7 @@ namespace UnityEditor.VFX.UI
 
             m_Title.RegisterCallback<MouseDownEvent>(OnTitleMouseDown);
 
-            m_TitleField.Q("unity-text-input").RegisterCallback<FocusOutEvent>(OnTitleBlur);
+            m_TitleField.Q("unity-text-input").RegisterCallback<FocusOutEvent>(OnTitleBlur, TrickleDown.TrickleDown);
             m_TitleField.RegisterCallback<ChangeEvent<string>>(OnTitleChange);
             m_Title.RegisterCallback<GeometryChangedEvent>(OnTitleRelayout);
 
@@ -164,7 +164,7 @@ namespace UnityEditor.VFX.UI
             title = m_TitleField.value;
             m_TitleField.style.display = DisplayStyle.None;
 
-            controller.title = title;
+            controller.SetTitle(title);
         }
 
         void OnContextChanged(GeometryChangedEvent e)

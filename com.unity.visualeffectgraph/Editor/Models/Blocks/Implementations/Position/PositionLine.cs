@@ -1,10 +1,11 @@
 using System.Collections.Generic;
-using System.Linq;
+
 using UnityEngine;
 
 namespace UnityEditor.VFX.Block
 {
-    [VFXInfo(category = "Position", variantProvider = typeof(PositionBaseProvider))]
+    [VFXHelpURL("Block-SetPosition(Line)")]
+    [VFXInfo(category = "Attribute/position/Composition/{0}", variantProvider = typeof(PositionBaseProvider))]
     class PositionLine : PositionBase
     {
         public override string name { get { return string.Format(base.name, "Line"); } }

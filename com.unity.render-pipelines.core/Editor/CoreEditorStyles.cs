@@ -28,10 +28,6 @@ namespace UnityEditor.Rendering
         /// <summary>Style for a small checkbox in mixed state</summary>
         public static GUIStyle smallMixedTickbox => m_SmallMixedTickbox.Value;
 
-        static System.Lazy<GUIStyle> m_HelpBoxLabelStyle = new(() => new GUIStyle(EditorStyles.miniLabel) { wordWrap = true });
-        /// <summary>Style for a small checkbox in mixed state</summary>
-        internal static GUIStyle helpBoxLabelStyle => m_HelpBoxLabelStyle.Value;
-
         static GUIStyle m_MiniLabelButton;
         /// <summary>Style for a minilabel button</summary>
         public static GUIStyle miniLabelButton
@@ -84,6 +80,7 @@ namespace UnityEditor.Rendering
         /// <summary>Style of Sub-Section Headers.</summary>
         public static GUIStyle subSectionHeaderStyle => m_SubSectionHeaderStyle.Value;
 
+
         static System.Lazy<GUIStyle> m_HelpBox = new(() =>
         {
             var style = new GUIStyle() { imagePosition = ImagePosition.ImageLeft, fontSize = 10, wordWrap = true };
@@ -121,6 +118,8 @@ namespace UnityEditor.Rendering
         public static readonly Texture2D iconFail;
         /// <summary> Success icon </summary>
         public static readonly Texture2D iconSuccess;
+        /// <summary> Complete icon </summary>
+        public static readonly Texture2D iconComplete;
         /// <summary> Pending icon </summary>
         public static readonly Texture2D iconPending;
 
@@ -214,6 +213,7 @@ namespace UnityEditor.Rendering
             iconWarn = CoreEditorUtils.LoadIcon("icons", "console.warnicon", ".png");
             iconFail = CoreEditorUtils.LoadIcon("icons", "console.erroricon", ".png");
             iconSuccess = EditorGUIUtility.FindTexture("TestPassed");
+            iconComplete = CoreEditorUtils.LoadIcon("icons", "GreenCheckmark", ".png");
             iconPending = EditorGUIUtility.FindTexture("Toolbar Minus");
 
             globalSettingsIcon = EditorGUIUtility.FindTexture("ScriptableObject Icon");

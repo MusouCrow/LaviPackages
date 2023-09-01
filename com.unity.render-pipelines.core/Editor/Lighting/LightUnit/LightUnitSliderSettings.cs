@@ -134,17 +134,17 @@ namespace UnityEditor.Rendering
         };
 
         /// <summary>
-        /// Content
+        /// The content
         /// </summary>
         public GUIContent content;
 
         /// <summary>
-        /// Value
+        /// The value
         /// </summary>
         public Vector2 value;
 
         /// <summary>
-        /// Preset value
+        /// The value of the preset
         /// </summary>
         public float presetValue;
     }

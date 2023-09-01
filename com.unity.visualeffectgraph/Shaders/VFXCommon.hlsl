@@ -449,11 +449,18 @@ float SnapToTexel(float f)
     return f - fmod(f, kInvTextureWidth) + 0.5f * kInvTextureWidth;
 }
 
-float4 SampleGradient(float2 gradientData, float u)
+float4 SampleGradient(float3 gradientData, float u)
 {
     float2 uv = float2(HalfTexelOffset(saturate(u)), gradientData.x);
     if (gradientData.y > 0.5f) uv.x = SnapToTexel(uv.x);
-    return SampleTexture(VFX_SAMPLER(bakedTexture), uv, 0);
+    float4 gradientResult = SampleTexture(VFX_SAMPLER(bakedTexture), uv, 0);
+    gradientResult.rgb *= gradientData.z;
+    return gradientResult;
+}
+
+float4 SampleGradient(float2 gradientData, float u)
+{
+    return SampleGradient(float3(gradientData, 1.0f), u);
 }
 
 float4 SampleGradient(float gradientData, float u)
@@ -463,7 +470,9 @@ float4 SampleGradient(float gradientData, float u)
 
 float SampleCurve(float4 curveData, float u)
 {
-    float uNorm = (u * curveData.x) + curveData.y;
+    float invScaleU = f16tof32(asuint(curveData.x));
+    float scaledStart = f16tof32(asuint(curveData.x) >> 16);
+    float uNorm = (u * invScaleU) + scaledStart;
 
 #if defined(SHADER_API_METAL)
     // Workaround metal compiler crash that is caused by switch statement uint byte shift
@@ -476,7 +485,7 @@ float SampleCurve(float4 curveData, float u)
         case 2: uNorm = HalfTexelOffset(frac(max(0.0f, uNorm))); break; // clamp start
         case 3: uNorm = HalfTexelOffset(saturate(uNorm)); break; // clamp both
     }
-    return SampleTexture(VFX_SAMPLER(bakedTexture), float2(uNorm, curveData.z), 0)[asuint(curveData.w) & 0x3];
+    return curveData.y * SampleTexture(VFX_SAMPLER(bakedTexture), float2(uNorm, curveData.z), 0)[asuint(curveData.w) & 0x3];
 }
 
 ///////////
@@ -622,9 +631,13 @@ struct VFXUVData
 
 float4 SampleTexture(VFXSampler2D s, VFXUVData uvData)
 {
+ #if USE_FLIPBOOK_INTERPOLATION
     float4 s0 = SampleTexture(s, uvData.uvs.xy + uvData.mvs.xy);
     float4 s1 = SampleTexture(s, uvData.uvs.zw + uvData.mvs.zw);
     return lerp(s0, s1, uvData.blend);
+#else
+    return SampleTexture(s, uvData.uvs.xy);
+#endif
 }
 
 float4 SampleTexture(VFXSampler2DArray s, VFXUVData uvData) //For flipbook in array layout
@@ -700,6 +713,59 @@ VFXUVData GetUVData(float2 flipBookSize, float2 uv, float texIndex)
     return GetUVData(flipBookSize, 1.0f / flipBookSize, uv, texIndex);
 }
 
+////////////////
+// Prefix Sum //
+////////////////
+
+//Binary search in Inclusive Prefix sum
+//Returns the index of the category between startIndex (included) and endIndex (excluded) where value lands.
+//If value exceeds the total capacity of the list, the function will return endIndex and remainder will be the amount exceeding
+//Optionally, it can return the remainder of the value compared to its category
+uint BinarySearchPrefixSum(uint value, StructuredBuffer<uint> prefixSum,uint startIndex, uint endIndex, out uint remainder)
+{
+    uint left = startIndex;
+    uint right = endIndex - 1;
+
+    while (left < right)
+    {
+        uint center = (left + right) / 2;
+        if (value < prefixSum[center])
+        {
+            right = center;
+        }
+        else
+        {
+            left = center + 1;
+        }
+    }
+    uint index = left;
+
+    uint prevValue = 0;
+    [branch]
+    if (index > startIndex)
+    {
+        prevValue = prefixSum[index - 1];
+    }
+    remainder = value - prevValue;
+    return index;
+}
+
+uint BinarySearchPrefixSum(uint value, StructuredBuffer<uint> prefixSum, uint startIndex, uint endIndex)
+{
+    uint remainder;
+    return BinarySearchPrefixSum(value, prefixSum, startIndex, endIndex, remainder);
+}
+
+/////////////////////
+// Thread indexing //
+/////////////////////
+
+#ifdef NB_THREADS_PER_GROUP
+uint GetThreadId(uint3 groupId, uint3 groupThreadId, uint dispatchWidth)
+{
+    return groupThreadId.x + groupId.x * NB_THREADS_PER_GROUP + groupId.y * dispatchWidth * NB_THREADS_PER_GROUP;
+}
+#endif
 
 ///////////
 // Noise //
@@ -713,10 +779,14 @@ VFXUVData GetUVData(float2 flipBookSize, float2 uv, float texIndex)
 
 #include "VFXParticleStripCommon.hlsl"
 
-
-
 ////////////////////////////
 // Bounds reduction utils //
 ////////////////////////////
 
 #include "VFXBoundsReduction.hlsl"
+
+
+//////////////////////
+// Instancing Utils //
+//////////////////////
+#include "VFXInstancing.hlsl"

@@ -1,11 +1,11 @@
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.VFX;
 
 namespace UnityEditor.VFX.Block
 {
-    [VFXInfo(category = "Position", variantProvider = typeof(PositionBaseProvider))]
+    [VFXHelpURL("Block-SetPosition(Sphere)")]
+    [VFXInfo(category = "Attribute/position/Composition/{0}", variantProvider = typeof(PositionBaseProvider))]
     class PositionSphere : PositionBase
     {
         public override string name { get { return string.Format(base.name, "Arc Sphere"); } }

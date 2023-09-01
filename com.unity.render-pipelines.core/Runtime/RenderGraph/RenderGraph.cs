@@ -175,6 +175,9 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
             public List<int>[] resourceReadLists;
             public List<int>[] resourceWriteLists;
             public bool culled;
+            public bool async;
+            public int syncToPassIndex; // Index of the pass that needs to be waited for.
+            public int syncFromPassIndex; // Smaller pass index that waits for this pass.
             // We have this member instead of removing the pass altogether because we need the full list of passes in order to be able to remap them correctly when we remove them from display in the viewer.
             public bool generateDebugData;
         }
@@ -247,6 +250,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
             public List<int>[] resourceReleaseList;
             public int refCount;
             public bool culled;
+            public bool culledByRendererList;
             public bool hasSideEffect;
             public int syncToPassIndex; // Index of the pass that needs to be waited for.
             public int syncFromPassIndex; // Smaller pass index that waits for this pass.
@@ -296,6 +300,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
 
                 refCount = 0;
                 culled = false;
+                culledByRendererList = false;
                 hasSideEffect = false;
                 syncToPassIndex = -1;
                 syncFromPassIndex = -1;
@@ -493,6 +498,16 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         }
 
         /// <summary>
+        /// Refresh a shared texture with a new descriptor.
+        /// </summary>
+        /// <param name="handle">Shared texture that needs to be updated.</param>
+        /// <param name="desc">New Descriptor for the texture.</param>
+        public void RefreshSharedTextureDesc(TextureHandle handle, in TextureDesc desc)
+        {
+            m_Resources.RefreshSharedTextureDesc(handle, desc);
+        }
+
+        /// <summary>
         /// Release a Render Graph shared texture resource.
         /// </summary>
         /// <param name="texture">The handle to the texture that needs to be release.</param>
@@ -640,6 +655,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
             m_CurrentFrameIndex = parameters.currentFrameIndex;
             m_CurrentExecutionName = parameters.executionName != null ? parameters.executionName : "RenderGraphExecution";
             m_HasRenderGraphBegun = true;
+            m_RendererListCulling = parameters.rendererListCulling;
 
             m_Resources.BeginRenderGraph(m_ExecutionCount++);
 
@@ -975,6 +991,40 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
             }
         }
 
+        int GetFirstValidConsumerIndex(int passIndex, in CompiledResourceInfo info)
+        {
+            // We want to know the lowest pass index after the current pass that reads from the resource.
+            foreach (int consumer in info.consumers)
+            {
+                // consumers are by construction in increasing order.
+                if (consumer > passIndex && !m_CompiledPassInfos[consumer].culled)
+                    return consumer;
+            }
+
+            return -1;
+        }
+
+        int FindTextureProducer(int consumerPass, in CompiledResourceInfo info, out int index)
+        {
+            // We check all producers before the consumerPass. The first one not culled will be the one allocating the resource
+            // If they are all culled, we need to get the one right before the consumer, it will allocate or reuse the resource
+
+            int previousPass = 0;
+            for (index = 0; index < info.producers.Count; index++)
+            {
+                int currentPass = info.producers[index];
+                // We found a valid producer - he will allocate the texture
+                if (!m_CompiledPassInfos[currentPass].culled)
+                    return currentPass;
+                // We reached consumer pass, return last producer even if it's culled
+                if (currentPass >= consumerPass)
+                    return previousPass;
+                previousPass = currentPass;
+            }
+
+            return previousPass;
+        }
+
         int GetLatestProducerIndex(int passIndex, in CompiledResourceInfo info)
         {
             // We want to know the highest pass index below the current pass that writes to the resource.
@@ -1053,6 +1103,78 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
             m_Resources.CreateRendererLists(m_RendererLists, m_RenderGraphContext.renderContext, m_RendererListCulling);
         }
 
+        internal bool GetImportedFallback(TextureDesc desc, out TextureHandle fallback)
+        {
+            fallback = TextureHandle.nullHandle;
+
+            // We don't have any fallback texture with MSAA
+            if (!desc.bindTextureMS)
+            {
+                if (desc.depthBufferBits != DepthBits.None)
+                {
+                    fallback = defaultResources.whiteTexture;
+                }
+                else if (desc.clearColor == Color.black || desc.clearColor == default)
+                {
+                    if (desc.dimension == TextureXR.dimension)
+                        fallback = defaultResources.blackTextureXR;
+                    else if (desc.dimension == TextureDimension.Tex3D)
+                        fallback = defaultResources.blackTexture3DXR;
+                    else if (desc.dimension == TextureDimension.Tex2D)
+                        fallback = defaultResources.blackTexture;
+                }
+                else if (desc.clearColor == Color.white)
+                {
+                    if (desc.dimension == TextureXR.dimension)
+                        fallback = defaultResources.whiteTextureXR;
+                    else if (desc.dimension == TextureDimension.Tex2D)
+                        fallback = defaultResources.whiteTexture;
+                }
+            }
+
+            return fallback.IsValid();
+        }
+
+        void AllocateCulledPassResources(ref CompiledPassInfo passInfo, int passIndex)
+        {
+            for (int type = 0; type < (int)RenderGraphResourceType.Count; ++type)
+            {
+                var resourcesInfo = m_CompiledResourcesInfos[type];
+                foreach (var resourceHandle in passInfo.pass.resourceWriteLists[type])
+                {
+                    ref var compiledResource = ref resourcesInfo[resourceHandle];
+
+                    // Check if there is a valid consumer and no other valid producer
+                    int consumerPass = GetFirstValidConsumerIndex(passIndex, compiledResource);
+                    int producerPass = FindTextureProducer(consumerPass, compiledResource, out int index);
+                    if (consumerPass != -1 && passIndex == producerPass)
+                    {
+                        if (type == (int)RenderGraphResourceType.Texture)
+                        {
+                            // Try to transform into an imported resource - for some textures, this will save an allocation
+                            // We have a way to disable the fallback, because we can't fallback to RenderTexture and sometimes it's necessary (eg. SampleCopyChannel_xyzw2x)
+                            var textureResource = m_Resources.GetTextureResource(resourceHandle);
+                            if (!textureResource.desc.disableFallBackToImportedTexture && GetImportedFallback(textureResource.desc, out var fallback))
+                            {
+                                compiledResource.imported = true;
+                                textureResource.imported = true;
+                                textureResource.graphicsResource = m_Resources.GetTexture(fallback);
+                                continue;
+                            }
+
+                            textureResource.desc.sizeMode = TextureSizeMode.Explicit;
+                            textureResource.desc.width = 1;
+                            textureResource.desc.height = 1;
+                            textureResource.desc.clearBuffer = true;
+                        }
+
+                        // Delegate resource allocation to the consumer
+                        compiledResource.producers[index - 1] = consumerPass;
+                    }
+                }
+            }
+        }
+
         void UpdateResourceAllocationAndSynchronization()
         {
             int lastGraphicsPipeSync = -1;
@@ -1065,6 +1187,11 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
             for (int passIndex = 0; passIndex < m_CompiledPassInfos.size; ++passIndex)
             {
                 ref CompiledPassInfo passInfo = ref m_CompiledPassInfos[passIndex];
+
+                // If this pass is culled, we need to make sure that any texture read by a later pass is still allocated
+                // We also try to find an imported fallback to save an allocation
+                if (passInfo.culledByRendererList)
+                    AllocateCulledPassResources(ref passInfo, passIndex);
 
                 if (passInfo.culled)
                     continue;
@@ -1155,6 +1282,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
                                 else
                                 {
                                     RenderGraphPass invalidPass = m_RenderPasses[lastReadPassIndex];
+
                                     var resName = "<unknown>";
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
                                     resName = m_Resources.GetRenderGraphResourceName((RenderGraphResourceType)type, i);
@@ -1165,7 +1293,13 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
                             }
 
                             // Finally add the release command to the pass before the first pass that waits for the compute pipe.
-                            ref CompiledPassInfo passInfo = ref m_CompiledPassInfos[Math.Max(0, firstWaitingPassIndex - 1)];
+                            var releasePassIndex = Math.Max(0, firstWaitingPassIndex - 1);
+
+                            // Check to ensure that we do not release resources on a culled pass (causes a leak otherwise).
+                            while (m_CompiledPassInfos[releasePassIndex].culled)
+                                releasePassIndex = Math.Max(0, releasePassIndex - 1);
+
+                            ref CompiledPassInfo passInfo = ref m_CompiledPassInfos[releasePassIndex];
                             passInfo.resourceReleaseList[type].Add(i);
                         }
                         else
@@ -1193,6 +1327,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
                     return false;
                 }
             }
+
             // If the list of RendererLists is empty, then the default behavior is to not cull, so return false.
             return rendererLists.Count > 0 ? true : false;
         }
@@ -1205,10 +1340,10 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
                 pass.allowRendererListCulling &&
                 !m_CompiledPassInfos[passIndex].hasSideEffect)
             {
-                if (AreRendererListsEmpty(pass.usedRendererListList) || AreRendererListsEmpty(pass.dependsOnRendererListList))
+                if (AreRendererListsEmpty(pass.usedRendererListList))
                 {
                     //Debug.Log($"Culling pass <color=red> {pass.name} </color>");
-                    m_CompiledPassInfos[passIndex].culled = true;
+                    m_CompiledPassInfos[passIndex].culled = m_CompiledPassInfos[passIndex].culledByRendererList = true;
                 }
             }
         }
@@ -1220,7 +1355,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
                 if (!m_CompiledPassInfos[passIndex].culled && !m_CompiledPassInfos[passIndex].hasSideEffect)
                 {
                     var pass = m_CompiledPassInfos[passIndex].pass;
-                    if (pass.usedRendererListList.Count > 0 || pass.dependsOnRendererListList.Count > 0)
+                    if (pass.usedRendererListList.Count > 0)
                     {
                         TryCullPassAtIndex(passIndex);
                     }
@@ -1273,19 +1408,6 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
             // We will release all resources at the end of the render graph execution.
             for (int iType = 0; iType < (int)RenderGraphResourceType.Count; ++iType)
             {
-                foreach (var res in pass.resourceWriteLists[iType])
-                {
-                    if (!m_Resources.IsGraphicsResourceCreated(res))
-                    {
-                        passInfo.resourceCreateList[iType].Add(res);
-                        m_ImmediateModeResourceList[iType].Add(res);
-                    }
-
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-                    passInfo.debugResourceWrites[iType].Add(m_Resources.GetRenderGraphResourceName(res));
-#endif
-                }
-
                 foreach (var res in pass.transientResourceList[iType])
                 {
                     passInfo.resourceCreateList[iType].Add(res);
@@ -1294,6 +1416,22 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
                     passInfo.debugResourceWrites[iType].Add(m_Resources.GetRenderGraphResourceName(res));
                     passInfo.debugResourceReads[iType].Add(m_Resources.GetRenderGraphResourceName(res));
+#endif
+                }
+
+                foreach (var res in pass.resourceWriteLists[iType])
+                {
+                    if (pass.transientResourceList[iType].Contains(res))
+                        continue; // Prevent registering writes to transient texture twice
+
+                    if (!m_Resources.IsGraphicsResourceCreated(res))
+                    {
+                        passInfo.resourceCreateList[iType].Add(res);
+                        m_ImmediateModeResourceList[iType].Add(res);
+                    }
+
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                    passInfo.debugResourceWrites[iType].Add(m_Resources.GetRenderGraphResourceName(res));
 #endif
                 }
 
@@ -1621,9 +1759,12 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
                 RenderGraphDebugData.PassDebugData newPass = new RenderGraphDebugData.PassDebugData();
                 newPass.name = passInfo.pass.name;
                 newPass.culled = passInfo.culled;
+                newPass.async = passInfo.enableAsyncCompute;
                 newPass.generateDebugData = passInfo.pass.generateDebugData;
                 newPass.resourceReadLists = new List<int>[(int)RenderGraphResourceType.Count];
                 newPass.resourceWriteLists = new List<int>[(int)RenderGraphResourceType.Count];
+                newPass.syncFromPassIndex = passInfo.syncFromPassIndex;
+                newPass.syncToPassIndex = passInfo.syncToPassIndex;
 
                 for (int type = 0; type < (int)RenderGraphResourceType.Count; ++type)
                 {

@@ -2,7 +2,7 @@
 
 using UnityEngine;
 using UnityEngine.UIElements;
-using FloatField = UnityEditor.VFX.UI.VFXLabeledField<UnityEditor.UIElements.FloatField, float>;
+using FloatField = UnityEditor.VFX.UI.VFXLabeledField<UnityEngine.UIElements.FloatField, float>;
 
 
 namespace UnityEditor.VFX.UI
@@ -153,6 +153,18 @@ namespace UnityEditor.VFX.UI
                 m_FloatFields[i].SetValueWithoutNotify(m_Value[i]);
                 m_TooltipHolders[i].tooltip = m_Value[i].ToString();
             }
+        }
+
+        public override object FilterValue(object value)
+        {
+
+            Color colorValue = (Color)value;
+            value =  new Color(Mathf.Max(colorValue.r, 0),
+                Mathf.Max(colorValue.g, 0),
+                Mathf.Max(colorValue.b, 0),
+                Mathf.Max(colorValue.a, 0));
+
+            return value;
         }
 
         public override bool showsEverything { get { return true; } }

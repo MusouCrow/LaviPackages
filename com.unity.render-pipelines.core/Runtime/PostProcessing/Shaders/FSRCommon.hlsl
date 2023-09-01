@@ -81,6 +81,21 @@ AH4 FsrEasuBH(AF2 p)
 {
     return (AH4)GATHER_BLUE_TEXTURE2D_X(FSR_INPUT_TEXTURE, FSR_INPUT_SAMPLER, p);
 }
+
+void FsrEasuProcessInput(inout AH4 r, inout AH4 g, inout AH4 b)
+{
+    // HDRP only. URP use an upscaling pass before EASU pass where this operation can be done.
+#ifdef HDR_INPUT
+    AH3 s0 = FastTonemap(AH3(r.x, g.x, b.x) * FSR_EASU_ONE_OVER_PAPER_WHITE);
+    AH3 s1 = FastTonemap(AH3(r.y, g.y, b.y) * FSR_EASU_ONE_OVER_PAPER_WHITE);
+    AH3 s2 = FastTonemap(AH3(r.z, g.z, b.z) * FSR_EASU_ONE_OVER_PAPER_WHITE);
+    AH3 s3 = FastTonemap(AH3(r.w, g.w, b.w) * FSR_EASU_ONE_OVER_PAPER_WHITE);
+
+    r = AH4(s0.r, s1.r, s2.r, s3.r);
+    g = AH4(s0.g, s1.g, s2.g, s3.g);
+    b = AH4(s0.b, s1.b, s2.b, s3.b);
+#endif
+}
 #else
 AF4 FsrEasuRF(AF2 p)
 {
@@ -93,6 +108,24 @@ AF4 FsrEasuGF(AF2 p)
 AF4 FsrEasuBF(AF2 p)
 {
     return GATHER_BLUE_TEXTURE2D_X(FSR_INPUT_TEXTURE, FSR_INPUT_SAMPLER, p);
+}
+
+void FsrEasuProcessInput(inout AF4 r, inout AF4 g, inout AF4 b)
+{
+    // HDRP only. URP use an upscaling pass before EASU pass where this operation can be done.
+#ifdef HDR_INPUT
+    #ifndef FSR_EASU_ONE_OVER_PAPER_WHITE
+    #error missing definition of FSR_EASU_ONE_OVER_PAPER_WHITE
+    #endif
+    float3 s0 = FastTonemap(float3(r.x, g.x, b.x) * FSR_EASU_ONE_OVER_PAPER_WHITE);
+    float3 s1 = FastTonemap(float3(r.y, g.y, b.y) * FSR_EASU_ONE_OVER_PAPER_WHITE);
+    float3 s2 = FastTonemap(float3(r.z, g.z, b.z) * FSR_EASU_ONE_OVER_PAPER_WHITE);
+    float3 s3 = FastTonemap(float3(r.w, g.w, b.w) * FSR_EASU_ONE_OVER_PAPER_WHITE);
+
+    r = float4(s0.r, s1.r, s2.r, s3.r);
+    g = float4(s0.g, s1.g, s2.g, s3.g);
+    b = float4(s0.b, s1.b, s2.b, s3.b);
+#endif
 }
 #endif
 

@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEditor.UIElements;
+
 
 using Action = System.Action;
 
-using FloatField = UnityEditor.VFX.UI.VFXLabeledField<UnityEditor.UIElements.FloatField, float>;
+using FloatField = UnityEditor.VFX.UI.VFXLabeledField<UnityEngine.UIElements.FloatField, float>;
 namespace UnityEditor.VFX.UI
 {
     abstract class VFXVectorNField<T> : VFXControl<T>
@@ -74,10 +74,11 @@ namespace UnityEditor.VFX.UI
                 m_Fields[i].control.AddToClassList("fieldContainer");
                 m_Fields[i].AddToClassList("fieldContainer");
                 m_Fields[i].RegisterCallback<ChangeEvent<float>, int>(OnValueChanged, i);
+                m_Fields[i].RegisterCallback<FocusOutEvent>(OnLostFocus);
 
 
-                m_Fields[i].onValueDragFinished = t => ValueDragFinished();
-                m_Fields[i].onValueDragStarted = t => ValueDragStarted();
+                m_Fields[i].SetOnValueDragFinished(t => ValueDragFinished());
+                m_Fields[i].SetOnValueDragStarted(t => ValueDragStarted());
 
                 m_FieldParents[i] = new VisualElement { name = "FieldParent" };
                 m_FieldParents[i].Add(m_Fields[i]);
@@ -92,6 +93,12 @@ namespace UnityEditor.VFX.UI
             }
 
             m_Fields[0].label.AddToClassList("first");
+        }
+
+        private void OnLostFocus(FocusOutEvent focusOutEvent)
+        {
+            // Filter value if needed (range attribute for instance)
+            this.ValueToGUI(true);
         }
 
         public override bool indeterminate

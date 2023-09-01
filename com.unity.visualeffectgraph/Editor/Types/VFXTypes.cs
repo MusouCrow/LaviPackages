@@ -38,11 +38,6 @@ namespace UnityEditor.VFX
         }
     }
 
-    class CoordinateSpaceInfo
-    {
-        public static readonly int SpaceCount = Enum.GetValues(typeof(VFXCoordinateSpace)).Length;
-    }
-
     [VFXType(VFXTypeAttribute.Usage.Default, "Circle"), Serializable]
     struct TCircle
     {
@@ -101,7 +96,7 @@ namespace UnityEditor.VFX
         public static TSphere defaultValue = new TSphere { transform = Transform.defaultValue, radius = 1.0f };
     }
 
-    [VFXType(VFXTypeAttribute.Usage.Default), Serializable]
+    [VFXType(VFXTypeAttribute.Usage.Default, "Arc Sphere"), Serializable]
     struct TArcSphere
     {
         public TSphere sphere;
@@ -355,12 +350,14 @@ namespace UnityEditor.VFX
         public float aspectRatio;
         [Min(0.0f), Tooltip("The width and height of the camera in pixels.")]
         public Vector2 pixelDimensions;
+        [Tooltip("The lens shift along the x and y directions.")]
+        public Vector2 lensShift;
         [Tooltip("The depth buffer of the camera, containing the rendered depth information.")]
         public CameraBuffer depthBuffer;
         [Tooltip("The color buffer of the camera, containing the rendered color information.")]
         public CameraBuffer colorBuffer;
 
-        public static CameraType defaultValue = new CameraType { transform = Transform.defaultValue, fieldOfView = 60.0f * Mathf.Deg2Rad, nearPlane = 0.3f, farPlane = 1000.0f, aspectRatio = 1.0f, orthographicSize = 5.0f, pixelDimensions = new Vector2(1920, 1080) };
+        public static CameraType defaultValue = new CameraType { transform = Transform.defaultValue, fieldOfView = 60.0f * Mathf.Deg2Rad, nearPlane = 0.3f, farPlane = 1000.0f, aspectRatio = 1.0f, lensShift = Vector2.zero, orthographicSize = 5.0f, pixelDimensions = new Vector2(1920, 1080) };
     }
 
     [VFXType, Serializable]

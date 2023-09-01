@@ -1,14 +1,11 @@
 using System;
-using System.Linq;
-using System.Collections.ObjectModel;
 using System.Collections.Generic;
+
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.VFX;
-using System.Runtime.Remoting.Messaging;
 
 namespace UnityEditor.VFX.Operator
 {
+    [VFXHelpURL("Operator-SampleAttributeMap")]
     [VFXInfo(category = "Sampling", experimental = true)]
     class SampleAttributeMap : VFXOperatorDynamicType
     {
@@ -38,7 +35,7 @@ namespace UnityEditor.VFX.Operator
         }
 
 
-        [VFXSetting, SerializeField, Tooltip("Specifies how Unity handles the sample when the particleId is out of the point cache bounds.")]
+        [VFXSetting, SerializeField, Tooltip("Specifies how Unity handles the sample when the index is out of the point cache bounds.")]
         private VFXOperatorUtility.SequentialAddressingMode mode = VFXOperatorUtility.SequentialAddressingMode.Wrap;
 
 

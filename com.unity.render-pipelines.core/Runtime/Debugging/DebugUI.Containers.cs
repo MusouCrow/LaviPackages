@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace UnityEngine.Rendering
 {
@@ -10,6 +11,9 @@ namespace UnityEngine.Rendering
         /// </summary>
         public class Container : Widget, IContainer
         {
+            const string k_IDToken = "#";
+            internal bool hideDisplayName => string.IsNullOrEmpty(displayName) || displayName.StartsWith(k_IDToken);
+
             /// <summary>
             /// List of children.
             /// </summary>
@@ -23,11 +27,16 @@ namespace UnityEngine.Rendering
                 get { return m_Panel; }
                 internal set
                 {
+                    /// Frequenlty used panels do now own widgets
+                    if (value != null && value.flags.HasFlag(DebugUI.Flags.FrequentlyUsed))
+                        return;
+
                     m_Panel = value;
 
                     // Bubble down
-                    foreach (var child in children)
-                        child.panel = value;
+                    int numChildren = children.Count;
+                    for (int i = 0; i < numChildren; i++)
+                        children[i].panel = value;
                 }
             }
 
@@ -35,11 +44,17 @@ namespace UnityEngine.Rendering
             /// Constructor
             /// </summary>
             public Container()
+                : this(string.Empty, new ObservableList<Widget>())
             {
-                displayName = "";
-                children = new ObservableList<Widget>();
-                children.ItemAdded += OnItemAdded;
-                children.ItemRemoved += OnItemRemoved;
+            }
+
+            /// <summary>
+            /// Constructor for a container without header
+            /// </summary>
+            /// <param name="id">The id of the container</param>
+            public Container(string id)
+                : this($"{k_IDToken}{id}", new ObservableList<Widget>())
+            {
             }
 
             /// <summary>
@@ -53,14 +68,19 @@ namespace UnityEngine.Rendering
                 this.children = children;
                 children.ItemAdded += OnItemAdded;
                 children.ItemRemoved += OnItemRemoved;
+
+                // Call OnAdded callback for already existing items to ensure their panel & parent are set
+                for (int i = 0; i < this.children.Count; i++)
+                    OnItemAdded(this.children, new ListChangedEventArgs<Widget>(i, this.children[i]));
             }
 
             internal override void GenerateQueryPath()
             {
                 base.GenerateQueryPath();
 
-                foreach (var child in children)
-                    child.GenerateQueryPath();
+                int numChildren = children.Count;
+                for (int i = 0; i < numChildren; i++)
+                    children[i].GenerateQueryPath();
             }
 
             /// <summary>
@@ -105,9 +125,11 @@ namespace UnityEngine.Rendering
             {
                 int hash = 17;
                 hash = hash * 23 + queryPath.GetHashCode();
+                hash = hash * 23 + isHidden.GetHashCode();
 
-                foreach (var child in children)
-                    hash = hash * 23 + child.GetHashCode();
+                int numChildren = children.Count;
+                for (int i = 0; i < numChildren; i++)
+                    hash = hash * 23 + children[i].GetHashCode();
 
                 return hash;
             }

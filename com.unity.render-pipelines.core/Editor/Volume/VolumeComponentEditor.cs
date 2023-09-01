@@ -10,34 +10,9 @@ using UnityEngine.Rendering;
 namespace UnityEditor.Rendering
 {
     /// <summary>
-    /// This attributes tells a <see cref="VolumeComponentEditor"/> class which type of
-    /// <see cref="VolumeComponent"/> it's an editor for.
-    /// When you make a custom editor for a component, you need put this attribute on the editor
-    /// class.
-    /// </summary>
-    /// <seealso cref="VolumeComponentEditor"/>
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-    public sealed class VolumeComponentEditorAttribute : Attribute
-    {
-        /// <summary>
-        /// A type derived from <see cref="VolumeComponent"/>.
-        /// </summary>
-        public readonly Type componentType;
-
-        /// <summary>
-        /// Creates a new <see cref="VolumeComponentEditorAttribute"/> instance.
-        /// </summary>
-        /// <param name="componentType">A type derived from <see cref="VolumeComponent"/></param>
-        public VolumeComponentEditorAttribute(Type componentType)
-        {
-            this.componentType = componentType;
-        }
-    }
-
-    /// <summary>
     /// A custom editor class that draws a <see cref="VolumeComponent"/> in the Inspector. If you do not
     /// provide a custom editor for a <see cref="VolumeComponent"/>, Unity uses the default one.
-    /// You must use a <see cref="VolumeComponentEditorAttribute"/> to let the editor know which
+    /// You must use a <see cref="CustomEditor"/> to let the editor know which
     /// component this drawer is for.
     /// </summary>
     /// <example>
@@ -55,7 +30,7 @@ namespace UnityEditor.Rendering
     /// <code>
     /// using UnityEditor.Rendering;
     ///
-    /// [VolumeComponentEditor(typeof(ExampleComponent))]
+    /// [CustomEditor(typeof(ExampleComponent))]
     /// class ExampleComponentEditor : VolumeComponentEditor
     /// {
     ///     SerializedDataParameter m_Intensity;
@@ -73,9 +48,56 @@ namespace UnityEditor.Rendering
     /// }
     /// </code>
     /// </example>
-    /// <seealso cref="VolumeComponentEditorAttribute"/>
-    public class VolumeComponentEditor
+    /// <seealso cref="CustomEditor"/>
+    [CustomEditor(typeof(VolumeComponent), true)]
+    public class VolumeComponentEditor : Editor
     {
+        const string k_KeyPrefix = "CoreRP:VolumeComponent:UI_State:";
+
+        EditorPrefBool m_EditorPrefBool;
+
+        /// <summary>
+        /// If the editor for this <see cref="VolumeComponent"/> is expanded or not in the inspector
+        /// </summary>
+        public bool expanded
+        {
+            get => m_EditorPrefBool.value;
+            set => m_EditorPrefBool.value = value;
+        }
+
+        internal Type[] m_PipelineTypes;
+
+        internal Type[] pipelineTypes
+        {
+            get
+            {
+                if (m_PipelineTypes == null)
+                {
+                    var supportedOn = volumeComponent.GetType().GetCustomAttribute<VolumeComponentMenuForRenderPipeline>();
+                    if(supportedOn != null)
+                        m_PipelineTypes = supportedOn.pipelineTypes;
+                    else
+                        m_PipelineTypes = Array.Empty<Type>();
+                }
+
+                return m_PipelineTypes;
+            }
+        }
+
+        internal bool visible
+        {
+            get
+            {
+                if (RenderPipelineManager.currentPipeline == null)
+                    return false;
+
+                if (!pipelineTypes.Any())
+                    return true;
+
+                return pipelineTypes.Contains(RenderPipelineManager.currentPipeline.GetType());
+            }
+        }
+
         class Styles
         {
             public static GUIContent overrideSettingText { get; } = EditorGUIUtility.TrTextContent("", "Override this setting for this volume.");
@@ -102,17 +124,13 @@ namespace UnityEditor.Rendering
         /// <summary>
         /// Specifies the <see cref="VolumeComponent"/> this editor is drawing.
         /// </summary>
-        public VolumeComponent target { get; private set; }
-
-        /// <summary>
-        /// A <c>SerializedObject</c> representing the object being inspected.
-        /// </summary>
-        public SerializedObject serializedObject { get; private set; }
+        public VolumeComponent volumeComponent => target as VolumeComponent;
 
         /// <summary>
         /// The copy of the serialized property of the <see cref="VolumeComponent"/> being
         /// inspected. Unity uses this to track whether the editor is collapsed in the Inspector or not.
         /// </summary>
+        [Obsolete("Please use expanded property instead. #from(2022.2)", false)]
         public SerializedProperty baseProperty { get; internal set; }
 
         /// <summary>
@@ -125,12 +143,12 @@ namespace UnityEditor.Rendering
 
         AnimFloat m_AdditionalPropertiesAnimation;
         EditorPrefBool m_ShowAdditionalProperties;
-        List<VolumeParameter> m_VolumeNotAdditionalParameters;
+        List<VolumeParameter> m_VolumeNotAdditionalParameters = new List<VolumeParameter>();
 
         /// <summary>
         /// Override this property if your editor makes use of the "Additional Properties" feature.
         /// </summary>
-        public virtual bool hasAdditionalProperties => target.parameters.Count != m_VolumeNotAdditionalParameters.Count;
+        public virtual bool hasAdditionalProperties => volumeComponent.parameterList.Count != m_VolumeNotAdditionalParameters.Count;
 
         /// <summary>
         /// Set to true to show additional properties.
@@ -186,6 +204,20 @@ namespace UnityEditor.Rendering
         /// </summary>
         protected Editor m_Inspector;
 
+        /// <summary>
+        /// A reference to the parent editor in the Inspector.
+        /// </summary>
+        internal Editor inspector
+        {
+            get => m_Inspector;
+            set => m_Inspector = value;
+        }
+
+        /// <summary>
+        /// Obtains the <see cref="Volume"/> that is being edited from this volume component
+        /// </summary>
+        protected Volume volume => inspector?.target as Volume;
+
         List<(GUIContent displayName, int displayOrder, SerializedDataParameter param)> m_Parameters;
 
         static Dictionary<Type, VolumeParameterDrawer> s_ParameterDrawers;
@@ -222,18 +254,25 @@ namespace UnityEditor.Rendering
         /// <summary>
         /// Triggers an Inspector repaint event.
         /// </summary>
-        public void Repaint()
+        public new void Repaint()
         {
-            if (m_Inspector != null) // Can happen in tests.
-                m_Inspector.Repaint();
+            inspector?.Repaint();
+
             // Volume Component Editors can be shown in the ProjectSettings window (default volume profile)
             // This will force a repaint of the whole window, otherwise, additional properties highlight animation does not work properly.
             SettingsService.RepaintAllSettingsWindow();
+
+            base.Repaint();
+        }
+
+        internal static string GetAdditionalPropertiesPreferenceKey(Type type)
+        {
+            return $"UI_Show_Additional_Properties_{type}";
         }
 
         internal void InitAdditionalPropertiesPreference()
         {
-            string key = $"UI_Show_Additional_Properties_{GetType()}";
+            string key = GetAdditionalPropertiesPreferenceKey(GetType());
             m_ShowAdditionalProperties = new EditorPrefBool(key);
         }
 
@@ -242,12 +281,12 @@ namespace UnityEditor.Rendering
             m_ShowAdditionalProperties.value = value;
         }
 
-        internal void Init(VolumeComponent target, Editor inspector)
+        internal void Init()
         {
-            this.target = target;
-            m_Inspector = inspector;
-            serializedObject = new SerializedObject(target);
             activeProperty = serializedObject.FindProperty("active");
+
+            var inspectorKey = inspector != null ? inspector.GetType().Name : string.Empty;
+            m_EditorPrefBool = new EditorPrefBool(k_KeyPrefix + inspectorKey + volumeComponent.GetType().Name, true);
 
             InitAdditionalPropertiesPreference();
 
@@ -263,7 +302,6 @@ namespace UnityEditor.Rendering
 
         void InitParameters()
         {
-            m_VolumeNotAdditionalParameters = new List<VolumeParameter>();
             VolumeComponent.FindParameters(target, m_VolumeNotAdditionalParameters, field => field.GetCustomAttribute<AdditionalPropertyAttribute>() == null);
         }
 
@@ -352,7 +390,7 @@ namespace UnityEditor.Rendering
         /// want Unity to display all the properties from the <see cref="VolumeComponent"/>
         /// automatically.
         /// </remarks>
-        public virtual void OnInspectorGUI()
+        public override void OnInspectorGUI()
         {
             // Display every field as-is
             foreach (var parameter in m_Parameters)
@@ -372,7 +410,7 @@ namespace UnityEditor.Rendering
         public virtual GUIContent GetDisplayTitle()
         {
             var targetType = target.GetType();
-            string title = string.IsNullOrEmpty(target.displayName) ? ObjectNames.NicifyVariableName(target.GetType().Name) : target.displayName;
+            string title = string.IsNullOrEmpty(volumeComponent.displayName) ? ObjectNames.NicifyVariableName(volumeComponent.GetType().Name) : volumeComponent.displayName;
             string tooltip = targetType.GetCustomAttribute(typeof(VolumeComponentMenuForRenderPipeline), false) is VolumeComponentMenuForRenderPipeline supportedOn
                 ? string.Join(", ", supportedOn.pipelineTypes.Select(t => ObjectNames.NicifyVariableName(t.Name)))
                 : string.Empty;
@@ -423,16 +461,16 @@ namespace UnityEditor.Rendering
             else
             {
                 Undo.RecordObject(target, Styles.toggleAllText);
-                target.SetOverridesTo(m_VolumeNotAdditionalParameters, state);
+                volumeComponent.SetOverridesTo(m_VolumeNotAdditionalParameters, state);
                 serializedObject.Update();
             }
         }
 
         internal bool AreAllOverridesTo(bool state)
         {
-            for (int i = 0; i < target.parameters.Count; ++i)
+            for (int i = 0; i < volumeComponent.parameterList.Count; ++i)
             {
-                if (target.parameters[i].overrideState != state)
+                if (volumeComponent.parameterList[i].overrideState != state)
                     return false;
             }
             return true;
@@ -441,7 +479,7 @@ namespace UnityEditor.Rendering
         internal void SetAllOverridesTo(bool state)
         {
             Undo.RecordObject(target, Styles.toggleAllText);
-            target.SetAllOverridesTo(state);
+            volumeComponent.SetAllOverridesTo(state);
             serializedObject.Update();
         }
 
@@ -739,7 +777,7 @@ namespace UnityEditor.Rendering
             }
 
             /// <summary>
-            /// Dispose
+            /// Dispose of the class
             /// </summary>
             void IDisposable.Dispose()
             {
@@ -781,7 +819,7 @@ namespace UnityEditor.Rendering
             }
 
             /// <summary>
-            /// Dispose
+            /// Closes the scope
             /// </summary>
             protected override void CloseScope()
             {

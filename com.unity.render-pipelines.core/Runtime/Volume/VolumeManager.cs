@@ -4,6 +4,10 @@ using System.Diagnostics;
 using System.Linq;
 using UnityEngine.Assertions;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace UnityEngine.Rendering
 {
     using UnityObject = UnityEngine.Object;
@@ -37,6 +41,74 @@ namespace UnityEngine.Rendering
             private set => baseComponentTypeArray = value.ToArray();
         }
 
+        static readonly Dictionary<Type, List<(string, Type)>> s_SupportedVolumeComponentsForRenderPipeline = new();
+
+        internal static List<(string, Type)> GetSupportedVolumeComponents(Type currentPipelineType)
+        {
+            if (s_SupportedVolumeComponentsForRenderPipeline.TryGetValue(currentPipelineType,
+                out var supportedVolumeComponents))
+                return supportedVolumeComponents;
+
+            supportedVolumeComponents = FilterVolumeComponentTypes(
+                VolumeManager.instance.baseComponentTypeArray, currentPipelineType);
+            s_SupportedVolumeComponentsForRenderPipeline[currentPipelineType] = supportedVolumeComponents;
+
+            return supportedVolumeComponents;
+        }
+
+        static List<(string, Type)> FilterVolumeComponentTypes(Type[] types, Type currentPipelineType)
+        {
+            var volumes = new List<(string, Type)>();
+            foreach (var t in types)
+            {
+                string path = string.Empty;
+
+                var attrs = t.GetCustomAttributes(false);
+
+                bool skipComponent = false;
+
+                // Look for the attributes of this volume component and decide how is added and if it needs to be skipped
+                foreach (var attr in attrs)
+                {
+                    switch (attr)
+                    {
+                        case VolumeComponentMenu attrMenu:
+                        {
+                            path = attrMenu.menu;
+                            if (attrMenu is VolumeComponentMenuForRenderPipeline supportedOn)
+                                skipComponent |= !supportedOn.pipelineTypes.Contains(currentPipelineType);
+                            break;
+                        }
+                        case HideInInspector attrHide:
+                        case ObsoleteAttribute attrDeprecated:
+                            skipComponent = true;
+                            break;
+                    }
+                }
+
+                if (skipComponent)
+                    continue;
+
+                // If no attribute or in case something went wrong when grabbing it, fallback to a
+                // beautified class name
+                if (string.IsNullOrEmpty(path))
+                {
+#if UNITY_EDITOR
+                    path = ObjectNames.NicifyVariableName(t.Name);
+#else
+                    path = t.Name;
+#endif
+                }
+
+
+                volumes.Add((path, t));
+            }
+
+            return volumes
+                .OrderBy(i => i.Item1)
+                .ToList();
+        }
+
         /// <summary>
         /// The current list of all available types that derive from <see cref="VolumeComponent"/>.
         /// </summary>
@@ -58,6 +130,17 @@ namespace UnityEngine.Rendering
         // states on update instead of having to implement a Reset method on all components (which
         // would be error-prone)
         readonly List<VolumeComponent> m_ComponentsDefaultState;
+
+        internal VolumeComponent GetDefaultVolumeComponent(Type volumeComponentType)
+        {
+            foreach (VolumeComponent component in m_ComponentsDefaultState)
+            {
+                if (component.GetType() == volumeComponentType)
+                    return component;
+            }
+
+            return null;
+        }
 
         // Recycled list used for volume traversal
         readonly List<Collider> m_TempColliders;
@@ -232,8 +315,10 @@ namespace UnityEngine.Rendering
         // Go through all listed components and lerp overridden values in the global state
         void OverrideData(VolumeStack stack, List<VolumeComponent> components, float interpFactor)
         {
-            foreach (var component in components)
+            var numComponents = components.Count;
+            for (int i = 0; i < numComponents; i++)
             {
+                var component = components[i];
                 if (!component.active)
                     continue;
 
@@ -243,7 +328,7 @@ namespace UnityEngine.Rendering
         }
 
         // Faster version of OverrideData to force replace values in the global state
-        void ReplaceData(VolumeStack stack)
+        internal void ReplaceData(VolumeStack stack)
         {
             var resetParameters = stack.defaultParameters;
             var resetParametersCount = resetParameters.Length;
@@ -364,8 +449,10 @@ namespace UnityEngine.Rendering
                 trigger.TryGetComponent<Camera>(out camera);
 
             // Traverse all volumes
-            foreach (var volume in volumes)
+            int numVolumes = volumes.Count;
+            for (int i = 0; i < numVolumes; i++)
             {
+                Volume volume = volumes[i];
                 if (volume == null)
                     continue;
 
@@ -398,8 +485,10 @@ namespace UnityEngine.Rendering
                 // Find closest distance to volume, 0 means it's inside it
                 float closestDistanceSqr = float.PositiveInfinity;
 
-                foreach (var collider in colliders)
+                int numColliders = colliders.Count;
+                for (int c = 0; c < numColliders; c++)
                 {
+                    var collider = colliders[c];
                     if (!collider.enabled)
                         continue;
 
@@ -453,8 +542,10 @@ namespace UnityEngine.Rendering
                 // to this mask in it
                 list = new List<Volume>();
 
-                foreach (var volume in m_Volumes)
+                var numVolumes = m_Volumes.Count;
+                for (int i = 0; i < numVolumes; i++)
                 {
+                    var volume = m_Volumes[i];
                     if ((mask & (1 << volume.gameObject.layer)) == 0)
                         continue;
 
@@ -500,6 +591,9 @@ namespace UnityEngine.Rendering
         static bool IsVolumeRenderedByCamera(Volume volume, Camera camera)
         {
 #if UNITY_2018_3_OR_NEWER && UNITY_EDITOR
+            // GameObject for default global volume may not belong to any scene, following check prevents it from being culled
+            if (!volume.gameObject.scene.IsValid())
+                return true;
             // IsGameObjectRenderedByCamera does not behave correctly when camera is null so we have to catch it here.
             return camera == null ? true : UnityEditor.SceneManagement.StageUtility.IsGameObjectRenderedByCamera(volume.gameObject, camera);
 #else

@@ -18,6 +18,8 @@ namespace UnityEditor.ShaderGraph
         , IMayRequireBitangent
         , IMayRequireMeshUV
         , IMayRequireScreenPosition
+        , IMayRequireNDCPosition
+        , IMayRequirePixelPosition
         , IMayRequireViewDirection
         , IMayRequirePosition
         , IMayRequirePositionPredisplacement
@@ -28,6 +30,7 @@ namespace UnityEditor.ShaderGraph
         , IMayRequireDepthTexture
         , IMayRequireVertexSkinning
         , IMayRequireVertexID
+        , IDisposable
     {
         [Serializable]
         public class MinimalSubGraphNode : IHasDependencies
@@ -764,6 +767,22 @@ namespace UnityEditor.ShaderGraph
             return asset.requirements.requiresScreenPosition;
         }
 
+        public bool RequiresNDCPosition(ShaderStageCapability stageCapability)
+        {
+            if (asset == null)
+                return false;
+
+            return asset.requirements.requiresNDCPosition;
+        }
+
+        public bool RequiresPixelPosition(ShaderStageCapability stageCapability)
+        {
+            if (asset == null)
+                return false;
+
+            return asset.requirements.requiresPixelPosition;
+        }
+
         public NeededCoordinateSpace RequiresViewDirection(ShaderStageCapability stageCapability)
         {
             if (asset == null)
@@ -878,6 +897,12 @@ namespace UnityEditor.ShaderGraph
                 m_Dropdowns.Add(referenceName);
                 m_DropdownSelectedEntries.Add(value);
             }
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            m_SubGraph = null;
         }
     }
 }

@@ -11,6 +11,7 @@ namespace UnityEditor.VFX
 {
     interface IVFXSlotContainer
     {
+        VFXSlot activationSlot { get; } // Return the activation slot if any, null otherwise
         ReadOnlyCollection<VFXSlot> inputSlots { get; }
         ReadOnlyCollection<VFXSlot> outputSlots { get; }
 
@@ -28,6 +29,8 @@ namespace UnityEditor.VFX
 
         void UpdateOutputExpressions();
 
+        void ClearSlots();
+        bool ResyncSlots(bool notify);
         void Invalidate(VFXModel.InvalidationCause cause);
         void Invalidate(VFXModel model, VFXModel.InvalidationCause cause);
 
@@ -49,6 +52,7 @@ namespace UnityEditor.VFX
         where ParentType : VFXModel
         where ChildrenType : VFXModel
     {
+        public virtual VFXSlot activationSlot => null;
         public virtual ReadOnlyCollection<VFXSlot> inputSlots { get { return m_InputSlots.AsReadOnly(); } }
         public virtual ReadOnlyCollection<VFXSlot> outputSlots { get { return m_OutputSlots.AsReadOnly(); } }
 
@@ -249,6 +253,15 @@ namespace UnityEditor.VFX
             return changed;
         }
 
+        //Specific helper for VFXLibrary, doesn't notify, used before applying variants.
+        public void ClearSlots()
+        {
+            while (m_InputSlots.Count > 0)
+                InnerRemoveSlot(m_InputSlots.First(), false);
+            while (m_OutputSlots.Count > 0)
+                InnerRemoveSlot(m_OutputSlots.First(), false);
+        }
+
         public void MoveSlots(VFXSlot.Direction direction, int movedIndex, int targetIndex)
         {
             VFXSlot movedSlot = m_InputSlots[movedIndex];
@@ -439,7 +452,7 @@ namespace UnityEditor.VFX
 
         public virtual VFXCoordinateSpace GetOutputSpaceFromSlot(VFXSlot slot)
         {
-            return (VFXCoordinateSpace)int.MaxValue;
+            return VFXCoordinateSpace.None;
         }
 
         //[SerializeField]

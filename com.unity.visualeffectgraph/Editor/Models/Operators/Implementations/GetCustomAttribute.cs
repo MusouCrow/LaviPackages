@@ -1,12 +1,11 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEngine.VFX;
+
 using UnityEditor.VFX.Block;
 using UnityEngine;
 
 namespace UnityEditor.VFX
 {
+    [VFXHelpURL("Operator-GetCustomAttribute")]
     [VFXInfo(category = "Attribute", experimental = true)]
     class GetCustomAttribute : VFXOperator
     {
@@ -23,33 +22,32 @@ namespace UnityEditor.VFX
         {
             get
             {
-                var attribute = currentAttribute;
-                yield return new VFXPropertyWithValue(new VFXProperty(VFXExpression.TypeToType(attribute.type), attribute.name));
+                var vfxAttribute = currentAttribute;
+                yield return new VFXPropertyWithValue(new VFXProperty(VFXExpression.TypeToType(vfxAttribute.type), vfxAttribute.name));
             }
         }
 
-        private VFXAttribute currentAttribute
+        private VFXAttribute currentAttribute => new(attribute, CustomAttributeUtility.GetValueType(AttributeType));
+
+        public override string libraryName { get; } = "Get Attribute: custom";
+
+        public override string name => $"Get '{attribute}' ({AttributeType})";
+
+        internal sealed override void GenerateErrors(VFXInvalidateErrorReporter manager)
         {
-            get
+            base.GenerateErrors(manager);
+
+            if (!CustomAttributeUtility.IsShaderCompilableName(attribute))
             {
-                return new VFXAttribute(attribute, CustomAttributeUtility.GetValueType(AttributeType));
+                manager.RegisterError("InvalidCustomAttributeName", VFXErrorType.Error, $"Custom attribute name '{attribute}' is not valid.\n\t- The name must not contain spaces or any special character\n\t- The name must not start with a digit character");
             }
         }
 
-        override public string libraryName { get { return "Get Custom Attribute"; } }
-
-        override public string name
-        {
-            get
-            {
-                return "Get " + attribute + " (" + AttributeType.ToString() + ")";
-            }
-        }
         protected override VFXExpression[] BuildExpression(VFXExpression[] inputExpression)
         {
-            var attribute = currentAttribute;
+            var vfxAttribute = currentAttribute;
 
-            var expression = new VFXAttributeExpression(attribute, location);
+            var expression = new VFXAttributeExpression(vfxAttribute, location);
             return new VFXExpression[] { expression };
         }
     }

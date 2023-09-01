@@ -5,7 +5,7 @@ using System.Globalization;
 using UnityEditor.Experimental;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.SceneManagement;
-using UnityEditor.UIElements;
+
 using UnityEditor.VFX.UIElements;
 using UnityEngine;
 using UnityEngine.VFX;
@@ -169,6 +169,7 @@ namespace UnityEditor.VFX.UI
             m_Step.clickable.clicked += EffectStep;
             m_Restart = this.Query<Button>("restart");
             m_Restart.clickable.clicked += EffectRestart;
+            m_PlayIcon = m_Play.Q<Image>("icon");
 
             m_PlayRateSlider = this.Query<Slider>("play-rate-slider");
             m_PlayRateSlider.lowValue = Mathf.Pow(VisualEffectControl.minSlider, 1 / VisualEffectControl.sliderPower);
@@ -194,10 +195,11 @@ namespace UnityEditor.VFX.UI
             m_DebugModes = this.Query<Button>("debug-modes");
             m_DebugModes.clickable.clicked += OnDebugModes;
 
-            m_RecordBoundsButton = this.Query<Button>("record");
-            m_RecordBoundsImage = this.Query<Image>("record-icon");
-            m_RecordBoundsButton.clickable.clicked += OnRecordBoundsButton;
             m_RecordIcon = VFXView.LoadImage("d_Record");
+            m_RecordBoundsButton = this.Query<Button>("record");
+            m_RecordBoundsImage = m_RecordBoundsButton.Query<Image>("record-icon");
+            m_RecordBoundsImage.style.backgroundImage = m_RecordIcon;
+            m_RecordBoundsButton.clickable.clicked += OnRecordBoundsButton;
             m_BoundsActionLabel = this.Query<Label>("bounds-label");
             m_BoundsToolContainer = this.Query("bounds-tool-container");
             m_BackgroundDefaultColor = m_BoundsToolContainer.style.backgroundColor;
@@ -237,6 +239,11 @@ namespace UnityEditor.VFX.UI
             style.top = newPos.yMin;
             style.width = newPos.width;
             style.height = newPos.height;
+        }
+
+        public void SetDebugMode(VFXUIDebug.Modes mode)
+        {
+            m_DebugUI?.SetDebugMode(mode, this);
         }
 
         void OnMouseClick(MouseDownEvent e)
@@ -287,12 +294,12 @@ namespace UnityEditor.VFX.UI
             GenericMenu menu = new GenericMenu();
             foreach (VFXUIDebug.Modes mode in Enum.GetValues(typeof(VFXUIDebug.Modes)))
             {
-                menu.AddItem(EditorGUIUtility.TextContent(mode.ToString()), false, SetDebugMode, mode);
+                menu.AddItem(EditorGUIUtility.TextContent(mode.ToString()), false, SetDebugModeCallback, mode);
             }
             menu.DropDown(m_DebugModes.worldBound);
         }
 
-        void SetDebugMode(object mode)
+        private void SetDebugModeCallback(object mode)
         {
             m_DebugUI.SetDebugMode((VFXUIDebug.Modes)mode, this);
         }
@@ -354,13 +361,14 @@ namespace UnityEditor.VFX.UI
             if (m_BoundsRecorder != null)
             {
                 m_BoundsRecorder.isRecording = false;
+                m_BoundsRecorder.CleanUp();
                 m_BoundsRecorder = null;
             }
         }
 
         void UpdateBoundsRecorder()
         {
-            if (m_AttachedComponent != null && m_View.controller.graph != null)
+            if (controller != null && m_AttachedComponent != null && m_View.controller.graph != null)
             {
                 controller.RecompileExpressionGraphIfNeeded();
                 bool wasRecording = false;
@@ -394,7 +402,7 @@ namespace UnityEditor.VFX.UI
                     VFXComponentBoardBoundsSystemUI newUI = m_SystemBoundsContainer.Children().Last() as VFXComponentBoardBoundsSystemUI;
                     if (newUI != null)
                     {
-                        newUI.Setup(system, m_BoundsRecorder);
+                        newUI.Setup(m_View, system, m_BoundsRecorder);
                     }
                 }
             }
@@ -476,6 +484,8 @@ namespace UnityEditor.VFX.UI
                 {
                     m_Play.RemoveFromClassList("paused");
                 }
+
+                m_PlayIcon.MarkDirtyRepaint();
             }
         }
 
@@ -521,8 +531,18 @@ namespace UnityEditor.VFX.UI
 
             foreach (var context in contextsToRefresh)
             {
-                context.controller.model.RefreshErrors(m_View.controller.graph);
+                context.controller.model.RefreshErrors();
             }
+        }
+
+        public void LockUI()
+        {
+            m_BoundsToolContainer.SetEnabled(false);
+        }
+
+        public void UnlockUI()
+        {
+            m_BoundsToolContainer.SetEnabled(true);
         }
 
         public bool Attach(VisualEffect effect = null)
@@ -604,7 +624,7 @@ namespace UnityEditor.VFX.UI
                 current = current.parent;
             }
 
-            if (EditorSceneManager.loadedSceneCount > 1)
+            if (UnityEngine.SceneManagement.SceneManager.loadedSceneCount > 1)
             {
                 path = m_AttachedComponent.gameObject.scene.name + " : " + path;
             }
@@ -625,7 +645,6 @@ namespace UnityEditor.VFX.UI
             UpdatePlayRate();
             UpdatePlayButton();
             UpdateBoundsModes();
-            m_ApplyBoundsButton.SetEnabled(m_BoundsRecorder.bounds.Any() && m_View.IsAssetEditable());
             UpdateRecordingButton();
         }
 
@@ -673,6 +692,7 @@ namespace UnityEditor.VFX.UI
         Image m_SubtitleIcon;
         Button m_Stop;
         Button m_Play;
+        Image m_PlayIcon;
         Button m_Step;
         Button m_Restart;
         Slider m_PlayRateSlider;
@@ -924,14 +944,14 @@ namespace UnityEditor.VFX.UI
             }
         }
 
-        public void Setup(string systemName, VFXBoundsRecorder boundsRecorder)
+        public void Setup(VFXView vfxView, string systemName, VFXBoundsRecorder boundsRecorder)
         {
             m_BoundsRecorder = boundsRecorder;
             m_CurrentMode = m_BoundsRecorder.GetSystemBoundsSettingMode(systemName);
             m_SystemName = systemName;
             m_SystemNameButton = this.Query<VFXBoundsRecorderField>("system-field");
-            var initContextUI = m_BoundsRecorder.GetInitContextController(m_SystemName);
-            m_SystemNameButton.Setup(initContextUI, m_BoundsRecorder.view);
+            var initContextUI = m_BoundsRecorder.GetInitializeContextUI(m_SystemName);
+            m_SystemNameButton.Setup(initContextUI, vfxView);
             m_SystemNameButton.text = m_SystemName;
             InitBoundsModeElement();
             m_Colors = new Dictionary<string, StyleColor>()

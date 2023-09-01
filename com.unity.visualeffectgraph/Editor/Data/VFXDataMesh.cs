@@ -33,8 +33,7 @@ namespace UnityEditor.VFX
             {
                 m_Shader = value;
                 DestroyCachedMaterial();
-                if (m_Shader != null)
-                    m_ShaderName = m_Shader.name;
+                m_ShaderName = m_Shader != null ? m_Shader.name : null;
             }
         }
 
@@ -45,8 +44,6 @@ namespace UnityEditor.VFX
         public override void OnEnable()
         {
             base.OnEnable();
-
-            VFXLibrary.OnSRPChanged += OnSRPChanged;
 
             if (object.ReferenceEquals(shader, null)) shader = VFXResources.defaultResources.shader;
 
@@ -62,11 +59,10 @@ namespace UnityEditor.VFX
 
         public virtual void OnDisable()
         {
-            VFXLibrary.OnSRPChanged -= OnSRPChanged;
             DestroyCachedMaterial();
         }
 
-        private void OnSRPChanged()
+        public override void OnSRPChanged()
         {
             DestroyCachedMaterial();
         }
@@ -102,7 +98,7 @@ namespace UnityEditor.VFX
 
         public Material GetOrCreateMaterial()
         {
-            if (m_CachedMaterial == null && shader != null)
+            if (shader != null && (m_CachedMaterial == null || m_CachedMaterial.shader != shader))
             {
                 m_CachedMaterial = new Material(shader);
                 m_CachedMaterial.hideFlags = HideFlags.HideAndDontSave;
@@ -123,6 +119,7 @@ namespace UnityEditor.VFX
             Dictionary<VFXContext, int> contextSpawnToBufferIndex,
             VFXDependentBuffersData dependentBuffers,
             Dictionary<VFXContext, List<VFXContextLink>[]> effectiveFlowInputLinks,
+            Dictionary<VFXData, uint> dataToSystemIndex,
             VFXSystemNames systemNames = null)
         {
             var context = m_Owners[0];
@@ -173,6 +170,16 @@ namespace UnityEditor.VFX
                 type = VFXSystemType.Mesh,
                 layer = uint.MaxValue,
             });
+        }
+        public override void Sanitize(int version)
+        {
+            if (shader == null && m_ShaderName == "Hidden/Default StaticMeshOutput")
+            {
+                shader = VFXResources.defaultResources.shader;
+                owners.OfType<VFXStaticMeshOutput>().First().Invalidate(InvalidationCause.kSettingChanged);
+            }
+
+            base.Sanitize(version);
         }
 
         public override void GenerateAttributeLayout(Dictionary<VFXContext, List<VFXContextLink>[]> effectiveFlowInputLinks)

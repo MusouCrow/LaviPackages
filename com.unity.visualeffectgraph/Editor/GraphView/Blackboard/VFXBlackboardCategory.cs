@@ -115,7 +115,7 @@ namespace UnityEditor.VFX.UI
             var blackboard = GetFirstAncestorOfType<VFXBlackboard>();
             if (blackboard != null)
             {
-                blackboard.SetCategoryName(this, string.IsNullOrEmpty(m_NameField.value) ? "Untitled" : m_NameField.value);
+                blackboard.SetCategoryName(this, m_NameField.value);
             }
         }
 
@@ -139,8 +139,8 @@ namespace UnityEditor.VFX.UI
             m_NameField = new TextField() { name = "name-field" };
             m_Header.Add(m_NameField);
             m_Header.RegisterCallback<MouseDownEvent>(OnMouseDownEvent);
-            m_NameField.Q("unity-text-input").RegisterCallback<FocusOutEvent>(e => { OnEditTextSucceded(); });
-            m_NameField.Q("unity-text-input").RegisterCallback<KeyDownEvent>(OnTextFieldKeyPressed);
+            m_NameField.Q("unity-text-input").RegisterCallback<FocusOutEvent>(e => { OnEditTextSucceded(); }, TrickleDown.TrickleDown);
+            m_NameField.Q("unity-text-input").RegisterCallback<KeyDownEvent>(OnTextFieldKeyPressed, TrickleDown.TrickleDown);
             m_Header.pickingMode = PickingMode.Position;
             m_NameField.style.display = DisplayStyle.None;
         }

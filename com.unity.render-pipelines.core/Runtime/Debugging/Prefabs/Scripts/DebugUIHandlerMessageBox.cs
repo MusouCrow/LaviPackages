@@ -37,11 +37,11 @@ namespace UnityEngine.Rendering.UI
         }
 
         /// <summary>
-        /// On selection callback
+        /// Method called when the box is selected
         /// </summary>
-        /// <param name="fromNext">If is called from the next</param>
-        /// <param name="previous">The previous widget</param>
-        /// <returns>false</returns>
+        /// <param name="fromNext">If is from next</param>
+        /// <param name="previous">The previous <see cref="DebugUIHandlerWidget"/></param>
+        /// <returns></returns>
         public override bool OnSelection(bool fromNext, DebugUIHandlerWidget previous)
         {
             return false;

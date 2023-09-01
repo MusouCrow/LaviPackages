@@ -93,6 +93,10 @@ namespace UnityEngine.Rendering
             int bufferCount
         )
         {
+            // This function should only be used when there is a non-zero number of buffers to allocate.
+            // If the caller provides a value of zero, they're likely doing something unintentional in the calling code.
+            Debug.Assert(bufferCount > 0);
+
             var buffer = new RTHandle[bufferCount];
             m_RTHandles.Add(bufferId, buffer);
 
@@ -147,7 +151,7 @@ namespace UnityEngine.Rendering
         /// Queries the number of RT handle buffers allocated for a buffer ID.
         /// </summary>
         /// <param name="bufferId">The buffer ID to query.</param>
-        /// <returns>The count of frames allocated</returns>
+        /// <returns>The num of frames allocated</returns>
         public int GetNumFramesAllocated(int bufferId)
         {
             if (!m_RTHandles.ContainsKey(bufferId))

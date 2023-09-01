@@ -284,7 +284,6 @@ namespace UnityEditor.VFX.SDF
                 m_MeshPreview = new SdfBakerPreview(mesh);
                 m_RefreshMeshPreview = false;
             }
-
             if (mesh == null ||
                 !liftSizeLimit && estimatedGridSize > MeshToSDFBaker.kMaxRecommandedGridSize ||
                 estimatedGridSize > MeshToSDFBaker.kMaxAbsoluteGridSize ||

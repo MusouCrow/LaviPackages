@@ -17,10 +17,12 @@ namespace UnityEditor.VFX
         public struct ShaderGraphBinder
         {
             public static readonly PragmaDescriptor kPragmaDescriptorNone = new() { value = "None" };
+            public static readonly KeywordDescriptor kKeywordDescriptorNone = new() { referenceName = "None" };
 
             public StructCollection structs;
             public DependencyCollection fieldDependencies;
             public (PragmaDescriptor oldDesc, PragmaDescriptor newDesc)[] pragmasReplacement;
+            public (KeywordDescriptor oldDesc, KeywordDescriptor newDesc)[] keywordsReplacement;
             public bool useFragInputs;
         }
 
@@ -98,6 +100,21 @@ namespace UnityEditor.VFX
         public virtual ShaderGraphBinder GetShaderGraphDescriptor(VFXContext context, VFXContextCompiledData data)
         {
             return new ShaderGraphBinder();
+        }
+
+        public virtual IEnumerable<GraphicsDeviceType> GetSupportedGraphicDevices()
+        {
+            yield return GraphicsDeviceType.Direct3D11;
+            yield return GraphicsDeviceType.OpenGLCore;
+            yield return GraphicsDeviceType.OpenGLES3;
+            yield return GraphicsDeviceType.Metal;
+            yield return GraphicsDeviceType.Vulkan;
+            yield return GraphicsDeviceType.XboxOne;
+            yield return GraphicsDeviceType.GameCoreXboxOne;
+            yield return GraphicsDeviceType.GameCoreXboxSeries;
+            yield return GraphicsDeviceType.PlayStation4;
+            yield return GraphicsDeviceType.PlayStation5;
+            yield return GraphicsDeviceType.Switch;
         }
     }
 }

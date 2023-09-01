@@ -101,7 +101,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Inspector.PropertyDrawers
                 if (foldout.value)
                 {
                     // Get settings for Target
-                    var context = new TargetPropertyGUIContext();
+                    var context = new TargetPropertyGUIContext(graphData.ValidateGraph);
                     // Indent the content of the foldout
                     context.globalIndentLevel++;
                     target.GetPropertiesGUI(ref context, onChange, RegisterActionToUndo);
@@ -206,5 +206,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Inspector.PropertyDrawers
         {
             return this.CreateGUI((GraphData)actualObject);
         }
+
+        void IPropertyDrawer.DisposePropertyDrawer() { }
     }
 }

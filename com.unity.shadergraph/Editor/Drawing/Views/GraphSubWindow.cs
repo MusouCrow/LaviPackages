@@ -45,6 +45,9 @@ namespace UnityEditor.ShaderGraph.Drawing.Views
         protected VisualElement m_HeaderItem;
         protected VisualElement m_ParentView;
 
+        // Added for test assembly access
+        internal ScrollView scrollView => m_ScrollView;
+
         // These are used as default values for styling and layout purposes
         // They can be overriden if a child class wants to roll its own style and layout behavior
         public virtual string layoutKey => "UnityEditor.ShaderGraph.SubWindow";
@@ -367,6 +370,20 @@ namespace UnityEditor.ShaderGraph.Drawing.Views
 
         void OnWindowResize(MouseUpEvent upEvent)
         {
+        }
+
+        public virtual void Dispose()
+        {
+            m_MainContainer = null;
+            m_Root = null;
+            m_TitleLabel = null;
+            m_SubTitleLabel = null;
+            m_ScrollView = null;
+            m_ContentContainer = null;
+            m_HeaderItem = null;
+            m_ParentView = null;
+            cachedWindowDockingStyle = null;
+            styleSheets.Clear();
         }
     }
     #endregion

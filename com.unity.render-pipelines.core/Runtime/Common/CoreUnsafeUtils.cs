@@ -333,7 +333,6 @@ namespace UnityEngine.Rendering
         }
 
         /// <summary>
-        /// Radix Sort
         /// Radix sort or bucket sort, stable and non in place.
         /// </summary>
         /// <param name="arr">Array to sort.</param>
@@ -357,7 +356,6 @@ namespace UnityEngine.Rendering
         }
 
         /// <summary>
-        /// Radix Sort
         /// Radix sort or bucket sort, stable and non in place.
         /// </summary>
         /// <param name="array">Array to sort.</param>

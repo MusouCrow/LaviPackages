@@ -6,7 +6,8 @@ using UnityEngine.VFX;
 
 namespace UnityEditor.VFX.Operator
 {
-    [VFXInfo(category = "Sampling", variantProvider = typeof(SampleMeshProvider), experimental = true)]
+    [VFXHelpURL("Operator-MeshIndexCount")]
+    [VFXInfo(category = "Sampling", variantProvider = typeof(SampleMeshProvider))]
     class MeshIndexCount : VFXOperator
     {
         override public string name
@@ -14,9 +15,9 @@ namespace UnityEditor.VFX.Operator
             get
             {
                 if (source == SampleMesh.SourceType.Mesh)
-                    return "Mesh Index Count";
+                    return "Get Mesh Index Count";
                 else
-                    return "Skinned Mesh Index Count";
+                    return "Get Skinned Mesh Index Count";
             }
         }
 

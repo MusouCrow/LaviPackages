@@ -55,8 +55,10 @@ namespace UnityEditor.VFX
         public List<VFXContextLink> link = new List<VFXContextLink>();
     }
 
-    internal class VFXContext : VFXSlotContainerModel<VFXGraph, VFXBlock>
+    internal class VFXContext : VFXSlotContainerModel<VFXGraph, VFXBlock>, IVFXDataGetter
     {
+        public const int kMaxFlowCount = 10;
+
         protected static string RenderPipeTemplate(string fileName)
         {
             return VFXLibrary.currentSRPBinder.templatePath + "/Templates/" + fileName;
@@ -161,6 +163,17 @@ namespace UnityEditor.VFX
             }
         }
 
+        private static bool IsDisabledBlock(VFXModel model)
+        {
+            VFXBlock block = null;
+            if (model is VFXBlock)
+                block = (VFXBlock)model;
+            else if (model is VFXSlot)
+                block = ((VFXSlot)model).owner as VFXBlock;
+
+            return block != null && !block.enabled;
+        }
+
         protected override void OnInvalidate(VFXModel model, InvalidationCause cause)
         {
             base.OnInvalidate(model, cause);
@@ -178,17 +191,26 @@ namespace UnityEditor.VFX
                     // Check if the invalidation comes from a disable block and in that case don't recompile
                     if (cause != InvalidationCause.kEnableChanged)
                     {
-                        VFXBlock block = null;
-                        if (model is VFXBlock)
-                            block = (VFXBlock)model;
-                        else if (model is VFXSlot)
-                            block = ((VFXSlot)model).owner as VFXBlock;
-
-                        skip = block != null && !block.enabled;
+                        skip = IsDisabledBlock(model);
                     }
 
                     if (!skip)
                         Invalidate(InvalidationCause.kExpressionGraphChanged);
+                }
+            }
+
+            if (cause == InvalidationCause.kParamChanged ||
+                cause == InvalidationCause.kExpressionValueInvalidated)
+            {
+                if (contextType == VFXContextType.Spawner ||
+                    contextType == VFXContextType.Init)
+                {
+                    bool isBounds = model is VFXSlot slot && (
+                        slot.name.Equals(nameof(VFXBasicInitialize.InputPropertiesBounds.bounds)) ||
+                        slot.name.Equals(nameof(VFXBasicInitialize.InputPropertiesPadding.boundsPadding))); // Skip bounds so no reinit occurs when authoring the bounds
+
+                    if ((hasBeenCompiled || CanBeCompiled()) && !IsDisabledBlock(model) && !isBounds)
+                        Invalidate(InvalidationCause.kInitValueChanged);
                 }
             }
         }
@@ -393,7 +415,7 @@ namespace UnityEditor.VFX
                 }
             }
 
-            if ((from.ownedType & to.ownedType) == to.ownedType)
+            if ((from.ownedType & to.ownedType) == to.ownedType && from.ownedType.HasFlag(VFXDataType.Particle))
                 to.InnerSetData(from.GetData(), false);
 
             from.m_OutputFlowSlot[fromIndex].link.Add(new VFXContextLink() { context = to, slotIndex = toIndex });
@@ -439,7 +461,7 @@ namespace UnityEditor.VFX
 
         public void SetDefaultData(bool notify)
         {
-            InnerSetData(VFXData.CreateDataType(GetGraph(), ownedType), notify);
+            InnerSetData(VFXData.CreateDataType(ownedType), notify);
         }
 
         public virtual void OnDataChanges(VFXData oldData, VFXData newData)
@@ -453,8 +475,6 @@ namespace UnityEditor.VFX
                 if (m_Data != null)
                 {
                     m_Data.OnContextRemoved(this);
-                    if (m_Data.owners.Count() == 0)
-                        m_Data.Detach(notify);
                 }
                 OnDataChanges(m_Data, data);
                 m_Data = data;
@@ -466,9 +486,10 @@ namespace UnityEditor.VFX
                     Invalidate(InvalidationCause.kStructureChanged);
 
                 // Propagate data downwards
-                foreach (var output in m_OutputFlowSlot.SelectMany(o => o.link.Select(l => l.context)))
-                    if (output.ownedType == ownedType)
-                        output.InnerSetData(data, notify);
+                if (ownedType.HasFlag(VFXDataType.Particle)) // Only propagate for particle type atm
+                    foreach (var output in m_OutputFlowSlot.SelectMany(o => o.link.Select(l => l.context)))
+                        if (output.ownedType == ownedType)
+                            output.InnerSetData(data, notify);
             }
         }
 
@@ -618,7 +639,7 @@ namespace UnityEditor.VFX
                 {
                     return (m_Data as ISpaceable).space;
                 }
-                return (VFXCoordinateSpace)int.MaxValue;
+                return VFXCoordinateSpace.None;
             }
 
             set

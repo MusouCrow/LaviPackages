@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using System;
 using System.Linq;
+
 using UnityEngine;
-using UnityEngine.VFX;
 
 namespace UnityEditor.VFX.Block
 {
+    [VFXHelpURL("Block-CameraFade")]
     [VFXInfo(category = "Output")]
     class CameraFade : VFXBlock
     {
@@ -78,8 +79,9 @@ namespace UnityEditor.VFX.Block
             }
         }
 
-        protected override sealed void GenerateErrors(VFXInvalidateErrorReporter manager)
+        internal sealed override void GenerateErrors(VFXInvalidateErrorReporter manager)
         {
+            base.GenerateErrors(manager);
             if (affectShadows && Camera.allCamerasCount > 1)
                 manager.RegisterError("CameraFadeShadowsMultipleCamera", VFXErrorType.Warning, "Camera fade in shadow maps may be incorrect when rendered in more than one camera.");
         }

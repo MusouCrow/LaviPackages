@@ -6,11 +6,6 @@ o.VFX_VARYING_COLOR = attributes.color;
 o.VFX_VARYING_ALPHA = attributes.alpha;
 #endif
 
-// KOIYUN
-#if VFX_USE_GLOW_CURRENT
-o.glow = attributes.glow;
-#endif
-
 #ifdef VFX_VARYING_EXPOSUREWEIGHT
 ${VFXLoadParameter:{exposureWeight}}
 o.VFX_VARYING_EXPOSUREWEIGHT = exposureWeight;
@@ -51,6 +46,13 @@ o.VFX_VARYING_DECALLAYER = decalLayerMask;
 
 #if defined(VFX_VARYING_POSWS)
 o.VFX_VARYING_POSWS = TransformPositionVFXToWorld(vPos);
+#endif
+
+#if VFX_USE_INSTANCING
+    #ifdef UNITY_INSTANCING_ENABLED
+    o.VFX_VARYINGS_INSTANCE_CURRENT_INDEX = unity_InstanceID;
+    #endif
+o.VFX_VARYINGS_INSTANCE_ACTIVE_INDEX = instanceActiveIndex;
 #endif
 ${VFXEnd}
 
@@ -101,9 +103,14 @@ ${VFXEnd}
 ${VFXBegin:VFXLoadAttributesOrCull}
 uint deadCount = 0;
 #if USE_DEAD_LIST_COUNT
-deadCount = deadListCount.Load(0);
+deadCount = deadListCount[instanceIndex];
 #endif
+#if VFX_USE_INSTANCING
+if (index >= nbMax - deadCount)
+#else
 if (index >= asuint(nbMax) - deadCount)
+#endif
+
 {
 #if USE_GEOMETRY_SHADER
 	return; // cull
@@ -117,7 +124,7 @@ VFXAttributes attributes = (VFXAttributes)0;
 VFXSourceAttributes sourceAttributes = (VFXSourceAttributes)0;
 
 #if VFX_HAS_INDIRECT_DRAW
-index = indirectBuffer[index];
+index = indirectBuffer[VFXGetIndirectBufferIndex(index, instanceActiveIndex)];
 ${VFXLoadAttributes}
 #else
 ${VFXLoadAttributes:{alive}}
@@ -147,8 +154,9 @@ ${VFXBegin:VFXVertexComputeCurrentAndPreviousClipPos}
 	o.VFX_VARYING_VELOCITY_CPOS_PREVIOUS = o.VFX_VARYING_VELOCITY_CPOS = float4(0.0f, 0.0f, 0.0f, 1.0f);
 #endif
 
+${VFXLoadParameter:{currentFrameIndex}}
 uint elementToVFXBaseIndex;
-if (TryGetElementToVFXBaseIndex(index, elementToVFXBaseIndex))
+if (TryGetElementToVFXBaseIndex(index, instanceIndex, elementToVFXBaseIndex, currentFrameIndex))
 {
 float4 cPos = TransformPositionVFXToNonJitteredClip(vPos);
 
@@ -195,7 +203,7 @@ float4 color = VFXGetFragmentColor(i);
 #endif
 
 #if VFX_COLORMAPPING_GRADIENTMAPPED
-	${VFXLoadAttributes:{gradient}}
+	${VFXLoadParameter:{gradient}}
 	o.color = SampleGradient(gradient, VFX_TEXTURE_COLOR.a * color.a) * float4(color.rgb,1.0);
 #endif
 
@@ -234,9 +242,14 @@ void frag(ps_input i
     , out float4 outMotionVector : SV_Target0
     #endif
 #elif VFX_PASSDEPTH == VFX_PASSDEPTH_ACTUAL
-    #ifdef WRITE_MSAA_DEPTH
+    #if defined(WRITE_MSAA_DEPTH)
+	#if defined(WRITE_NORMAL_BUFFER)
+	#error Unexpected depth setup mssa + depth normal
+	#endif
     , out float4 outDepthColor : SV_Target0
-    #else
+    #elif defined(WRITE_NORMAL_BUFFER)
+	, out float4 outNormalBuffer : SV_Target0
+	#else
     , out float4 dummy : SV_Target0
     #endif
 #elif VFX_PASSDEPTH == VFX_PASSDEPTH_SELECTION || VFX_PASSDEPTH == VFX_PASSDEPTH_PICKING
@@ -261,7 +274,11 @@ void frag(ps_input i
     #else
         float alpha = VFXGetFragmentColor(i).a;
 		#if VFX_SUPPORT_MAIN_TEXTURE_SAMPLING_IN_FRAGMENT_DEPTH
-			alpha *= VFXGetTextureColor(VFX_SAMPLER(mainTexture),i).a;
+			#ifdef VFX_PROCEDURAL_UV
+				alpha *= VFXGetTextureColorWithProceduralUV(VFX_SAMPLER(mainTexture),i,VFX_PROCEDURAL_UV(i)).a;
+			#else
+				alpha *= VFXGetTextureColor(VFX_SAMPLER(mainTexture),i).a;
+			#endif
 		#endif
     #endif
 	VFXClipFragmentColor(alpha,i);
@@ -273,6 +290,15 @@ void frag(ps_input i
 		#endif
 	#endif
 
+	#ifdef WRITE_NORMAL_BUFFER
+		#ifdef VFX_VARYING_NORMAL
+			VFXComputePixelOutputToNormalBuffer(i, normalWS, GetUVData(i), outNormalBuffer);
+		#else
+			//Fallback for point and lines, render normal as if those are face camera plane
+			VFXComputePixelOutputToNormalBuffer(i, VFXGetWorldToViewRotMatrix()[2], GetUVData(i), outNormalBuffer);
+		#endif
+	#endif
+
 	#if VFX_PASSDEPTH == VFX_PASSDEPTH_MOTION_VECTOR
 		${VFXComputeOutputMotionVector}
 		outMotionVector = encodedMotionVector;
@@ -281,8 +307,8 @@ void frag(ps_input i
 	#elif VFX_PASSDEPTH == VFX_PASSDEPTH_PICKING
 		outSelection = _SelectionID;
 	#elif VFX_PASSDEPTH == VFX_PASSDEPTH_ACTUAL
-		#ifndef WRITE_MSAA_DEPTH
-			dummy = (float4)0;
+		#if !defined(WRITE_MSAA_DEPTH) && !defined(WRITE_NORMAL_BUFFER)
+		    dummy = float4(i.VFX_VARYING_POSCS.z, 0,0,0);
 		#endif
 	#elif VFX_PASSDEPTH == VFX_PASSDEPTH_SHADOW
 		dummy = (float4)0;
@@ -294,30 +320,103 @@ ${VFXEnd}
 
 // Strips tangent computation
 ${VFXBegin:VFXDeclareGetStripTangent}
-float3 GetParticlePosition(uint index)
+float3 GetParticlePosition(uint index, uint instanceIndex)
 {
 	VFXAttributes attributes = (VFXAttributes)0;
 	${VFXLoadAttributes:{position}}
 	return attributes.position;
 }
 
-float3 GetStripTangent(float3 currentPos, uint relativeIndex, const StripData stripData)
+float3 GetStripTangent(float3 currentPos, uint instanceIndex, uint relativeIndex, const StripData stripData)
 {
 	float3 prevTangent = (float3)0.0f;
 	if (relativeIndex > 0)
 	{
 		uint prevIndex = GetParticleIndex(relativeIndex - 1,stripData);
-		prevTangent = normalize(currentPos - GetParticlePosition(prevIndex));
+		float3 tangent = currentPos - GetParticlePosition(prevIndex,instanceIndex);
+		float sqrLength = dot(tangent, tangent);
+		if (sqrLength > VFX_EPSILON)
+			prevTangent = tangent * rsqrt(sqrLength);
 	}
 
 	float3 nextTangent = (float3)0.0f;
 	if (relativeIndex < stripData.nextIndex - 1)
 	{
 		uint nextIndex = GetParticleIndex(relativeIndex + 1,stripData);
-		nextTangent = normalize(GetParticlePosition(nextIndex) - currentPos);
+		float3 tangent = GetParticlePosition(nextIndex, instanceIndex) - currentPos;
+		float sqrLength = dot(tangent, tangent);
+		if (sqrLength > VFX_EPSILON)
+			nextTangent = tangent * rsqrt(sqrLength);
 	}
 
 	return normalize(prevTangent + nextTangent);
 }
 ${VFXEnd}
 
+${VFXBegin:VFXInitInstancing}
+uint instanceIndex, instanceActiveIndex, instanceCurrentIndex;
+index = VFXInitInstancing(index, instanceIndex, instanceActiveIndex, instanceCurrentIndex);
+${VFXEnd}
+
+${VFXBegin:VFXInitInstancingCompute}
+uint instanceIndex, instanceActiveIndex, instanceCurrentIndex;
+#if defined(VFX_INSTANCING_FIXED_SIZE)
+	uint index = GetThreadId(groupId, 0, dispatchWidth);
+	index = VFXInitInstancing(index, instanceIndex, instanceActiveIndex, instanceCurrentIndex);
+	index += groupThreadId.x;
+#else
+	uint index = VFXInitInstancing(id, instanceIndex, instanceActiveIndex, instanceCurrentIndex);
+#endif
+
+${VFXEnd}
+
+${VFXBegin:VFXInstancingConstants}
+float4 instancingConstants;
+${VFXEnd}
+
+${VFXBegin:VFXFeedSortingKeys}
+                Kvp output;
+#if VFX_CUSTOM_SORT_KEY
+                ${VFXLoadParameter:{sortKey}}
+                output.sortKey = -1.0f * sortKey; //Lowest values are rendered first
+#elif VFX_DISTANCE_SORT_KEY
+#if VFX_LOCAL_SPACE
+                float3 posRWS = TransformObjectToWorld(attributes.position);
+#else
+                float3 posRWS = GetCameraRelativePositionWS(attributes.position);
+#endif
+                float3 camToPos = posRWS - GetCurrentViewPosition();
+
+                output.sortKey = dot(camToPos,camToPos); // sqr distance to the camera
+#elif VFX_DEPTH_SORT_KEY
+#if VFX_LOCAL_SPACE
+                float3 posRWS = TransformObjectToWorld(attributes.position);
+#else
+                float3 posRWS = GetCameraRelativePositionWS(attributes.position);
+#endif
+                float3 zAxisCam = -GetWorldToViewMatrix()[2].xyz;
+                float depth = dot(posRWS, zAxisCam);
+                output.sortKey = depth;
+
+#elif VFX_YOUNGEST_SORT_KEY
+                ${VFXLoadAttributes:{age}}
+                output.sortKey = attributes.age;
+
+#endif //VFX_[CRITERION]_SORT_KEY
+                output.index = index;
+                output.sortKey *= SORTING_SIGN;
+${VFXEnd}
+
+${VFXBegin:VFXDeclareAppendOutputIndirectBuffer}
+void AppendOutputBuffer(RWStructuredBuffer<IndirectOutputType> outputBuffer, IndirectOutputType output, uint instanceActiveIndex)
+{
+    uint indirectIndex;
+#if VFX_FEATURE_SORT
+    InterlockedAdd(outputBuffer[instanceActiveIndex].index, 1, indirectIndex);
+#else
+    InterlockedAdd(outputBuffer[instanceActiveIndex], 1, indirectIndex);
+#endif
+    indirectIndex += instancingBatchSize + instanceActiveIndex * RAW_CAPACITY;
+    outputBuffer[indirectIndex] = output;
+}
+${VFXEnd}

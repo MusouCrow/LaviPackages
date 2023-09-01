@@ -1,11 +1,11 @@
-using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace UnityEditor.VFX.Block
 {
-    [VFXInfo(category = "Position")]
+    [VFXHelpURL("Block-SetPosition(Depth)")]
+    [VFXInfo(category = "Attribute/position/Composition/Set")]
     class PositionDepth : VFXBlock
     {
         public enum PositionMode
@@ -79,8 +79,9 @@ namespace UnityEditor.VFX.Block
         public override VFXContextType compatibleContexts { get { return VFXContextType.Init; } }
         public override VFXDataType compatibleData { get { return VFXDataType.Particle; } }
 
-        protected override sealed void GenerateErrors(VFXInvalidateErrorReporter manager)
+        internal sealed override void GenerateErrors(VFXInvalidateErrorReporter manager)
         {
+            base.GenerateErrors(manager);
             if (camera == CameraMode.Main && (UnityEngine.Rendering.RenderPipelineManager.currentPipeline == null || !UnityEngine.Rendering.RenderPipelineManager.currentPipeline.ToString().Contains("HDRenderPipeline")))
                 manager.RegisterError("PositionDepthBlockUnavailableWithoutHDRP", VFXErrorType.Warning, "Position (Depth) is currently only supported in the High Definition Render Pipeline (HDRP).");
         }

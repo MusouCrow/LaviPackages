@@ -24,6 +24,13 @@ half4 frag(PackedVaryings packedInput) : SV_TARGET
     half4 color = half4(surfaceDescription.BaseColor, surfaceDescription.Alpha);
 #endif
 
+#if ALPHA_CLIP_THRESHOLD
+    clip(color.a - surfaceDescription.AlphaClipThreshold);
+#endif
+
+#ifndef HAVE_VFX_MODIFICATION
     color *= unpacked.color;
+#endif
+
     return color;
 }

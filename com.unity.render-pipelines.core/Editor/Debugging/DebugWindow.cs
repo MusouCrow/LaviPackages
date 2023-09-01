@@ -8,6 +8,7 @@ using System.Linq;
 using UnityEditor.Callbacks;
 using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 
 namespace UnityEditor.Rendering
@@ -58,18 +59,11 @@ namespace UnityEditor.Rendering
         static Dictionary<Type, Type> s_WidgetStateMap; // DebugUI.Widget type -> DebugState type
         static Dictionary<Type, DebugUIDrawer> s_WidgetDrawerMap; // DebugUI.Widget type -> DebugUIDrawer
 
-        static bool s_Open;
         public static bool open
         {
-            get => s_Open;
-            private set
-            {
-                if (s_Open ^ value)
-                    OnDebugWindowToggled?.Invoke(value);
-                s_Open = value;
-            }
+            get => DebugManager.instance.displayEditorUI;
+            private set => DebugManager.instance.displayEditorUI = value;
         }
-        static event Action<bool> OnDebugWindowToggled;
 
         [DidReloadScripts]
         static void OnEditorReload()
@@ -78,9 +72,6 @@ namespace UnityEditor.Rendering
 
             //find if it where open, relink static event end propagate the info
             open = (Resources.FindObjectsOfTypeAll<DebugWindow>()?.Length ?? 0) > 0;
-            if (OnDebugWindowToggled == null)
-                OnDebugWindowToggled += DebugManager.instance.ToggleEditorUI;
-            DebugManager.instance.ToggleEditorUI(open);
         }
 
         static void RebuildTypeMaps()
@@ -130,11 +121,6 @@ namespace UnityEditor.Rendering
         {
             var window = GetWindow<DebugWindow>();
             window.titleContent = Styles.windowTitle;
-
-            if (OnDebugWindowToggled == null)
-                OnDebugWindowToggled += DebugManager.instance.ToggleEditorUI;
-
-            open = true;
         }
 
         [MenuItem("Window/Analysis/Rendering Debugger", validate = true)]
@@ -145,6 +131,8 @@ namespace UnityEditor.Rendering
 
         void OnEnable()
         {
+            open = true;
+
             DebugManager.instance.refreshEditorRequested = false;
 
             hideFlags = HideFlags.HideAndDontSave;
@@ -203,6 +191,26 @@ namespace UnityEditor.Rendering
             m_WidgetStates.Clear();
         }
 
+        public void ReloadWidgetStates()
+        {
+            if (m_WidgetStates == null)
+                return;
+
+            // Clear all the states from memory
+            foreach (var state in m_WidgetStates)
+            {
+                var widget = DebugManager.instance.GetItem(state.Key);
+                if (widget == null)
+                {
+                    var s = state.Value;
+                    Undo.ClearUndo(s); // Don't leave dangling states in the global undo/redo stack
+                    DestroyImmediate(s);
+                }
+            }
+
+            UpdateWidgetStates();
+        }
+
         bool AreWidgetStatesValid()
         {
             foreach (var state in m_WidgetStates)
@@ -246,15 +254,13 @@ namespace UnityEditor.Rendering
                     if (widget.isInactiveInEditor)
                         return;
 
-                    var widgetType = widget.GetType();
                     string guid = widget.queryPath;
-                    s_WidgetStateMap.TryGetValue(widgetType, out Type stateType);
-
-                    // Create missing states & recreate the ones that are null
-                    if (stateType != null)
+                    if (!m_WidgetStates.TryGetValue(guid, out var state) || state == null)
                     {
-                        if (!m_WidgetStates.ContainsKey(guid) || m_WidgetStates[guid] == null)
+                        var widgetType = widget.GetType();
+                        if (s_WidgetStateMap.TryGetValue(widgetType, out Type stateType))
                         {
+                            Assert.IsNotNull(stateType);
                             var inst = (DebugState)CreateInstance(stateType);
                             inst.queryPath = guid;
                             inst.SetValue(valueField.GetValue(), valueField);
@@ -325,7 +331,8 @@ namespace UnityEditor.Rendering
             // some debug values need to be refresh/recreated as well (e.g. frame settings on HD)
             if (DebugManager.instance.refreshEditorRequested)
             {
-                DestroyWidgetStates();
+                ReloadWidgetStates();
+                m_IsDirty = true;
                 DebugManager.instance.refreshEditorRequested = false;
             }
 
@@ -517,9 +524,7 @@ namespace UnityEditor.Rendering
 
                 if (drawer.OnGUI(widget, state))
                 {
-                    var container = widget as DebugUI.IContainer;
-
-                    if (container != null)
+                    if (widget is DebugUI.IContainer container)
                         TraverseContainerGUI(container);
                 }
 
@@ -563,6 +568,11 @@ namespace UnityEditor.Rendering
             public readonly GUIStyle selected = "OL SelectedRow";
             public readonly GUIStyle sectionHeader = new GUIStyle(EditorStyles.largeLabel);
             public readonly Color skinBackgroundColor;
+
+            public static GUIStyle centeredLeft = new GUIStyle(EditorStyles.label) { alignment = TextAnchor.MiddleLeft };
+            public static float singleRowHeight = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+
+            public static int foldoutColumnWidth = 70;
 
             public Styles()
             {

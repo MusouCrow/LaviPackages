@@ -20,9 +20,6 @@ HLSLPROGRAM
 // Pragmas
 $splice(PassPragmas)
 
-$splice(DotsInstancingOptions)
-$splice(HybridV1InjectedBuiltinProperties)
-
 // Keywords
 $splice(PassKeywords)
 $splice(GraphKeywords)
@@ -37,7 +34,6 @@ $SpecularSetup: #define _SPECULAR_SETUP
 $NormalDropOffTS: #define _NORMAL_DROPOFF_TS 1
 $NormalDropOffOS: #define _NORMAL_DROPOFF_OS 1
 $NormalDropOffWS: #define _NORMAL_DROPOFF_WS 1
-$Attributes.positionOS: #define ATTRIBUTES_NEED_POSITION
 $Attributes.normalOS: #define ATTRIBUTES_NEED_NORMAL
 $Attributes.tangentOS: #define ATTRIBUTES_NEED_TANGENT
 $Attributes.uv0: #define ATTRIBUTES_NEED_TEXCOORD0
@@ -54,7 +50,6 @@ $Varyings.texCoord1: #define VARYINGS_NEED_TEXCOORD1
 $Varyings.texCoord2: #define VARYINGS_NEED_TEXCOORD2
 $Varyings.texCoord3: #define VARYINGS_NEED_TEXCOORD3
 $Varyings.color: #define VARYINGS_NEED_COLOR
-$Varyings.viewDirectionWS: #define VARYINGS_NEED_VIEWDIRECTION_WS
 $Varyings.bitangentWS: #define VARYINGS_NEED_BITANGENT_WS
 $Varyings.screenPosition: #define VARYINGS_NEED_SCREENPOSITION
 $Varyings.fogFactorAndVertexLight: #define VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
@@ -63,7 +58,6 @@ $features.graphVertex: #define FEATURES_GRAPH_VERTEX
 $BuiltIn.UseLegacySpriteBlocks: #define BUILTIN_USELEGACYSPRITEBLOCKS
 $splice(PassInstancing)
 $splice(GraphDefines)
-$splice(DotsInstancingVars)
 #ifdef _BUILTIN_SURFACE_TYPE_TRANSPARENT
 #define _SURFACE_TYPE_TRANSPARENT _BUILTIN_SURFACE_TYPE_TRANSPARENT
 #endif

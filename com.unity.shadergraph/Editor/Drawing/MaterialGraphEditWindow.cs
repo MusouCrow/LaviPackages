@@ -62,6 +62,8 @@ namespace UnityEditor.ShaderGraph.Drawing
         [SerializeField]
         bool m_AssetMaybeDeleted;
 
+        internal bool WereWindowResourcesDisposed { get; private set; }
+
         MessageManager m_MessageManager;
         MessageManager messageManager
         {
@@ -307,6 +309,15 @@ namespace UnityEditor.ShaderGraph.Drawing
                 if (m_ChangedFileDependencyGUIDs.Count > 0 && graphObject != null && graphObject.graph != null)
                 {
                     bool reloadedSomething = false;
+                    foreach (var guid in m_ChangedFileDependencyGUIDs)
+                    {
+                        if (AssetDatabase.GUIDToAssetPath(guid) != null)
+                        {
+                            // update preview for changed textures
+                            graphEditorView?.previewManager?.ReloadChangedFiles(guid);
+                        }
+                    }
+
                     var subGraphNodes = graphObject.graph.GetNodes<SubGraphNode>();
                     foreach (var subGraphNode in subGraphNodes)
                     {
@@ -403,8 +414,18 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void OnDisable()
         {
-            graphEditorView = null;
+            m_GraphEditorView?.UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
+            m_GraphEditorView?.Dispose();
             messageManager.ClearAll();
+
+            m_GraphEditorView = null;
+            m_GraphObject = null;
+            m_MessageManager = null;
+            m_RenderPipelineAsset = null;
+
+            Resources.UnloadUnusedAssets();
+
+            WereWindowResourcesDisposed = true;
         }
 
         // returns true only when the file on disk doesn't match the graph we last loaded or saved to disk (i.e. someone else changed it)
@@ -514,6 +535,14 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 // the window is closing for good.. cleanup undo history for the graph object
                 Undo.ClearUndo(graphObject);
+            }
+
+            // Discard any unsaved modification on the generated material
+            if (graphObject && graphObject.materialArtifact && EditorUtility.IsDirty(graphObject.materialArtifact))
+            {
+                var material = new Material(AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath(graphObject.AssetGuid)));
+                graphObject.materialArtifact.CopyPropertiesFromMaterial(material);
+                CoreUtils.Destroy(material);
             }
 
             graphObject = null;

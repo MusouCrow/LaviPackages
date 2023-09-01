@@ -128,6 +128,14 @@ namespace UnityEditor.VFX
             return new VFXExpressionPow(BaseToConstant(_base, input.valueType), input);
         }
 
+        static public VFXExpression SnapToClosestPowerOfBase(VFXExpression input, VFXExpression _base)
+        {
+            var exactPower = Log(input, _base);
+            var nextPower = Round(exactPower);
+            return new VFXExpressionPow(_base, nextPower);
+        }
+
+
         static public VFXExpression Atanh(VFXExpression input)
         {
             //0.5*Log((1+x)/(1-x), e)
@@ -475,10 +483,12 @@ namespace UnityEditor.VFX
             var components = ExtractComponents(linear).ToArray();
             if (components.Length != 3 && components.Length != 4)
                 throw new ArgumentException("input expression must be a 3 or 4 components vector");
-
             VFXExpression exp = VFXValue.Constant(1.0f / 2.2f);
             for (int i = 0; i < 3; ++i)
-                components[i] = new VFXExpressionPow(components[i], exp);
+                components[i] = new VFXExpressionBranch(
+                    new VFXExpressionCondition(VFXValueType.Float, VFXCondition.Greater,components[i], ZeroExpression[VFXValueType.Float]),
+                    new VFXExpressionPow(components[i], exp),
+                    ZeroExpression[VFXValueType.Float]);
 
             return new VFXExpressionCombine(components);
         }
@@ -589,6 +599,7 @@ namespace UnityEditor.VFX
         static public VFXExpression ApplyAddressingMode(VFXExpression index, VFXExpression count, SequentialAddressingMode mode)
         {
             VFXExpression r = null;
+            count = new VFXExpressionMax(count, OneExpression[VFXValueType.Uint32]);
 
             if (mode == SequentialAddressingMode.Wrap)
             {
@@ -668,16 +679,17 @@ namespace UnityEditor.VFX
             return r;
         }
 
-        static public VFXExpression GetPerspectiveMatrix(VFXExpression fov, VFXExpression aspect, VFXExpression zNear, VFXExpression zFar)
+        static public VFXExpression GetPerspectiveMatrix(VFXExpression fov, VFXExpression aspect, VFXExpression zNear, VFXExpression zFar, VFXExpression lensShift)
         {
             var fovHalf = fov / TwoExpression[VFXValueType.Float];
             var cotangent = new VFXExpressionCos(fovHalf) / new VFXExpressionSin(fovHalf);
             var deltaZ = zNear - zFar;
+            var minusTwoExp = MinusOneExpression[VFXValueType.Float] * TwoExpression[VFXValueType.Float];
 
             var zero = ZeroExpression[VFXValueType.Float];
             var m0 = new VFXExpressionCombine(cotangent / aspect, zero, zero, zero);
             var m1 = new VFXExpressionCombine(zero, cotangent, zero, zero);
-            var m2 = new VFXExpressionCombine(zero, zero, MinusOneExpression[VFXValueType.Float] * (zFar + zNear) / deltaZ, OneExpression[VFXValueType.Float]);
+            var m2 = new VFXExpressionCombine(minusTwoExp * lensShift.x, minusTwoExp * lensShift.y, MinusOneExpression[VFXValueType.Float] * (zFar + zNear) / deltaZ, OneExpression[VFXValueType.Float]);
             var m3 = new VFXExpressionCombine(zero, zero, TwoExpression[VFXValueType.Float] * zNear * zFar / deltaZ, zero);
 
             return new VFXExpressionVector4sToMatrix(m0, m1, m2, m3);

@@ -2,12 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.VFX;
-using UnityEditor.VFX;
-using System;
 
 namespace UnityEditor.VFX.Block
 {
-    [VFXInfo(category = "Position")]
+    [VFXHelpURL("Block-TileWarpPositions")]
+    [VFXInfo(category = "Attribute/position/TileWarp")]
     class TileWarp : VFXBlock
     {
         public class InputProperties

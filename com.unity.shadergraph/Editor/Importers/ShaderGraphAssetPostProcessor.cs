@@ -56,6 +56,30 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
+        void OnPreprocessAsset()
+        {
+            ShaderGraphImporter sgImporter = assetImporter as ShaderGraphImporter;
+            if (sgImporter != null)
+            {
+                // Before importing, clear shader messages for any existing old shaders, if any.
+                // This is a terrible way to do it, but currently how the shader message system works at the moment.
+
+                // to workaround a bug with LoadAllAssetsAtPath(), which crashes if the asset has not yet been imported
+                // we first call LoadAssetAtPath<>, which handles assets not yet imported by returning null
+                if (AssetDatabase.LoadAssetAtPath<Shader>(assetPath) != null)
+                {
+                    var oldArtifacts = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+                    foreach (var artifact in oldArtifacts)
+                    {
+                        if ((artifact != null) && (artifact is Shader oldShader))
+                        {
+                            ShaderUtil.ClearShaderMessages(oldShader);
+                        }
+                    }
+                }
+            }
+        }
+
         static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
             RegisterShaders(importedAssets);
@@ -72,31 +96,48 @@ namespace UnityEditor.ShaderGraph
             if (anyRemovedShaders)
                 DisplayDeletionDialog(deletedAssets);
 
-            var windows = Resources.FindObjectsOfTypeAll<MaterialGraphEditWindow>();
-
             var changedGraphGuids = importedAssets
                 .Where(x => x.EndsWith(ShaderGraphImporter.Extension, StringComparison.InvariantCultureIgnoreCase)
                 || x.EndsWith(ShaderSubGraphImporter.Extension, StringComparison.InvariantCultureIgnoreCase))
                 .Select(AssetDatabase.AssetPathToGUID)
                 .ToList();
-            foreach (var window in windows)
+
+            MaterialGraphEditWindow[] windows = null;
+            if (changedGraphGuids.Count > 0)
             {
-                if (changedGraphGuids.Contains(window.selectedGuid))
+                windows = Resources.FindObjectsOfTypeAll<MaterialGraphEditWindow>();
+                foreach (var window in windows)
                 {
-                    window.CheckForChanges();
+                    if (changedGraphGuids.Contains(window.selectedGuid))
+                    {
+                        window.CheckForChanges();
+                    }
                 }
             }
-
             // moved or imported subgraphs or HLSL files should notify open shadergraphs that they need to handle them
             var changedFileGUIDs = movedAssets.Concat(importedAssets).Concat(deletedAssets)
-                .Where(x => x.EndsWith(ShaderSubGraphImporter.Extension, StringComparison.InvariantCultureIgnoreCase)
-                    || CustomFunctionNode.s_ValidExtensions.Contains(Path.GetExtension(x)))
+                .Where(x =>
+                {
+                    if (x.EndsWith(ShaderSubGraphImporter.Extension, StringComparison.InvariantCultureIgnoreCase) || CustomFunctionNode.s_ValidExtensions.Contains(Path.GetExtension(x)))
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        var asset = AssetDatabase.GetMainAssetTypeAtPath(x);
+                        return asset is null || asset.IsSubclassOf(typeof(Texture));
+                    }
+                })
                 .Select(AssetDatabase.AssetPathToGUID)
                 .Distinct()
                 .ToList();
 
             if (changedFileGUIDs.Count > 0)
             {
+                if (windows == null)
+                {
+                    windows = Resources.FindObjectsOfTypeAll<MaterialGraphEditWindow>();
+                }
                 foreach (var window in windows)
                 {
                     window.ReloadSubGraphsOnNextUpdate(changedFileGUIDs);

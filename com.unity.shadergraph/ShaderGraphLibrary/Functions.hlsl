@@ -55,6 +55,10 @@ Gradient NewGradient(int type, int colorsLength, int alphasLength,
     #define SHADERGRAPH_SAMPLE_SCENE_COLOR(uv) shadergraph_SampleSceneColor(uv)
 #endif
 
+#ifndef SHADERGRAPH_SAMPLE_SCENE_NORMAL
+    #define SHADERGRAPH_SAMPLE_SCENE_NORMAL(uv) shadergraph_SampleSceneNormal(uv)
+#endif
+
 #ifndef SHADERGRAPH_BAKED_GI
     #define SHADERGRAPH_BAKED_GI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap, applyScaling) shadergraph_BakedGI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap, applyScaling)
 #endif
@@ -83,12 +87,24 @@ Gradient NewGradient(int type, int colorsLength, int alphasLength,
     #define SHADERGRAPH_OBJECT_POSITION UNITY_MATRIX_M._m03_m13_m23
 #endif
 
+#ifndef SHADERGRAPH_RENDERER_BOUNDS_MIN
+    #define SHADERGRAPH_RENDERER_BOUNDS_MIN float3(0, 0, 0)
+#endif
+#ifndef SHADERGRAPH_RENDERER_BOUNDS_MAX
+    #define SHADERGRAPH_RENDERER_BOUNDS_MAX float3(0, 0, 0)
+#endif
+
 float shadergraph_SampleSceneDepth(float2 uv)
 {
     return 1;
 }
 
 float3 shadergraph_SampleSceneColor(float2 uv)
+{
+    return 0;
+}
+
+float3 shadergraph_SampleSceneNormal(float2 uv)
 {
     return 0;
 }

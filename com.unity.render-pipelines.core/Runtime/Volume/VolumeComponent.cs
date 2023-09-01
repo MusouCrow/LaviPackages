@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
 
 namespace UnityEngine.Rendering
 {
@@ -92,7 +92,7 @@ namespace UnityEngine.Rendering
     /// </code>
     /// </example>
     [Serializable]
-    public class VolumeComponent : ScriptableObject
+    public partial class VolumeComponent : ScriptableObject
     {
         /// <summary>
         /// Local attribute for VolumeComponent fields only.
@@ -122,9 +122,23 @@ namespace UnityEngine.Rendering
         public string displayName { get; protected set; } = "";
 
         /// <summary>
+        /// The backing storage of <see cref="parameters"/>. Use this for performance-critical work.
+        /// </summary>
+        internal readonly List<VolumeParameter> parameterList = new();
+
+        ReadOnlyCollection<VolumeParameter> m_ParameterReadOnlyCollection;
+        /// <summary>
         /// A read-only collection of all the <see cref="VolumeParameter"/>s defined in this class.
         /// </summary>
-        public ReadOnlyCollection<VolumeParameter> parameters { get; private set; }
+        public ReadOnlyCollection<VolumeParameter> parameters
+        {
+            get
+            {
+                if (m_ParameterReadOnlyCollection == null)
+                    m_ParameterReadOnlyCollection = parameterList.AsReadOnly();
+                return m_ParameterReadOnlyCollection;
+            }
+        }
 
         /// <summary>
         /// Extracts all the <see cref="VolumeParameter"/>s defined in this class and nested classes.
@@ -146,7 +160,10 @@ namespace UnityEngine.Rendering
                 if (field.FieldType.IsSubclassOf(typeof(VolumeParameter)))
                 {
                     if (filter?.Invoke(field) ?? true)
-                        parameters.Add((VolumeParameter)field.GetValue(o));
+                    {
+                        VolumeParameter volumeParameter = (VolumeParameter)field.GetValue(o);
+                        parameters.Add(volumeParameter);
+                    }
                 }
                 else if (!field.FieldType.IsArray && field.FieldType.IsClass)
                     FindParameters(field.GetValue(o), parameters, filter);
@@ -162,12 +179,10 @@ namespace UnityEngine.Rendering
         protected virtual void OnEnable()
         {
             // Automatically grab all fields of type VolumeParameter for this instance
-            var fields = new List<VolumeParameter>();
-            FindParameters(this, fields);
-            parameters = fields.AsReadOnly();
+            parameterList.Clear();
+            FindParameters(this, parameterList);
 
-
-            foreach (var parameter in parameters)
+            foreach (var parameter in parameterList)
             {
                 if (parameter != null)
                     parameter.OnEnable();
@@ -181,10 +196,7 @@ namespace UnityEngine.Rendering
         /// </summary>
         protected virtual void OnDisable()
         {
-            if (parameters == null)
-                return;
-
-            foreach (var parameter in parameters)
+            foreach (var parameter in parameterList)
             {
                 if (parameter != null)
                     parameter.OnDisable();
@@ -228,12 +240,12 @@ namespace UnityEngine.Rendering
         /// </example>
         public virtual void Override(VolumeComponent state, float interpFactor)
         {
-            int count = parameters.Count;
+            int count = parameterList.Count;
 
             for (int i = 0; i < count; i++)
             {
-                var stateParam = state.parameters[i];
-                var toParam = parameters[i];
+                var stateParam = state.parameterList[i];
+                var toParam = parameterList[i];
 
                 if (toParam.overrideState)
                 {
@@ -250,7 +262,7 @@ namespace UnityEngine.Rendering
         /// <param name="state">The value to set the state of the overrides to.</param>
         public void SetAllOverridesTo(bool state)
         {
-            SetOverridesTo(parameters, state);
+            SetOverridesTo(parameterList, state);
         }
 
         /// <summary>
@@ -289,11 +301,24 @@ namespace UnityEngine.Rendering
 
                 int hash = 17;
 
-                for (int i = 0; i < parameters.Count; i++)
-                    hash = hash * 23 + parameters[i].GetHashCode();
+                for (int i = 0; i < parameterList.Count; i++)
+                    hash = hash * 23 + parameterList[i].GetHashCode();
 
                 return hash;
             }
+        }
+
+        /// <summary>
+        /// Returns true if any of the volume properites has been overridden.
+        /// </summary>
+        /// <returns>True if any of the volume properites has been overridden.</returns>
+        public bool AnyPropertiesIsOverridden()
+        {
+            for (int i = 0; i < parameterList.Count; ++i)
+            {
+                if (parameterList[i].overrideState) return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -306,10 +331,13 @@ namespace UnityEngine.Rendering
         /// </summary>
         public void Release()
         {
-            for (int i = 0; i < parameters.Count; i++)
+            if (parameterList == null)
+                return;
+
+            for (int i = 0; i < parameterList.Count; i++)
             {
-                if (parameters[i] != null)
-                    parameters[i].Release();
+                if (parameterList[i] != null)
+                    parameterList[i].Release();
             }
         }
     }

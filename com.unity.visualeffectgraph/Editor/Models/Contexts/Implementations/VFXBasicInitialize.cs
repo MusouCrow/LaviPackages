@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+
 using UnityEditor.VFX.UI;
 using UnityEngine;
 using UnityEngine.VFX;
@@ -9,18 +10,13 @@ namespace UnityEditor.VFX
 {
     class InitializeVariantProvider : VariantProvider
     {
-        protected override sealed Dictionary<string, object[]> variants
+        protected sealed override Dictionary<string, object[]> variants { get; } = new Dictionary<string, object[]>
         {
-            get
-            {
-                return new Dictionary<string, object[]>
-                {
-                    { "dataType", Enum.GetValues(typeof(VFXDataParticle.DataType)).Cast<object>().ToArray() }
-                };
-            }
-        }
+            {"dataType", Enum.GetValues(typeof(VFXDataParticle.DataType)).Cast<object>().ToArray()}
+        };
     }
 
+    [VFXHelpURL("Context-Initialize")]
     [VFXInfo(variantProvider = typeof(InitializeVariantProvider))]
     class VFXBasicInitialize : VFXContext
     {
@@ -79,29 +75,29 @@ namespace UnityEditor.VFX
             {
                 if (model == this)
                     ResyncSlots(false); // To add/remove stripIndex
-                RefreshErrors(GetGraph());
+                RefreshErrors();
             }
 
             base.OnInvalidate(model, cause);
         }
 
-        protected override void GenerateErrors(VFXInvalidateErrorReporter manager)
+        internal override void GenerateErrors(VFXInvalidateErrorReporter manager)
         {
             VFXSetting capacitySetting = GetSetting("capacity");
-            if ((uint)capacitySetting.value > 1000000)
+            if (capacitySetting.valid && (uint)capacitySetting.value > 1000000)
                 manager.RegisterError("CapacityOver1M", VFXErrorType.PerfWarning, "Systems with large capacities can be slow to simulate");
             var data = GetData() as VFXDataParticle;
             if (data != null && CanBeCompiled())
             {
                 if (data.boundsMode == BoundsSettingMode.Recorded)
                 {
-                    if (VFXViewWindow.currentWindow?.graphView?.attachedComponent == null ||
+                    if (VFXViewWindow.GetWindow(GetGraph(), false, false)?.graphView?.attachedComponent == null ||
                         !BoardPreferenceHelper.IsVisible(BoardPreferenceHelper.Board.componentBoard, false))
                     {
                         manager.RegisterError("NeedsRecording", VFXErrorType.Warning,
                             "In order to record the bounds, the current graph needs to be attached to a scene instance via the Target Game Object panel");
                     }
-                    var boundsSlot = inputSlots.FirstOrDefault(s => s.name == "bounds");
+                    var boundsSlot = inputSlots.FirstOrDefault(s => s.name == nameof(InputPropertiesBounds.bounds));
                     if (boundsSlot != null && boundsSlot.HasLink(true))
                     {
                         manager.RegisterError("OverriddenRecording", VFXErrorType.Warning,
@@ -159,7 +155,7 @@ namespace UnityEditor.VFX
 
         public sealed override VFXCoordinateSpace GetOutputSpaceFromSlot(VFXSlot slot)
         {
-            if (slot.name == "bounds")
+            if (slot.name == nameof(InputPropertiesBounds.bounds))
                 return VFXCoordinateSpace.Local;
             return base.GetOutputSpaceFromSlot(slot);
         }
@@ -207,6 +203,21 @@ namespace UnityEditor.VFX
         public override IEnumerable<VFXSetting> GetSettings(bool listHidden, VFXSettingAttribute.VisibleFlags flags)
         {
             return GetData().GetSettings(listHidden, flags); // Just a bridge on data
+        }
+
+        protected override IEnumerable<VFXBlock> implicitPreBlock
+        {
+            get
+            {
+                var data = GetData();
+                if (hasGPUSpawner)
+                {
+                    // Force "alive" attribute when a system can spawn particles from GPU, because we are updating the entire capacity
+                    var block = VFXBlock.CreateImplicitBlock<Block.SetAttribute>(data);
+                    block.SetSettingValue(nameof(Block.SetAttribute.attribute), VFXAttribute.Alive.name);
+                    yield return block;
+                }
+            }
         }
     }
 }

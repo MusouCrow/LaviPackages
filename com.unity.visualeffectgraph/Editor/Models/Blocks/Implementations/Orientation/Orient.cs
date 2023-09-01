@@ -8,19 +8,14 @@ namespace UnityEditor.VFX.Block
 {
     class OrientationModeProvider : VariantProvider
     {
-        protected override sealed Dictionary<string, object[]> variants
+        protected sealed override Dictionary<string, object[]> variants { get; } = new Dictionary<string, object[]>
         {
-            get
-            {
-                return new Dictionary<string, object[]>
-                {
-                    { "mode", Enum.GetValues(typeof(Orient.Mode)).Cast<object>().ToArray() }
-                };
-            }
-        }
+            {"mode", Enum.GetValues(typeof(Orient.Mode)).Cast<object>().ToArray()}
+        };
     }
 
-    [VFXInfo(category = "Orientation", variantProvider = typeof(OrientationModeProvider))]
+    [VFXHelpURL("Block-Orient")]
+    [VFXInfo(category = "Attribute/orientation", variantProvider = typeof(OrientationModeProvider))]
     class Orient : VFXBlock
     {
         public enum Mode
@@ -330,8 +325,10 @@ axisY = cross(axisZ, axisX);
             base.Sanitize(version);
         }
 
-        protected override void GenerateErrors(VFXInvalidateErrorReporter manager)
+        internal sealed override void GenerateErrors(VFXInvalidateErrorReporter manager)
         {
+            base.GenerateErrors(manager);
+
             if (!canTestStrips)
                 return;
 

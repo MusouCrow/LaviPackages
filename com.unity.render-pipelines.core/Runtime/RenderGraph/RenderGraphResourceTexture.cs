@@ -20,9 +20,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
 
         internal ResourceHandle handle;
 
-        internal ResourceHandle fallBackResource;
-
-        internal TextureHandle(int handle, bool shared = false) { this.handle = new ResourceHandle(handle, RenderGraphResourceType.Texture, shared); fallBackResource = s_NullHandle.handle; }
+        internal TextureHandle(int handle, bool shared = false) { this.handle = new ResourceHandle(handle, RenderGraphResourceType.Texture, shared); }
 
         /// <summary>
         /// Cast to RenderTargetIdentifier
@@ -57,12 +55,6 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         /// </summary>
         /// <returns>True if the handle is valid.</returns>
         public bool IsValid() => handle.IsValid();
-
-        /// <summary>
-        /// Sets the fallback resource
-        /// </summary>
-        /// <param name="texture">The texture handle</param>
-        public void SetFallBackResource(TextureHandle texture) { fallBackResource = texture.handle; }
     }
 
     /// <summary>
@@ -140,6 +132,8 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         public bool useDynamicScale;
         ///<summary>Memory less flag.</summary>
         public RenderTextureMemoryless memoryless;
+        ///<summary>Special treatment of the VR eye texture used in stereoscopic rendering.</summary>
+        public VRTextureUsage vrUsage;
         ///<summary>Texture name.</summary>
         public string name;
 #if UNITY_2020_2_OR_NEWER
@@ -148,6 +142,11 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
 #endif
         ///<summary>Determines whether the texture will fallback to a black texture if it is read without ever writing to it.</summary>
         public bool fallBackToBlackTexture;
+        ///<summary>
+        ///If all passes writing to a texture are culled by Dynamic Render Pass Culling, it will automatically fallback to a similar preallocated texture.\n
+        ///Set this to false to force the allocation.
+        ///</summary>
+        public bool disableFallBackToImportedTexture;
 
         // Initial state. Those should not be used in the hash
         ///<summary>Texture needs to be cleared on first use.</summary>
@@ -158,6 +157,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         void InitDefaultValues(bool dynamicResolution, bool xrReady)
         {
             useDynamicScale = dynamicResolution;
+            vrUsage = VRTextureUsage.None;
             // XR Ready
             if (xrReady)
             {
@@ -211,7 +211,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         /// <summary>
         /// TextureDesc constructor for a texture using a functor for scaling
         /// </summary>
-        /// <param name="func">Function used to determnine the texture size</param>
+        /// <param name="func">Function used to determine the texture size</param>
         /// <param name="dynamicResolution">Use dynamic resolution</param>
         /// <param name="xrReady">Set this to true if the Texture is a render texture in an XR setting.</param>
         public TextureDesc(ScaleFunc func, bool dynamicResolution = false, bool xrReady = false)
@@ -269,6 +269,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
                 hashCode = hashCode * 23 + (int)wrapMode;
                 hashCode = hashCode * 23 + (int)dimension;
                 hashCode = hashCode * 23 + (int)memoryless;
+                hashCode = hashCode * 23 + (int)vrUsage;
                 hashCode = hashCode * 23 + anisoLevel;
                 hashCode = hashCode * 23 + (enableRandomWrite ? 1 : 0);
                 hashCode = hashCode * 23 + (useMipMap ? 1 : 0);
@@ -306,27 +307,28 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
 
         public override void CreatePooledGraphicsResource()
         {
-            Debug.Assert(m_Pool != null, "CreatePooledGraphicsResource should only be called for regular pooled resources");
+            Debug.Assert(m_Pool != null, "TextureResource: CreatePooledGraphicsResource should only be called for regular pooled resources");
 
             int hashCode = desc.GetHashCode();
 
             if (graphicsResource != null)
-                throw new InvalidOperationException(string.Format("Trying to create an already created resource ({0}). Resource was probably declared for writing more than once in the same pass.", GetName()));
+                throw new InvalidOperationException(string.Format("TextureResource: Trying to create an already created resource ({0}). Resource was probably declared for writing more than once in the same pass.", GetName()));
 
             var pool = m_Pool as TexturePool;
             if (!pool.TryGetResource(hashCode, out graphicsResource))
             {
-                CreateGraphicsResource();
+                CreateGraphicsResource(desc.name);
             }
 
             cachedHash = hashCode;
             pool.RegisterFrameAllocation(cachedHash, graphicsResource);
+            graphicsResource.m_Name = desc.name;
         }
 
         public override void ReleasePooledGraphicsResource(int frameIndex)
         {
             if (graphicsResource == null)
-                throw new InvalidOperationException($"Tried to release a resource ({GetName()}) that was never created. Check that there is at least one pass writing to it first.");
+                throw new InvalidOperationException($"TextureResource: Tried to release a resource ({GetName()}) that was never created. Check that there is at least one pass writing to it first.");
 
             // Shared resources don't use the pool
             var pool = m_Pool as TexturePool;
@@ -350,15 +352,15 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
             {
                 case TextureSizeMode.Explicit:
                     graphicsResource = RTHandles.Alloc(desc.width, desc.height, desc.slices, desc.depthBufferBits, desc.colorFormat, desc.filterMode, desc.wrapMode, desc.dimension, desc.enableRandomWrite,
-                        desc.useMipMap, desc.autoGenerateMips, desc.isShadowMap, desc.anisoLevel, desc.mipMapBias, desc.msaaSamples, desc.bindTextureMS, desc.useDynamicScale, desc.memoryless, name);
+                        desc.useMipMap, desc.autoGenerateMips, desc.isShadowMap, desc.anisoLevel, desc.mipMapBias, desc.msaaSamples, desc.bindTextureMS, desc.useDynamicScale, desc.memoryless, desc.vrUsage, name);
                     break;
                 case TextureSizeMode.Scale:
                     graphicsResource = RTHandles.Alloc(desc.scale, desc.slices, desc.depthBufferBits, desc.colorFormat, desc.filterMode, desc.wrapMode, desc.dimension, desc.enableRandomWrite,
-                        desc.useMipMap, desc.autoGenerateMips, desc.isShadowMap, desc.anisoLevel, desc.mipMapBias, desc.msaaSamples, desc.bindTextureMS, desc.useDynamicScale, desc.memoryless, name);
+                        desc.useMipMap, desc.autoGenerateMips, desc.isShadowMap, desc.anisoLevel, desc.mipMapBias, desc.msaaSamples, desc.bindTextureMS, desc.useDynamicScale, desc.memoryless, desc.vrUsage, name);
                     break;
                 case TextureSizeMode.Functor:
                     graphicsResource = RTHandles.Alloc(desc.func, desc.slices, desc.depthBufferBits, desc.colorFormat, desc.filterMode, desc.wrapMode, desc.dimension, desc.enableRandomWrite,
-                        desc.useMipMap, desc.autoGenerateMips, desc.isShadowMap, desc.anisoLevel, desc.mipMapBias, desc.msaaSamples, desc.bindTextureMS, desc.useDynamicScale, desc.memoryless, name);
+                        desc.useMipMap, desc.autoGenerateMips, desc.isShadowMap, desc.anisoLevel, desc.mipMapBias, desc.msaaSamples, desc.bindTextureMS, desc.useDynamicScale, desc.memoryless, desc.vrUsage, name);
                     break;
             }
         }

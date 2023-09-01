@@ -1,25 +1,20 @@
-using System;
+using System.Linq;
+using System.Reflection;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-using UnityEngine;
-using UnityEngine.SceneManagement;
-using System.Reflection;
-using System.Linq;
 
-namespace UnityEngine.Experimental.Rendering
+namespace UnityEngine.Rendering
 {
     // Add Profile and baking settings.
-
-    /// <summary>
-    /// A class containing info about the bounds defined by the probe volumes in various scenes.
-    /// </summary>
+    /// <summary> A class containing info about the bounds defined by the probe volumes in various scenes. </summary>
     [System.Serializable]
     public class ProbeVolumeSceneData : ISerializationCallbackReceiver
     {
         static PropertyInfo s_SceneGUID = typeof(Scene).GetProperty("guid", System.Reflection.BindingFlags.NonPublic | BindingFlags.Instance);
-        string GetSceneGUID(Scene scene)
+        static internal string GetSceneGUID(Scene scene)
         {
             Debug.Assert(s_SceneGUID != null, "Reflection for scene GUID failed");
             return (string)s_SceneGUID.GetValue(scene);
@@ -49,8 +44,8 @@ namespace UnityEngine.Experimental.Rendering
         [System.Serializable]
         struct SerializablePVBakeSettings
         {
-            [SerializeField] public string sceneGUID;
-            [SerializeField] public ProbeVolumeBakingProcessSettings settings;
+            public string sceneGUID;
+            public ProbeVolumeBakingProcessSettings settings;
         }
 
         [System.Serializable]
@@ -60,6 +55,28 @@ namespace UnityEngine.Experimental.Rendering
             public List<string> sceneGUIDs = new List<string>();
             public ProbeVolumeBakingProcessSettings settings;
             public ProbeReferenceVolumeProfile profile;
+
+            public List<string> lightingScenarios = new List<string>();
+
+            internal string CreateScenario(string name)
+            {
+                if (lightingScenarios.Contains(name))
+                {
+                    string renamed;
+                    int index = 1;
+                    do
+                        renamed = $"{name} ({index++})";
+                    while (lightingScenarios.Contains(renamed));
+                    name = renamed;
+                }
+                lightingScenarios.Add(name);
+                return name;
+            }
+
+            internal bool RemoveScenario(string name)
+            {
+                return lightingScenarios.Remove(name);
+            }
         }
 
         [SerializeField] List<SerializableBoundItem> serializedBounds;
@@ -78,8 +95,75 @@ namespace UnityEngine.Experimental.Rendering
         internal Dictionary<string, ProbeVolumeBakingProcessSettings> sceneBakingSettings;
         internal List<BakingSet> bakingSets;
 
-        /// <summary>Constructor for ProbeVolumeSceneData. </summary>
-        /// <param name="parentAsset">The asset holding this ProbeVolumeSceneData, it will be dirtied every time scene bounds or settings are changed. </param>
+        [SerializeField] string m_LightingScenario = ProbeReferenceVolume.defaultLightingScenario;
+        string m_OtherScenario = null;
+        float m_ScenarioBlendingFactor = 0.0f;
+
+        internal string lightingScenario => m_LightingScenario;
+        internal string otherScenario => m_OtherScenario;
+        internal float scenarioBlendingFactor => m_ScenarioBlendingFactor;
+
+        internal void SetActiveScenario(string scenario)
+        {
+            if (m_LightingScenario == scenario && m_ScenarioBlendingFactor == 0.0f)
+                return;
+
+            m_LightingScenario = scenario;
+            m_OtherScenario = null;
+            m_ScenarioBlendingFactor = 0.0f;
+
+            foreach (var data in ProbeReferenceVolume.instance.perSceneDataList)
+                data.UpdateActiveScenario(m_LightingScenario, m_OtherScenario);
+
+            if (ProbeReferenceVolume.instance.enableScenarioBlending)
+            {
+                // Trigger blending system to replace old cells with the one from the new active scenario.
+                // Although we technically don't need blending for that, it is better than unloading all cells
+                // because it will replace them progressively. There is no real performance cost to using blending
+                // rather than regular load thanks to the bypassBlending branch in AddBlendingBricks.
+                ProbeReferenceVolume.instance.ScenarioBlendingChanged(true);
+            }
+            else
+                ProbeReferenceVolume.instance.UnloadAllCells();
+        }
+
+        internal void BlendLightingScenario(string otherScenario, float blendingFactor)
+        {
+            if (!ProbeReferenceVolume.instance.enableScenarioBlending)
+            {
+                if (!ProbeBrickBlendingPool.isSupported)
+                    Debug.LogError("Blending between lighting scenarios is not supported by this render pipeline.");
+                else
+                    Debug.LogError("Blending between lighting scenarios is disabled in the render pipeline settings.");
+                return;
+            }
+
+            blendingFactor = Mathf.Clamp01(blendingFactor);
+
+            if (otherScenario == m_LightingScenario || string.IsNullOrEmpty(otherScenario))
+                otherScenario = null;
+            if (otherScenario == null)
+                blendingFactor = 0.0f;
+            if (otherScenario == m_OtherScenario && Mathf.Approximately(blendingFactor, m_ScenarioBlendingFactor))
+                return;
+
+            bool scenarioChanged = otherScenario != m_OtherScenario;
+            m_OtherScenario = otherScenario;
+            m_ScenarioBlendingFactor = blendingFactor;
+
+            if (scenarioChanged)
+            {
+                foreach (var data in ProbeReferenceVolume.instance.perSceneDataList)
+                    data.UpdateActiveScenario(m_LightingScenario, m_OtherScenario);
+            }
+
+            ProbeReferenceVolume.instance.ScenarioBlendingChanged(scenarioChanged);
+        }
+
+        /// <summary>
+        /// Constructor for ProbeVolumeSceneData.
+        /// </summary>
+        /// <param name="parentAsset">The asset holding this ProbeVolumeSceneData, it will be dirtied every time scene bounds or settings are changed.</param>
         /// <param name="parentSceneDataPropertyName">The name of the property holding the ProbeVolumeSceneData in the parentAsset.</param>
         public ProbeVolumeSceneData(Object parentAsset, string parentSceneDataPropertyName)
         {
@@ -145,8 +229,19 @@ namespace UnityEngine.Experimental.Rendering
                 sceneBakingSettings.Add(settingsItem.sceneGUID, settingsItem.settings);
             }
 
+            if (string.IsNullOrEmpty(m_LightingScenario))
+                m_LightingScenario = ProbeReferenceVolume.defaultLightingScenario;
+
             foreach (var set in serializedBakingSets)
+            {
+                // Ensure baking set settings are up to date
+                set.settings.Upgrade();
+
                 bakingSets.Add(set);
+            }
+
+            if (m_OtherScenario == "")
+                m_OtherScenario = null;
         }
 
         // This function must not be called during the serialization (because of asset creation)
@@ -157,13 +252,8 @@ namespace UnityEngine.Experimental.Rendering
                 // Small migration code to ensure that old sets have correct settings
                 if (set.profile == null)
                     InitializeBakingSet(set, set.name);
-            }
-
-            // Initialize baking set in case it's empty:
-            if (bakingSets.Count == 0)
-            {
-                var set = CreateNewBakingSet("Default");
-                set.sceneGUIDs = serializedProfiles.Select(s => s.sceneGUID).ToList();
+                if (set.lightingScenarios.Count == 0)
+                    InitializeScenarios(set);
             }
 
             SyncBakingSetSettings();
@@ -235,29 +325,22 @@ namespace UnityEngine.Experimental.Rendering
         void InitializeBakingSet(BakingSet set, string name)
         {
             var newProfile = ScriptableObject.CreateInstance<ProbeReferenceVolumeProfile>();
+
 #if UNITY_EDITOR
-            ProjectWindowUtil.CreateAsset(newProfile, name + ".asset");
+            var path = AssetDatabase.GenerateUniqueAssetPath($"Assets/{name}.asset");
+            AssetDatabase.CreateAsset(newProfile, path);
 #endif
 
-            set.name = name;
+            set.name = newProfile.name;
             set.profile = newProfile;
-            set.settings = new ProbeVolumeBakingProcessSettings
-            {
-                dilationSettings = new ProbeDilationSettings
-                {
-                    enableDilation = true,
-                    dilationDistance = 1,
-                    dilationValidityThreshold = 0.25f,
-                    dilationIterations = 1,
-                    squaredDistWeighting = true,
-                },
-                virtualOffsetSettings = new VirtualOffsetSettings
-                {
-                    useVirtualOffset = true,
-                    outOfGeoOffset = 0.01f,
-                    searchMultiplier = 0.2f,
-                }
-            };
+            set.settings = ProbeVolumeBakingProcessSettings.Default;
+
+            InitializeScenarios(set);
+        }
+
+        void InitializeScenarios(BakingSet set)
+        {
+            set.lightingScenarios = new List<string>() { ProbeReferenceVolume.defaultLightingScenario };
         }
 
         internal void SyncBakingSetSettings()
@@ -274,19 +357,13 @@ namespace UnityEngine.Experimental.Rendering
         }
 
 #if UNITY_EDITOR
-        private int FindInflatingBrickSize(Vector3 size, ProbeVolume pv)
+        static internal int MaxSubdivLevelInProbeVolume(Vector3 volumeSize, int maxSubdiv)
         {
-            var refVol = ProbeReferenceVolume.instance;
-            float minSizedDim = Mathf.Min(size.x, Mathf.Min(size.y, size.z));
-
-            float minBrickSize = refVol.MinBrickSize();
-
-            float minSideInBricks = Mathf.CeilToInt(minSizedDim / minBrickSize);
+            float maxSizedDim = Mathf.Max(volumeSize.x, Mathf.Max(volumeSize.y, volumeSize.z));
+            float maxSideInBricks = maxSizedDim / ProbeReferenceVolume.instance.MinDistanceBetweenProbes();
             int absoluteMaxSubdiv = ProbeReferenceVolume.instance.GetMaxSubdivision() - 1;
-            minSideInBricks = Mathf.Max(minSideInBricks, Mathf.Pow(3, absoluteMaxSubdiv - (pv.overridesSubdivLevels ? pv.highestSubdivLevelOverride : 0)));
-            int subdivLevel = Mathf.FloorToInt(Mathf.Log(minSideInBricks, 3));
-
-            return subdivLevel;
+            int subdivLevel = Mathf.FloorToInt(Mathf.Log(maxSideInBricks, 3)) - 1;
+            return Mathf.Max(subdivLevel, absoluteMaxSubdiv - maxSubdiv);
         }
 
         private void InflateBound(ref Bounds bounds, ProbeVolume pv)
@@ -311,12 +388,13 @@ namespace UnityEngine.Experimental.Rendering
             maxPadding = cellSizeVector - new Vector3(Mathf.Abs(maxPadding.x), Mathf.Abs(maxPadding.y), Mathf.Abs(maxPadding.z));
 
             // Find the size of the brick we can put for every axis given the padding size
-            float rightPaddingSubdivLevel = ProbeReferenceVolume.instance.BrickSize(FindInflatingBrickSize(new Vector3(maxPadding.x, originalBounds.size.y, originalBounds.size.z), pv));
-            float leftPaddingSubdivLevel = ProbeReferenceVolume.instance.BrickSize(FindInflatingBrickSize(new Vector3(minPadding.x, originalBounds.size.y, originalBounds.size.z), pv));
-            float topPaddingSubdivLevel = ProbeReferenceVolume.instance.BrickSize(FindInflatingBrickSize(new Vector3(originalBounds.size.x, maxPadding.y, originalBounds.size.z), pv));
-            float bottomPaddingSubdivLevel = ProbeReferenceVolume.instance.BrickSize(FindInflatingBrickSize(new Vector3(originalBounds.size.x, minPadding.y, originalBounds.size.z), pv));
-            float forwardPaddingSubdivLevel = ProbeReferenceVolume.instance.BrickSize(FindInflatingBrickSize(new Vector3(originalBounds.size.x, originalBounds.size.y, maxPadding.z), pv));
-            float backPaddingSubdivLevel = ProbeReferenceVolume.instance.BrickSize(FindInflatingBrickSize(new Vector3(originalBounds.size.x, originalBounds.size.y, minPadding.z), pv));
+            int maxSubdiv = (pv.overridesSubdivLevels ? pv.highestSubdivLevelOverride : 0);
+            float rightPaddingSubdivLevel = ProbeReferenceVolume.instance.BrickSize(MaxSubdivLevelInProbeVolume(new Vector3(maxPadding.x, originalBounds.size.y, originalBounds.size.z), maxSubdiv));
+            float leftPaddingSubdivLevel = ProbeReferenceVolume.instance.BrickSize(MaxSubdivLevelInProbeVolume(new Vector3(minPadding.x, originalBounds.size.y, originalBounds.size.z), maxSubdiv));
+            float topPaddingSubdivLevel = ProbeReferenceVolume.instance.BrickSize(MaxSubdivLevelInProbeVolume(new Vector3(originalBounds.size.x, maxPadding.y, originalBounds.size.z), maxSubdiv));
+            float bottomPaddingSubdivLevel = ProbeReferenceVolume.instance.BrickSize(MaxSubdivLevelInProbeVolume(new Vector3(originalBounds.size.x, minPadding.y, originalBounds.size.z), maxSubdiv));
+            float forwardPaddingSubdivLevel = ProbeReferenceVolume.instance.BrickSize(MaxSubdivLevelInProbeVolume(new Vector3(originalBounds.size.x, originalBounds.size.y, maxPadding.z), maxSubdiv));
+            float backPaddingSubdivLevel = ProbeReferenceVolume.instance.BrickSize(MaxSubdivLevelInProbeVolume(new Vector3(originalBounds.size.x, originalBounds.size.y, minPadding.z), maxSubdiv));
             // Remove the extra padding caused by cell rounding
             bounds.min = bounds.min + new Vector3(
                 leftPaddingSubdivLevel * Mathf.Floor(Mathf.Abs(bounds.min.x - originalBounds.min.x) / (float)leftPaddingSubdivLevel),
@@ -330,20 +408,19 @@ namespace UnityEngine.Experimental.Rendering
             );
         }
 
-        internal void UpdateSceneBounds(Scene scene)
+        // Should be called after EnsureSceneIsInBakingSet otherwise GetProfileForScene might be out of date
+        internal void UpdateSceneBounds(Scene scene, bool updateGlobalVolumes)
         {
-            var volumes = UnityEngine.GameObject.FindObjectsOfType<ProbeVolume>();
+            var volumes = Object.FindObjectsOfType<ProbeVolume>();
+            float prevBrickSize = ProbeReferenceVolume.instance.MinBrickSize();
+            int prevMaxSubdiv = ProbeReferenceVolume.instance.GetMaxSubdivision();
 
-            // If we have not yet loaded any asset, we haven't initialized the probe reference volume with any info from the profile.
-            // As a result we need to prime with the profile info directly stored here.
             {
                 var profile = GetProfileForScene(scene);
                 if (profile == null)
                 {
                     if (volumes.Length > 0)
-                    {
                         Debug.LogWarning("A probe volume is present in the scene but a profile has not been set. Please configure a profile for your scene in the Probe Volume Baking settings.");
-                    }
                     return;
                 }
                 ProbeReferenceVolume.instance.SetMinBrickAndMaxSubdiv(profile.minBrickSize, profile.maxSubdivision);
@@ -354,90 +431,53 @@ namespace UnityEngine.Experimental.Rendering
             Bounds newBound = new Bounds();
             foreach (var volume in volumes)
             {
-                if (volume.globalVolume)
-                    volume.UpdateGlobalVolume(scene);
+                bool forceUpdate = updateGlobalVolumes && volume.mode == ProbeVolume.Mode.Global;
+                if (!forceUpdate && volume.gameObject.scene != scene)
+                    continue;
 
-                var volumeSceneGUID = GetSceneGUID(volume.gameObject.scene);
-                if (volumeSceneGUID == sceneGUID)
+                if (volume.mode != ProbeVolume.Mode.Local)
+                    volume.UpdateGlobalVolume(volume.mode == ProbeVolume.Mode.Global ? GIContributors.ContributorFilter.All : GIContributors.ContributorFilter.Scene);
+
+                var transform = volume.gameObject.transform;
+                var obb = new ProbeReferenceVolume.Volume(Matrix4x4.TRS(transform.position, transform.rotation, volume.GetExtents()), 0, 0);
+                Bounds localBounds = obb.CalculateAABB();
+
+                InflateBound(ref localBounds, volume);
+
+                if (!boundFound)
                 {
-                    var pos = volume.gameObject.transform.position;
-                    var extent = volume.GetExtents();
-
-                    Bounds localBounds = new Bounds(pos, extent);
-
-                    InflateBound(ref localBounds, volume);
-
-                    if (!boundFound)
-                    {
-                        newBound = localBounds;
-                        boundFound = true;
-                    }
-                    else
-                    {
-                        newBound.Encapsulate(localBounds);
-                    }
-                }
-            }
-
-            if (boundFound)
-            {
-                if (sceneBounds == null)
-                {
-                    sceneBounds = new Dictionary<string, Bounds>();
-                    hasProbeVolumes = new Dictionary<string, bool>();
-                }
-
-                if (sceneBounds.ContainsKey(sceneGUID))
-                {
-                    sceneBounds[sceneGUID] = newBound;
+                    newBound = localBounds;
+                    boundFound = true;
                 }
                 else
                 {
-                    sceneBounds.Add(sceneGUID, newBound);
+                    newBound.Encapsulate(localBounds);
                 }
             }
 
-            if (hasProbeVolumes.ContainsKey(sceneGUID))
-                hasProbeVolumes[sceneGUID] = boundFound;
-            else
-                hasProbeVolumes.Add(sceneGUID, boundFound);
+            hasProbeVolumes[sceneGUID] = boundFound;
+            if (boundFound)
+                sceneBounds[sceneGUID] = newBound;
+
+            ProbeReferenceVolume.instance.SetMinBrickAndMaxSubdiv(prevBrickSize, prevMaxSubdiv);
 
             if (parentAsset != null)
-            {
                 EditorUtility.SetDirty(parentAsset);
-            }
         }
 
-        internal void EnsureSceneHasProbeVolumeIsValid(Scene scene)
-        {
-            var sceneGUID = GetSceneGUID(scene);
-            var volumes = UnityEngine.GameObject.FindObjectsOfType<ProbeVolume>();
-            foreach (var volume in volumes)
-            {
-                if (GetSceneGUID(volume.gameObject.scene) == sceneGUID)
-                {
-                    hasProbeVolumes[sceneGUID] = true;
-                    return;
-                }
-            }
-            hasProbeVolumes[sceneGUID] = false;
-        }
-
-        // It is important this is called after UpdateSceneBounds is called!
+        // It is important this is called after UpdateSceneBounds is called otherwise SceneHasProbeVolumes might be out of date
         internal void EnsurePerSceneData(Scene scene)
         {
             var sceneGUID = GetSceneGUID(scene);
-
-            if (hasProbeVolumes.ContainsKey(sceneGUID) && hasProbeVolumes[sceneGUID])
+            if (SceneHasProbeVolumes(sceneGUID))
             {
-                var perSceneData = UnityEngine.GameObject.FindObjectsOfType<ProbeVolumePerSceneData>();
-
                 bool foundPerSceneData = false;
-                foreach (var data in perSceneData)
+                foreach (var data in ProbeReferenceVolume.instance.perSceneDataList)
                 {
                     if (GetSceneGUID(data.gameObject.scene) == sceneGUID)
                     {
                         foundPerSceneData = true;
+                        break;
                     }
                 }
 
@@ -477,12 +517,14 @@ namespace UnityEngine.Experimental.Rendering
             return null;
         }
 
-        internal void OnSceneSaved(Scene scene)
+        internal void OnSceneSaving(Scene scene, string path = null)
         {
-            EnsureSceneHasProbeVolumeIsValid(scene);
+            // If we are called from the scene callback, we want to update all global volumes that are potentially affected
+            bool updateGlobalVolumes = path != null;
+            
             EnsureSceneIsInBakingSet(scene);
+            UpdateSceneBounds(scene, updateGlobalVolumes);
             EnsurePerSceneData(scene);
-            UpdateSceneBounds(scene);
         }
 
         internal void SetProfileForScene(Scene scene, ProbeReferenceVolumeProfile profile)
@@ -504,11 +546,7 @@ namespace UnityEngine.Experimental.Rendering
             if (sceneBakingSettings == null) sceneBakingSettings = new Dictionary<string, ProbeVolumeBakingProcessSettings>();
 
             var sceneGUID = GetSceneGUID(scene);
-
-            ProbeVolumeBakingProcessSettings settings = new ProbeVolumeBakingProcessSettings();
-            settings.dilationSettings = dilationSettings;
-            settings.virtualOffsetSettings = virtualOffsetSettings;
-            sceneBakingSettings[sceneGUID] = settings;
+            sceneBakingSettings[sceneGUID] = new ProbeVolumeBakingProcessSettings(dilationSettings, virtualOffsetSettings);
         }
 
         internal ProbeReferenceVolumeProfile GetProfileForScene(Scene scene)
@@ -532,7 +570,7 @@ namespace UnityEngine.Experimental.Rendering
             if (sceneBakingSettings != null && sceneBakingSettings.ContainsKey(sceneGUID))
                 return sceneBakingSettings[sceneGUID];
 
-            return new ProbeVolumeBakingProcessSettings();
+            return ProbeVolumeBakingProcessSettings.Default;
         }
 
         // This is sub-optimal, but because is called once when kicking off a bake
@@ -551,11 +589,8 @@ namespace UnityEngine.Experimental.Rendering
             return null;
         }
 
-        internal bool SceneHasProbeVolumes(Scene scene)
-        {
-            var sceneGUID = GetSceneGUID(scene);
-            return hasProbeVolumes != null && hasProbeVolumes.ContainsKey(sceneGUID) && hasProbeVolumes[sceneGUID];
-        }
+        internal bool SceneHasProbeVolumes(string sceneGUID) => hasProbeVolumes != null && hasProbeVolumes.TryGetValue(sceneGUID, out var hasPV) && hasPV;
+        internal bool SceneHasProbeVolumes(Scene scene) => SceneHasProbeVolumes(GetSceneGUID(scene));
 #endif
     }
 }

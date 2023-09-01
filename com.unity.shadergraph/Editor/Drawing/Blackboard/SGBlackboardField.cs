@@ -16,7 +16,7 @@ using GraphDataStore = UnityEditor.ShaderGraph.DataStore<UnityEditor.ShaderGraph
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
-    class SGBlackboardField : GraphElement, IInspectable, ISGControlledElement<ShaderInputViewController>
+    class SGBlackboardField : GraphElement, IInspectable, ISGControlledElement<ShaderInputViewController>, IDisposable
     {
         static readonly Texture2D k_ExposedIcon = Resources.Load<Texture2D>("GraphView/Nodes/BlackboardFieldExposed");
         static readonly string k_UxmlTemplatePath = "UXML/Blackboard/SGBlackboardField";
@@ -93,10 +93,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_TextField = mainContainer.Q<TextField>("textField");
             m_TextField.style.display = DisplayStyle.None;
 
-            // Update the Pill text if shader input name is changed
-            // we handle this in controller if we change it through SGBlackboardField, but its possible to change through PropertyNodeView as well
-            shaderInput.displayNameUpdateTrigger += newDisplayName => text = newDisplayName;
-
             // Handles the upgrade fix for the old color property deprecation
             if (shaderInput is AbstractShaderProperty property)
             {
@@ -127,7 +123,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             // When a display name is changed through the BlackboardPill, bind this callback to handle it with appropriate change action
             var textInputElement = m_TextField.Q(TextField.textInputUssName);
-            textInputElement.RegisterCallback<FocusOutEvent>(e => { OnEditTextFinished(); });
+            textInputElement.RegisterCallback<FocusOutEvent>(e => { OnEditTextFinished(); }, TrickleDown.TrickleDown);
 
             ShaderGraphPreferences.onAllowDeprecatedChanged += UpdateTypeText;
 
@@ -146,11 +142,6 @@ namespace UnityEditor.ShaderGraph.Drawing
                 RegisterCallback<DragEnterEvent>(blackboard.OnDragEnterEvent);
                 RegisterCallback<DragExitedEvent>(blackboard.OnDragExitedEvent);
             }
-        }
-
-        ~SGBlackboardField()
-        {
-            ShaderGraphPreferences.onAllowDeprecatedChanged -= UpdateTypeText;
         }
 
         void AddContextMenuOptions(ContextualMenuPopulateEvent evt)
@@ -382,6 +373,33 @@ namespace UnityEditor.ShaderGraph.Drawing
         protected virtual void BuildFieldContextualMenu(ContextualMenuPopulateEvent evt)
         {
             evt.menu.AppendAction("Rename", (a) => OpenTextEditor(), DropdownMenuAction.AlwaysEnabled);
+        }
+
+        public void Dispose()
+        {
+            m_ResetReferenceNameTrigger = null;
+            m_InspectorUpdateDelegate = null;
+
+            UnregisterCallback<MouseDownEvent>(OnMouseDownEvent);
+            UnregisterCallback<MouseEnterEvent>(evt => OnMouseHover(evt, ViewModel.model));
+            UnregisterCallback<MouseLeaveEvent>(evt => OnMouseHover(evt, ViewModel.model));
+            UnregisterCallback<DragUpdatedEvent>(OnDragUpdatedEvent);
+            var blackboard = ViewModel.parentView.GetFirstAncestorOfType<SGBlackboard>();
+            UnregisterCallback<DragEnterEvent>(blackboard.OnDragEnterEvent);
+            UnregisterCallback<DragExitedEvent>(blackboard.OnDragExitedEvent);
+            ShaderGraphPreferences.onAllowDeprecatedChanged -= UpdateTypeText;
+
+            // Clear references
+            m_SelectedNodes = null;
+            m_ContentItem = null;
+            m_Pill = null;
+            m_TypeLabel = null;
+            m_TextField = null;
+            m_Controller = null;
+            m_ViewModel = null;
+            userData = null;
+            styleSheets.Clear();
+            Clear();
         }
     }
 }

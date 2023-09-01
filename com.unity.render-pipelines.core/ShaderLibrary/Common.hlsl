@@ -235,7 +235,76 @@
             #define LOAD_FRAMEBUFFER_INPUT(idx, v2fname) DXC_DummySubpassVariable##idx
             #define LOAD_FRAMEBUFFER_INPUT_MS(idx, sampleIdx, v2fname) DXC_DummySubpassVariable##idx
         #endif
+
+    #elif defined(SHADER_API_METAL) && defined(UNITY_NEEDS_RENDERPASS_FBFETCH_FALLBACK)
+
+        // On desktop metal we need special magic due to the need to support both intel and apple silicon
+        // since the former does not support framebuffer fetch
+        // Due to this we have special considerations:
+        // 1. since we might need to bind the copy texture, to simplify our lives we always declare _UnityFBInput texture
+        //    in metal translation we will add function_constant, but we still want to generate binding in hlsl
+        //    so that unity knows about the possibility
+        // 2. hlsl do not have anything like function constants, hence we will add bool to the fake cbuffer for subpass
+        //    again, this is done only for hlsl to generate proper code - in translation it will be changed to
+        //    a proper function constant (i.e. hlslcc_SubpassInput_f_ cbuffer is just "metadata" and is absent in metal code)
+        // 3. we want to generate an actual if command (not conditional move), hence we need to have an interim function
+        //    alas we are not able to hide in it the texture coords: we are guaranteed to have just one "declare fb input"
+        //    per index, but nothing stops users to have several "read fb input", hence we need to generate function code
+        //    in the former, where we do not know the source of uv coords
+        //    while the usage looks weird (we pass hlslcc_fbfetch_ in the function), it is ok due to the way hlsl compiler works
+        //    it will generate an actual if and access hlslcc_fbfetch_ only if framebuffer fetch is available
+        //    and when creating metal program, compiler takes care of this (function_constant magic)
+
+        #define RENDERPASS_DECLARE_FALLBACK(T, idx)                                                             \
+            Texture2D<T> _UnityFBInput##idx; float4 _UnityFBInput##idx##_TexelSize;                             \
+            inline T ReadFBInput_##idx(bool var, uint2 coord) {                                                 \
+                [branch]if(var) { return hlslcc_fbinput_##idx; }                                                \
+                else { return _UnityFBInput##idx.Load(uint3(coord,0)); }                                        \
+            }
+        #define RENDERPASS_DECLARE_FALLBACK_MS(T, idx)                                                          \
+            Texture2DMS<T> _UnityFBInput##idx; float4 _UnityFBInput##idx##_TexelSize;                           \
+            inline T ReadFBInput_##idx(bool var, uint2 coord, uint sampleIdx) {                                 \
+                [branch]if(var) { return hlslcc_fbinput_##idx[sampleIdx]; }                                     \
+                else { return _UnityFBInput##idx.Load(coord,sampleIdx); }                                       \
+            }
+
+        #define FRAMEBUFFER_INPUT_FLOAT(idx)                                                                    \
+            cbuffer hlslcc_SubpassInput_f_##idx { float4 hlslcc_fbinput_##idx; bool hlslcc_fbfetch_##idx; };    \
+            RENDERPASS_DECLARE_FALLBACK(float4, idx)
+
+        #define FRAMEBUFFER_INPUT_FLOAT_MS(idx)                                                                 \
+            cbuffer hlslcc_SubpassInput_F_##idx { float4 hlslcc_fbinput_##idx[8]; bool hlslcc_fbfetch_##idx; }; \
+            RENDERPASS_DECLARE_FALLBACK_MS(float4, idx)
+
+        #define FRAMEBUFFER_INPUT_HALF(idx)                                                                     \
+            cbuffer hlslcc_SubpassInput_h_##idx { half4 hlslcc_fbinput_##idx; bool hlslcc_fbfetch_##idx; };     \
+            RENDERPASS_DECLARE_FALLBACK(half4, idx)
+
+        #define FRAMEBUFFER_INPUT_HALF_MS(idx)                                                                  \
+            cbuffer hlslcc_SubpassInput_H_##idx { half4 hlslcc_fbinput_##idx[8]; bool hlslcc_fbfetch_##idx; };  \
+            RENDERPASS_DECLARE_FALLBACK_MS(half4, idx)
+
+        #define FRAMEBUFFER_INPUT_INT(idx)                                                                      \
+            cbuffer hlslcc_SubpassInput_i_##idx { int4 hlslcc_fbinput_##idx; bool hlslcc_fbfetch_##idx; };      \
+            RENDERPASS_DECLARE_FALLBACK(int4, idx)
+
+        #define FRAMEBUFFER_INPUT_INT_MS(idx)                                                                   \
+            cbuffer hlslcc_SubpassInput_I_##idx { int4 hlslcc_fbinput_##idx[8]; bool hlslcc_fbfetch_##idx; };   \
+            RENDERPASS_DECLARE_FALLBACK_MS(int4, idx)
+
+        #define FRAMEBUFFER_INPUT_UINT(idx)                                                                     \
+            cbuffer hlslcc_SubpassInput_u_##idx { uint4 hlslcc_fbinput_##idx; bool hlslcc_fbfetch_##idx; };     \
+            RENDERPASS_DECLARE_FALLBACK(uint4, idx)
+
+        #define FRAMEBUFFER_INPUT_UINT_MS(idx)                                                                  \
+            cbuffer hlslcc_SubpassInput_U_##idx { uint4 hlslcc_fbinput_##idx[8]; bool hlslcc_fbfetch_##idx; };  \
+            UNITY_RENDERPASS_DECLARE_FALLBACK_MS(uint4, idx)
+
+        #define LOAD_FRAMEBUFFER_INPUT(idx, v2fname) ReadFBInput_##idx(hlslcc_fbfetch_##idx, uint2(v2fname.xy))
+        #define LOAD_FRAMEBUFFER_INPUT_MS(idx, sampleIdx, v2fname) ReadFBInput_##idx(hlslcc_fbfetch_##idx, uint2(v2fname.xy), sampleIdx)
+
     #else
+
         // For floats
         #define FRAMEBUFFER_INPUT_FLOAT(idx) cbuffer hlslcc_SubpassInput_f_##idx { float4 hlslcc_fbinput_##idx; }
         #define FRAMEBUFFER_INPUT_FLOAT_MS(idx) cbuffer hlslcc_SubpassInput_F_##idx { float4 hlslcc_fbinput_##idx[8]; }
@@ -251,25 +320,25 @@
 
         #define LOAD_FRAMEBUFFER_INPUT(idx, v2fname) hlslcc_fbinput_##idx
         #define LOAD_FRAMEBUFFER_INPUT_MS(idx, sampleIdx, v2fname) hlslcc_fbinput_##idx[sampleIdx]
+
     #endif
 
 #else
 
-// Renderpass inputs: General fallback paths
-#define FRAMEBUFFER_INPUT_FLOAT(idx) TEXTURE2D_FLOAT(_UnityFBInput##idx); float4 _UnityFBInput##idx##_TexelSize
-#define FRAMEBUFFER_INPUT_HALF(idx) TEXTURE2D_HALF(_UnityFBInput##idx); float4 _UnityFBInput##idx##_TexelSize
-#define FRAMEBUFFER_INPUT_INT(idx) TEXTURE2D_INT(_UnityFBInput##idx); float4 _UnityFBInput##idx##_TexelSize
-#define FRAMEBUFFER_INPUT_UINT(idx) TEXTURE2D_UINT(_UnityFBInput##idx); float4 _UnityFBInput##idx##_TexelSize
+    // Renderpass inputs: General fallback paths
+    #define FRAMEBUFFER_INPUT_FLOAT(idx) TEXTURE2D_FLOAT(_UnityFBInput##idx); float4 _UnityFBInput##idx##_TexelSize
+    #define FRAMEBUFFER_INPUT_HALF(idx) TEXTURE2D_HALF(_UnityFBInput##idx); float4 _UnityFBInput##idx##_TexelSize
+    #define FRAMEBUFFER_INPUT_INT(idx) TEXTURE2D_INT(_UnityFBInput##idx); float4 _UnityFBInput##idx##_TexelSize
+    #define FRAMEBUFFER_INPUT_UINT(idx) TEXTURE2D_UINT(_UnityFBInput##idx); float4 _UnityFBInput##idx##_TexelSize
 
-#define LOAD_FRAMEBUFFER_INPUT(idx, v2fvertexname) _UnityFBInput##idx.Load(uint3(v2fvertexname.xy, 0))
+    #define LOAD_FRAMEBUFFER_INPUT(idx, v2fvertexname) _UnityFBInput##idx.Load(uint3(v2fvertexname.xy, 0))
 
-#define FRAMEBUFFER_INPUT_FLOAT_MS(idx) Texture2DMS<float4> _UnityFBInput##idx; float4 _UnityFBInput##idx##_TexelSize
-#define FRAMEBUFFER_INPUT_HALF_MS(idx) Texture2DMS<float4> _UnityFBInput##idx; float4 _UnityFBInput##idx##_TexelSize
-#define FRAMEBUFFER_INPUT_INT_MS(idx) Texture2DMS<int4> _UnityFBInput##idx; float4 _UnityFBInput##idx##_TexelSize
-#define FRAMEBUFFER_INPUT_UINT_MS(idx) Texture2DMS<uint4> _UnityFBInput##idx; float4 _UnityFBInput##idx##_TexelSize
+    #define FRAMEBUFFER_INPUT_FLOAT_MS(idx) Texture2DMS<float4> _UnityFBInput##idx; float4 _UnityFBInput##idx##_TexelSize
+    #define FRAMEBUFFER_INPUT_HALF_MS(idx) Texture2DMS<float4> _UnityFBInput##idx; float4 _UnityFBInput##idx##_TexelSize
+    #define FRAMEBUFFER_INPUT_INT_MS(idx) Texture2DMS<int4> _UnityFBInput##idx; float4 _UnityFBInput##idx##_TexelSize
+    #define FRAMEBUFFER_INPUT_UINT_MS(idx) Texture2DMS<uint4> _UnityFBInput##idx; float4 _UnityFBInput##idx##_TexelSize
 
-#define LOAD_FRAMEBUFFER_INPUT_MS(idx, sampleIdx, v2fvertexname) _UnityFBInput##idx.Load(uint2(v2fvertexname.xy), sampleIdx)
-
+    #define LOAD_FRAMEBUFFER_INPUT_MS(idx, sampleIdx, v2fvertexname) _UnityFBInput##idx.Load(uint2(v2fvertexname.xy), sampleIdx)
 
 #endif
 
@@ -901,45 +970,92 @@ uint GetMipCount(TEXTURE2D_PARAM(tex, smp))
 // ----------------------------------------------------------------------------
 
 // DXC no longer supports DX9-style HLSL syntax for sampler2D, tex2D and the like.
-// These are emulated for backwards compatibilit using our own small structs and functions which manually combine samplers and textures.
+// These are emulated for backwards compatibility using our own small structs and functions which manually combine samplers and textures.
 #if defined(UNITY_COMPILER_DXC) && !defined(DXC_SAMPLER_COMPATIBILITY)
 #define DXC_SAMPLER_COMPATIBILITY 1
-struct sampler1D            { Texture1D t; SamplerState s; };
-struct sampler2D            { Texture2D t; SamplerState s; };
-struct sampler3D            { Texture3D t; SamplerState s; };
-struct samplerCUBE          { TextureCube t; SamplerState s; };
 
-float4 tex1D(sampler1D x, float v)              { return x.t.Sample(x.s, v); }
-float4 tex2D(sampler2D x, float2 v)             { return x.t.Sample(x.s, v); }
-float4 tex3D(sampler3D x, float3 v)             { return x.t.Sample(x.s, v); }
-float4 texCUBE(samplerCUBE x, float3 v)         { return x.t.Sample(x.s, v); }
+// On DXC platforms which don't care about explicit sampler precison we want the emulated types to work directly e.g without needing to redefine 'sampler2D' to 'sampler2D_f'
+#if !defined(SHADER_API_GLES3) && !defined(SHADER_API_VULKAN) && !defined(SHADER_API_METAL) && !defined(SHADER_API_SWITCH)
+    #define sampler1D_f sampler1D
+    #define sampler2D_f sampler2D
+    #define sampler3D_f sampler3D
+    #define samplerCUBE_f samplerCUBE
+#endif
 
-float4 tex1Dbias(sampler1D x, in float4 t)              { return x.t.SampleBias(x.s, t.x, t.w); }
-float4 tex2Dbias(sampler2D x, in float4 t)              { return x.t.SampleBias(x.s, t.xy, t.w); }
-float4 tex3Dbias(sampler3D x, in float4 t)              { return x.t.SampleBias(x.s, t.xyz, t.w); }
-float4 texCUBEbias(samplerCUBE x, in float4 t)          { return x.t.SampleBias(x.s, t.xyz, t.w); }
+struct sampler1D_f      { Texture1D<float4> t; SamplerState s; };
+struct sampler2D_f      { Texture2D<float4> t; SamplerState s; };
+struct sampler3D_f      { Texture3D<float4> t; SamplerState s; };
+struct samplerCUBE_f    { TextureCube<float4> t; SamplerState s; };
 
-float4 tex1Dlod(sampler1D x, in float4 t)           { return x.t.SampleLevel(x.s, t.x, t.w); }
-float4 tex2Dlod(sampler2D x, in float4 t)           { return x.t.SampleLevel(x.s, t.xy, t.w); }
-float4 tex3Dlod(sampler3D x, in float4 t)           { return x.t.SampleLevel(x.s, t.xyz, t.w); }
-float4 texCUBElod(samplerCUBE x, in float4 t)       { return x.t.SampleLevel(x.s, t.xyz, t.w); }
+float4 tex1D(sampler1D_f x, float v)        { return x.t.Sample(x.s, v); }
+float4 tex2D(sampler2D_f x, float2 v)       { return x.t.Sample(x.s, v); }
+float4 tex3D(sampler3D_f x, float3 v)       { return x.t.Sample(x.s, v); }
+float4 texCUBE(samplerCUBE_f x, float3 v)   { return x.t.Sample(x.s, v); }
 
-float4 tex1Dgrad(sampler1D x, float t, float dx, float dy)              { return x.t.SampleGrad(x.s, t, dx, dy); }
-float4 tex2Dgrad(sampler2D x, float2 t, float2 dx, float2 dy)           { return x.t.SampleGrad(x.s, t, dx, dy); }
-float4 tex3Dgrad(sampler3D x, float3 t, float3 dx, float3 dy)           { return x.t.SampleGrad(x.s, t, dx, dy); }
-float4 texCUBEgrad(samplerCUBE x, float3 t, float3 dx, float3 dy)       { return x.t.SampleGrad(x.s, t, dx, dy); }
+float4 tex1Dbias(sampler1D_f x, in float4 t)        { return x.t.SampleBias(x.s, t.x, t.w); }
+float4 tex2Dbias(sampler2D_f x, in float4 t)        { return x.t.SampleBias(x.s, t.xy, t.w); }
+float4 tex3Dbias(sampler3D_f x, in float4 t)        { return x.t.SampleBias(x.s, t.xyz, t.w); }
+float4 texCUBEbias(samplerCUBE_f x, in float4 t)    { return x.t.SampleBias(x.s, t.xyz, t.w); }
 
-float4 tex1D(sampler1D x, float t, float dx, float dy)              { return x.t.SampleGrad(x.s, t, dx, dy); }
-float4 tex2D(sampler2D x, float2 t, float2 dx, float2 dy)           { return x.t.SampleGrad(x.s, t, dx, dy); }
-float4 tex3D(sampler3D x, float3 t, float3 dx, float3 dy)           { return x.t.SampleGrad(x.s, t, dx, dy); }
-float4 texCUBE(samplerCUBE x, float3 t, float3 dx, float3 dy)       { return x.t.SampleGrad(x.s, t, dx, dy); }
+float4 tex1Dlod(sampler1D_f x, in float4 t)     { return x.t.SampleLevel(x.s, t.x, t.w); }
+float4 tex2Dlod(sampler2D_f x, in float4 t)     { return x.t.SampleLevel(x.s, t.xy, t.w); }
+float4 tex3Dlod(sampler3D_f x, in float4 t)     { return x.t.SampleLevel(x.s, t.xyz, t.w); }
+float4 texCUBElod(samplerCUBE_f x, in float4 t) { return x.t.SampleLevel(x.s, t.xyz, t.w); }
 
-float4 tex1Dproj(sampler1D s, in float2 t)              { return tex1D(s, t.x / t.y); }
-float4 tex1Dproj(sampler1D s, in float4 t)              { return tex1D(s, t.x / t.w); }
-float4 tex2Dproj(sampler2D s, in float3 t)              { return tex2D(s, t.xy / t.z); }
-float4 tex2Dproj(sampler2D s, in float4 t)              { return tex2D(s, t.xy / t.w); }
-float4 tex3Dproj(sampler3D s, in float4 t)              { return tex3D(s, t.xyz / t.w); }
-float4 texCUBEproj(samplerCUBE s, in float4 t)          { return texCUBE(s, t.xyz / t.w); }
+float4 tex1Dgrad(sampler1D_f x, float t, float dx, float dy)        { return x.t.SampleGrad(x.s, t, dx, dy); }
+float4 tex2Dgrad(sampler2D_f x, float2 t, float2 dx, float2 dy)     { return x.t.SampleGrad(x.s, t, dx, dy); }
+float4 tex3Dgrad(sampler3D_f x, float3 t, float3 dx, float3 dy)     { return x.t.SampleGrad(x.s, t, dx, dy); }
+float4 texCUBEgrad(samplerCUBE_f x, float3 t, float3 dx, float3 dy) { return x.t.SampleGrad(x.s, t, dx, dy); }
+
+float4 tex1D(sampler1D_f x, float t, float dx, float dy)        { return x.t.SampleGrad(x.s, t, dx, dy); }
+float4 tex2D(sampler2D_f x, float2 t, float2 dx, float2 dy)     { return x.t.SampleGrad(x.s, t, dx, dy); }
+float4 tex3D(sampler3D_f x, float3 t, float3 dx, float3 dy)     { return x.t.SampleGrad(x.s, t, dx, dy); }
+float4 texCUBE(samplerCUBE_f x, float3 t, float3 dx, float3 dy) { return x.t.SampleGrad(x.s, t, dx, dy); }
+
+float4 tex1Dproj(sampler1D_f s, in float2 t)        { return tex1D(s, t.x / t.y); }
+float4 tex1Dproj(sampler1D_f s, in float4 t)        { return tex1D(s, t.x / t.w); }
+float4 tex2Dproj(sampler2D_f s, in float3 t)        { return tex2D(s, t.xy / t.z); }
+float4 tex2Dproj(sampler2D_f s, in float4 t)        { return tex2D(s, t.xy / t.w); }
+float4 tex3Dproj(sampler3D_f s, in float4 t)        { return tex3D(s, t.xyz / t.w); }
+float4 texCUBEproj(samplerCUBE_f s, in float4 t)    { return texCUBE(s, t.xyz / t.w); }
+
+// Half precision emulated samplers used instead the sampler.*_half unity types
+struct sampler1D_h      { Texture1D<min16float4> t; SamplerState s; };
+struct sampler2D_h      { Texture2D<min16float4> t; SamplerState s; };
+struct sampler3D_h      { Texture3D<min16float4> t; SamplerState s; };
+struct samplerCUBE_h    { TextureCube<min16float4> t; SamplerState s; };
+
+min16float4 tex1D(sampler1D_h x, float v)       { return x.t.Sample(x.s, v); }
+min16float4 tex2D(sampler2D_h x, float2 v)      { return x.t.Sample(x.s, v); }
+min16float4 tex3D(sampler3D_h x, float3 v)      { return x.t.Sample(x.s, v); }
+min16float4 texCUBE(samplerCUBE_h x, float3 v)  { return x.t.Sample(x.s, v); }
+
+min16float4 tex1Dbias(sampler1D_h x, in float4 t)       { return x.t.SampleBias(x.s, t.x, t.w); }
+min16float4 tex2Dbias(sampler2D_h x, in float4 t)       { return x.t.SampleBias(x.s, t.xy, t.w); }
+min16float4 tex3Dbias(sampler3D_h x, in float4 t)       { return x.t.SampleBias(x.s, t.xyz, t.w); }
+min16float4 texCUBEbias(samplerCUBE_h x, in float4 t)   { return x.t.SampleBias(x.s, t.xyz, t.w); }
+
+min16float4 tex1Dlod(sampler1D_h x, in float4 t)        { return x.t.SampleLevel(x.s, t.x, t.w); }
+min16float4 tex2Dlod(sampler2D_h x, in float4 t)        { return x.t.SampleLevel(x.s, t.xy, t.w); }
+min16float4 tex3Dlod(sampler3D_h x, in float4 t)        { return x.t.SampleLevel(x.s, t.xyz, t.w); }
+min16float4 texCUBElod(samplerCUBE_h x, in float4 t)    { return x.t.SampleLevel(x.s, t.xyz, t.w); }
+
+min16float4 tex1Dgrad(sampler1D_h x, float t, float dx, float dy)           { return x.t.SampleGrad(x.s, t, dx, dy); }
+min16float4 tex2Dgrad(sampler2D_h x, float2 t, float2 dx, float2 dy)        { return x.t.SampleGrad(x.s, t, dx, dy); }
+min16float4 tex3Dgrad(sampler3D_h x, float3 t, float3 dx, float3 dy)        { return x.t.SampleGrad(x.s, t, dx, dy); }
+min16float4 texCUBEgrad(samplerCUBE_h x, float3 t, float3 dx, float3 dy)    { return x.t.SampleGrad(x.s, t, dx, dy); }
+
+min16float4 tex1D(sampler1D_h x, float t, float dx, float dy)           { return x.t.SampleGrad(x.s, t, dx, dy); }
+min16float4 tex2D(sampler2D_h x, float2 t, float2 dx, float2 dy)        { return x.t.SampleGrad(x.s, t, dx, dy); }
+min16float4 tex3D(sampler3D_h x, float3 t, float3 dx, float3 dy)        { return x.t.SampleGrad(x.s, t, dx, dy); }
+min16float4 texCUBE(samplerCUBE_h x, float3 t, float3 dx, float3 dy)    { return x.t.SampleGrad(x.s, t, dx, dy); }
+
+min16float4 tex1Dproj(sampler1D_h s, in float2 t)       { return tex1D(s, t.x / t.y); }
+min16float4 tex1Dproj(sampler1D_h s, in float4 t)       { return tex1D(s, t.x / t.w); }
+min16float4 tex2Dproj(sampler2D_h s, in float3 t)       { return tex2D(s, t.xy / t.z); }
+min16float4 tex2Dproj(sampler2D_h s, in float4 t)       { return tex2D(s, t.xy / t.w); }
+min16float4 tex3Dproj(sampler3D_h s, in float4 t)       { return tex3D(s, t.xyz / t.w); }
+min16float4 texCUBEproj(samplerCUBE_h s, in float4 t)   { return texCUBE(s, t.xyz / t.w); }
 #endif
 
 float2 DirectionToLatLongCoordinate(float3 unDir)
@@ -1375,7 +1491,11 @@ float4 GetFullScreenTriangleVertexPosition(uint vertexID, float z = UNITY_NEAR_C
 {
     // note: the triangle vertex position coordinates are x2 so the returned UV coordinates are in range -1, 1 on the screen.
     float2 uv = float2((vertexID << 1) & 2, vertexID & 2);
-    return float4(uv * 2.0 - 1.0, z, 1.0);
+    float4 pos = float4(uv * 2.0 - 1.0, z, 1.0);
+#ifdef UNITY_PRETRANSFORM_TO_DISPLAY_ORIENTATION
+    pos = ApplyPretransformRotation(pos);
+#endif
+    return pos;
 }
 
 
@@ -1408,7 +1528,11 @@ float4 GetQuadVertexPosition(uint vertexID, float z = UNITY_NEAR_CLIP_VALUE)
     uint botBit = (vertexID & 1);
     float x = topBit;
     float y = 1 - (topBit + botBit) & 1; // produces 1 for indices 0,3 and 0 for 1,2
-    return float4(x, y, z, 1.0);
+    float4 pos = float4(x, y, z, 1.0);
+#ifdef UNITY_PRETRANSFORM_TO_DISPLAY_ORIENTATION
+    pos = ApplyPretransformRotation(pos);
+#endif
+    return pos;
 }
 
 #if !defined(SHADER_API_GLES) && !defined(SHADER_STAGE_RAY_TRACING)
@@ -1455,5 +1579,40 @@ TEMPLATE_1_REAL(ClampToFloat16Max, value, return min(value, HALF_MAX))
 #if SHADER_API_MOBILE || SHADER_API_GLES || SHADER_API_GLES3
 #pragma warning (enable : 3205) // conversion of larger type to smaller
 #endif
+
+float2 RepeatOctahedralUV(float u, float v)
+{
+    float2 uv;
+
+    if (u < 0.0f)
+    {
+        if (v < 0.0f)
+            uv = float2(1.0f + u, 1.0f + v);
+        else if (v < 1.0f)
+            uv = float2(-u, 1.0f - v);
+        else
+            uv = float2(1.0f + u, v - 1.0f);
+    }
+    else if (u < 1.0f)
+    {
+        if (v < 0.0f)
+            uv = float2(1.0f - u, -v);
+        else if (v < 1.0f)
+            uv = float2(u, v);
+        else
+            uv = float2(1.0f - u, 2.0f - v);
+    }
+    else
+    {
+        if (v < 0.0f)
+            uv = float2(u - 1.0f, 1.0f + v);
+        else if (v < 1.0f)
+            uv = float2(2.0f - u, 1.0f - v);
+        else
+            uv = float2(u - 1.0f, v - 1.0f);
+    }
+
+    return uv;
+}
 
 #endif // UNITY_COMMON_INCLUDED

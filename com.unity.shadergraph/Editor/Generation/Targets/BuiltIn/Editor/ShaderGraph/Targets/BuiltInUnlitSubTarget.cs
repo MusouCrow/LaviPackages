@@ -27,11 +27,9 @@ namespace UnityEditor.Rendering.BuiltIn.ShaderGraph
         public override void Setup(ref TargetSetupContext context)
         {
             context.AddAssetDependency(kSourceCodeGuid, AssetCollection.Flags.SourceDependency);
-            // If there is a custom GUI, we need to leave out the subtarget GUI or it will override the custom one due to ordering
-            // (Subtarget setup happens first, so it would always "win")
-            var biTarget = target as BuiltInTarget;
-            if (!context.HasCustomEditorForRenderPipeline(null) && string.IsNullOrEmpty(biTarget.customEditorGUI))
-                context.customEditorForRenderPipelines.Add((typeof(BuiltInUnlitGUI).FullName, ""));
+
+            if (!context.HasCustomEditorForRenderPipeline(""))
+                context.AddCustomEditorForRenderPipeline(typeof(BuiltInUnlitGUI).FullName, "");
 
             // Process SubShaders
             context.AddSubShader(SubShaders.Unlit(target, target.renderType, target.renderQueue));
