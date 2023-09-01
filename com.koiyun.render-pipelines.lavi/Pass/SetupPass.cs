@@ -21,8 +21,11 @@ namespace Koiyun.Render {
             
             this.SetScreenParams(cmd, ref data);
             this.SetZBufferParams(cmd, ref data);
-            VFXManager.ProcessCameraCommand(data.camera, cmd);
+            VFXManager.ProcessCameraCommand(data.camera, cmd, new VFXCameraXRSettings(), data.cullingResults);
             RenderUtil.ReadyRT(cmd, ref data, ref this.postRTR);
+
+            var cameraPos = data.camera.transform.position;
+            cmd.SetGlobalVector(RenderConst.CAMERA_POSWS_ID, cameraPos);
 
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);

@@ -64,8 +64,15 @@ float4 _ZBufferParams;
 // w = 1/far plane
 float4 _ProjectionParams;
 
+float3 _WorldSpaceCameraPos;
+
 struct Output
 {
     float4 color : SV_Target0;
     float4 glow : SV_Target1;
 };
+
+// VFX may also redefine UNITY_MATRIX_M / UNITY_MATRIX_I_M as static per-particle global matrices.
+#ifdef HAVE_VFX_MODIFICATION
+#include "Packages/com.unity.visualeffectgraph/Shaders/VFXMatricesOverride.hlsl"
+#endif

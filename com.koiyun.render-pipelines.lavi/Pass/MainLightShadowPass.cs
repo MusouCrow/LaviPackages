@@ -39,7 +39,7 @@ namespace Koiyun.Render {
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
 
-            var shadowSettings = new ShadowDrawingSettings(data.cullingResults, 0);
+            var shadowSettings = new ShadowDrawingSettings(data.cullingResults, 0, BatchCullingProjectionType.Orthographic);
             shadowSettings.splitData = shadowSplitData;
 
             var worldToShadowMatrix = this.CalculateWorldToShadowMatrix(ref viewMatrix, ref projMatrix);

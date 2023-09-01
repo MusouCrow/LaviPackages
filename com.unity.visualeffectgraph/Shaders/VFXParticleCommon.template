@@ -6,6 +6,11 @@ o.VFX_VARYING_COLOR = attributes.color;
 o.VFX_VARYING_ALPHA = attributes.alpha;
 #endif
 
+// KOIYUN
+#if VFX_USE_GLOW_CURRENT
+o.glow = attributes.glow;
+#endif
+
 #ifdef VFX_VARYING_EXPOSUREWEIGHT
 ${VFXLoadParameter:{exposureWeight}}
 o.VFX_VARYING_EXPOSUREWEIGHT = exposureWeight;

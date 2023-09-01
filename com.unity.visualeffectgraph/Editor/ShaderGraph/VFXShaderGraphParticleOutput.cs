@@ -658,6 +658,16 @@ namespace UnityEditor.VFX
             }
         }
 
+        // KOIYUN
+        protected static readonly RPInfo lvrpInfo = new RPInfo
+        {
+            passInfos = new Dictionary<string, PassInfo>()
+            {
+                { "Forward", new PassInfo()  { vertexPorts = new int[] {}, pixelPorts = new int[] { ShaderGraphVfxAsset.ColorSlotId, ShaderGraphVfxAsset.AlphaSlotId, ShaderGraphVfxAsset.AlphaThresholdSlotId } } },
+            }
+        };
+        
+        /*
         protected static readonly RPInfo hdrpInfo = new RPInfo
         {
             passInfos = new Dictionary<string, PassInfo>()
@@ -687,6 +697,7 @@ namespace UnityEditor.VFX
                 { "DepthNormals",  new PassInfo()  { vertexPorts = new int[] {}, pixelPorts = new int[] { ShaderGraphVfxAsset.AlphaSlotId, ShaderGraphVfxAsset.AlphaThresholdSlotId, ShaderGraphVfxAsset.NormalSlotId } } }
             }
         };
+        */
 
         protected override IEnumerable<VFXNamedExpression> CollectGPUExpressions(IEnumerable<VFXNamedExpression> slotExpressions)
         {
@@ -738,7 +749,9 @@ namespace UnityEditor.VFX
                             (graphCode.requirements.requiresBitangent & ~NeededCoordinateSpace.Tangent) != 0 ||
                             (graphCode.requirements.requiresViewDir & NeededCoordinateSpace.Tangent) != 0;
 
-                        bool hasNormalPort = pixelPorts.Any(t => t == ShaderGraphVfxAsset.NormalSlotId) && shaderGraph.HasOutput(ShaderGraphVfxAsset.NormalSlotId);
+                        // KOIYUN
+                        bool hasNormalPort = false;
+                        // bool hasNormalPort = pixelPorts.Any(t => t == ShaderGraphVfxAsset.NormalSlotId) && shaderGraph.HasOutput(ShaderGraphVfxAsset.NormalSlotId);
 
                         if (readsNormal || readsTangent || hasNormalPort) // needs normal
                             yield return $"SHADERGRAPH_NEEDS_NORMAL_{kvPass.Key.ToUpper(CultureInfo.InvariantCulture)}";
@@ -756,9 +769,10 @@ namespace UnityEditor.VFX
             }
         }
 
+        // KOIYUN
         protected virtual RPInfo currentRP
         {
-            get { return hdrpInfo; }
+            get { return lvrpInfo; }
         }
 
         public override VFXExpressionMapper GetExpressionMapper(VFXDeviceTarget target)
@@ -852,6 +866,8 @@ namespace UnityEditor.VFX
             var shaderGraph = GetOrRefreshShaderGraphObject();
             if (shaderGraph != null)
             {
+                // KOIYUN
+                /*
                 if (!isLitShader && shaderGraph.lit && !shaderGraph.generatesWithShaderGraph)
                 {
                     Debug.LogError("You must use an unlit vfx master node with an unlit output");
@@ -862,6 +878,7 @@ namespace UnityEditor.VFX
                     Debug.LogError("You must use a lit vfx master node with a lit output");
                     return false;
                 }
+                */
 
                 graphCodes = currentRP.passInfos.ToDictionary(t => t.Key, t => shaderGraph.GetCode(t.Value.pixelPorts.Select(u => shaderGraph.GetOutput(u)).Where(u => !string.IsNullOrEmpty(u.referenceName)).ToArray()));
             }

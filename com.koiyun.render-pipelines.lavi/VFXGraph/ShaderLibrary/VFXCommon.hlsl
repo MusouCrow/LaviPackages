@@ -160,8 +160,18 @@ float4 VFXApplyFog(float4 color, float4 positionCS, float3 positionWS)
     return color;
 }
 
+float4 VFXApplyAO(float4 color, float4 positionCS)
+{
+    return color;
+}
+
 // TODO
 float3 VFXGetCameraWorldDirection()
 {
     return 0;
+}
+
+#define VFXComputePixelOutputToNormalBuffer(i,normalWS,uvData,outNormalBuffer) \
+{ \
+    outNormalBuffer = float4(normalWS, 0.0); \
 }

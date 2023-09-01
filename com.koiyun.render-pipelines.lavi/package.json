@@ -1,12 +1,8 @@
 {
   "name": "com.koiyun.render-pipelines.lavi",
   "description": "Scriptable Render Pipeline for Lavivagnar.",
-  "version": "12.1.8",
-  "unity": "2021.2",
+  "version": "14.0.8",
+  "unity": "2022.3",
   "displayName": "Lavi RP",
-  "dependencies": {
-    "com.unity.render-pipelines.core": "12.1.8",
-    "com.unity.shadergraph": "12.1.8",
-    "com.unity.visualeffectgraph": "12.1.8"
-  }
+  "dependencies": {}
 }

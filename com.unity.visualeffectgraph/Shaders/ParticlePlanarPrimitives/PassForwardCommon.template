@@ -15,6 +15,12 @@ struct ps_input
 	#if VFX_NEEDS_COLOR_INTERPOLATOR
 	VFX_OPTIONAL_INTERPOLATION float4 color : COLOR0;
 	#endif
+
+	// KOIYUN
+	#if VFX_USE_GLOW_CURRENT
+	VFX_OPTIONAL_INTERPOLATION float glow : COLOR1;
+	#endif
+
 	#if USE_SOFT_PARTICLE || USE_ALPHA_TEST || USE_FLIPBOOK_INTERPOLATION || USE_EXPOSURE_WEIGHT || VFX_FEATURE_MOTION_VECTORS_FORWARD
 	// x: inverse soft particles fade distance
 	// y: alpha threshold
@@ -52,9 +58,13 @@ struct ps_input
 struct ps_output
 {
 	float4 color : SV_Target0;
+// KOIYUN
+	float4 glow : SV_Target1;
+/*
 #if VFX_FEATURE_MOTION_VECTORS_FORWARD
 	float4 outMotionVector : SV_Target1;
 #endif
+*/
 };
 
 #define VFX_VARYING_PS_INPUTS ps_input
@@ -135,10 +145,17 @@ ps_output frag(ps_input i,
 	o.color.a = saturate(o.color.a);
 	o.color = VFXTransformFinalColor(o.color);
 
+	// KOIYUN
+#if VFX_USE_GLOW_CURRENT
+	o.glow = float4(saturate(i.glow), 0, 0, o.color.a);
+#endif
+
+/*
 #if VFX_FEATURE_MOTION_VECTORS_FORWARD
 	${VFXComputeOutputMotionVector}
 	o.outMotionVector = encodedMotionVector;
 	o.outMotionVector.a = o.color.a < i.VFX_VARYING_ALPHATHRESHOLD ? 0.0f : 1.0f; //Independant clipping for motion vector pass
 #endif
+*/
 	return o;
 }

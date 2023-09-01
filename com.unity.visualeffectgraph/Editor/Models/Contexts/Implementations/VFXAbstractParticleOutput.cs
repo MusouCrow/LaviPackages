@@ -573,6 +573,12 @@ namespace UnityEditor.VFX
                     case CullMode.Off: rs.WriteLine("Cull Off"); break;
                 }
 
+                // KOIYUN
+                if (this.stencil > 0)
+                {
+                    rs.WriteLine("Stencil { Ref " + (int)this.stencil + " Comp Equal Pass Replace Fail Keep ZFail Keep}");
+                }
+
                 return rs;
             }
         }

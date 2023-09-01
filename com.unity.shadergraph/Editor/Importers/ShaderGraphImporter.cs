@@ -529,15 +529,14 @@ Shader ""Hidden/GraphErrorShader2""
             var result = asset.compilationResult = new GraphCompilationResult();
             var mode = GenerationMode.ForReals;
 
+            // KOIYUN
             if (target is VFXTarget vfxTarget)
             {
-                asset.lit = vfxTarget.lit;
                 asset.alphaClipping = vfxTarget.alphaTest;
                 asset.generatesWithShaderGraph = false;
             }
             else
             {
-                asset.lit = true;
                 asset.alphaClipping = false;
                 asset.generatesWithShaderGraph = true;
             }
@@ -831,11 +830,7 @@ Shader ""Hidden/GraphErrorShader2""
 
                 // In Master Nodes we had a different BaseColor/Color slot id between Unlit/Lit
                 // In the stack we use BaseColor for both cases. Catch this here.
-                if (asset.lit && originalId == ShaderGraphVfxAsset.ColorSlotId)
-                {
-                    originalId = ShaderGraphVfxAsset.BaseColorSlotId;
-                }
-
+                // KOIYUN
                 originialPortIds[i] = originalId;
             }
 

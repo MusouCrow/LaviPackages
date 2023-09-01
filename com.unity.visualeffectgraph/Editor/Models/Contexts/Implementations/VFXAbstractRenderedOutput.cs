@@ -43,6 +43,13 @@ namespace UnityEditor.VFX
             Always
         }
 
+        // KOIYUN
+        public enum StencilType
+        {
+            None = 0,
+            Scene = 1
+        }
+
         [VFXSetting, Header("Render States"), Tooltip("Specifies the transparency and blending method for rendering the particles to the screen.")]
         public BlendMode blendMode = BlendMode.Alpha;
 
@@ -54,6 +61,10 @@ namespace UnityEditor.VFX
 
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField, Tooltip("Specifies how the particle rendering is affected by the depth buffer. By default, particles render if they are closer to the camera than solid objects in the scene.")]
         protected ZTestMode zTestMode = ZTestMode.Default;
+
+        // KOIYUN
+        [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField]
+        protected StencilType stencil = StencilType.None;
 
         [VFXSetting, Tooltip("When enabled, transparent pixels under the specified alpha threshold will be discarded."), SerializeField]
         protected bool useAlphaClipping = false;

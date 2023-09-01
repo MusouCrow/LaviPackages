@@ -18,6 +18,9 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.RenderPipelines.Universal.Editor-testable")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
+// KOIYUN
+[assembly: InternalsVisibleTo("Koiyun.Render")]
+
 namespace UnityEditor.VFX
 {
     static class VisualEffectGraphPackageInfo

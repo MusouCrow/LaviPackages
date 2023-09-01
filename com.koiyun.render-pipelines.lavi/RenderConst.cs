@@ -13,6 +13,7 @@ namespace Koiyun.Render {
         public static int SCALED_SCREEN_PARAMS_ID = Shader.PropertyToID("_ScaledScreenParams");
         public static int ZBUFFER_PARAMS_ID = Shader.PropertyToID("_ZBufferParams");
         public static int PROJ_PARAMS_ID = Shader.PropertyToID("_ProjectionParams");
+        public static int CAMERA_POSWS_ID = Shader.PropertyToID("_WorldSpaceCameraPos");
         public static int POST_TEXTURE_ID = Shader.PropertyToID("_PostTexture");
         public static int BLOOM_BLUR_TEXTURE_ID = Shader.PropertyToID("_BloomBlurTexture");
         public static int PIXEL_TEXTURE_ID = Shader.PropertyToID("_PixelTexture");
