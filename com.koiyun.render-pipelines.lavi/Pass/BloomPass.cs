@@ -20,8 +20,7 @@ namespace Koiyun.Render {
         private RenderTexutreRegister[] blurVRTRs;
         
         public BloomPass(string shaderName, int postTID, int colorTID, int glowTID, int step) {
-            var shader = Shader.Find(shaderName);
-            this.material = new Material(shader);
+            this.material = CoreUtils.CreateEngineMaterial(shaderName);
             this.packPassIndex = this.material.FindPass("Pack");
             this.blurHPassIndex = this.material.FindPass("BlurH");
             this.blurVPassIndex = this.material.FindPass("BlurV");
@@ -112,6 +111,10 @@ namespace Koiyun.Render {
             
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
+        }
+
+        public void Dispose() {
+            
         }
     }
 }

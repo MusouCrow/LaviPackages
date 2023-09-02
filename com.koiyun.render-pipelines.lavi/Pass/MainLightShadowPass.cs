@@ -115,5 +115,9 @@ namespace Koiyun.Render {
 
             return scaleOffset * (projMatrix * viewMatrix);
         }
+
+        public void Dispose() {
+
+        }
     }
 }

@@ -11,8 +11,7 @@ namespace Koiyun.Render {
         private bool allocDST;
         
         public CopyColorPass(string shaderName, int srcTID, RenderTexutreRegister dstRTR, bool allocDST, bool isPixel) {
-            var shader = Shader.Find(shaderName);
-            this.material = new Material(shader);
+            this.material = CoreUtils.CreateEngineMaterial(shaderName);
             this.passIndex = this.material.FindPass("CopyColor");
             
             this.srcTID = srcTID;
@@ -50,6 +49,10 @@ namespace Koiyun.Render {
 
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
+        }
+
+        public void Dispose() {
+            CoreUtils.Destroy(this.material);
         }
     }
 }

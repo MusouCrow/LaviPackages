@@ -6,15 +6,24 @@ namespace Koiyun.Render {
     public class LaviRenderPipelineAsset : RenderPipelineAsset {
         public Shader DefaultShader;
         public Material DefaultMaterial;
+        public Material DefaultSpriteMaterial;
         [Range(0.25f, 2)]
         public float RenderScale = 1;
         public ShadowResolution ShadowResolution = ShadowResolution._2048;
         public float ShadowDistance = 50;
         public bool SRPBatch = true;
 
+        private LaviRenderPipeline renderPipeline;
+
         public override Material defaultMaterial {
             get {
                 return this.DefaultMaterial;
+            }
+        }
+
+        public override Material default2DMaterial {
+            get {
+                return this.DefaultSpriteMaterial;
             }
         }
 
@@ -25,7 +34,24 @@ namespace Koiyun.Render {
         }
 
         protected override RenderPipeline CreatePipeline() {
-            return new LaviRenderPipeline(this);
+            this.renderPipeline?.Dispose();
+            this.renderPipeline = new LaviRenderPipeline(this);
+
+            return this.renderPipeline;
+        }
+
+        protected override void OnValidate() {
+            this.renderPipeline?.Dispose();
+            this.renderPipeline = null;
+
+            base.OnValidate();
+        }
+
+        protected override void OnDisable() {
+            this.renderPipeline?.Dispose();
+            this.renderPipeline = null;
+
+            base.OnDisable();
         }
     }
 }

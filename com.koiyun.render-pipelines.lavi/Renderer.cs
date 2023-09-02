@@ -1,10 +1,11 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
 
 namespace Koiyun.Render {
-    public class Renderer {
+    public class Renderer : IDisposable {
         private List<IRenderPass> passes;
         private List<IRenderPass> culledPasses;
         private LaviRenderPipelineAsset asset;
@@ -23,10 +24,22 @@ namespace Koiyun.Render {
             
             var colorRTRs = new RenderTexutreRegister[] {
                 new RenderTexutreRegister() {
-                    tid = RenderConst.CAMERA_COLOR_TEXTURE_ID
+                    tid = RenderConst.CAMERA_COLOR_TEXTURE_ID,
+                    RTDHandler = (RenderTextureDescriptor rtd) => {
+                        rtd.width = (int)(rtd.width * asset.RenderScale);
+                        rtd.height = (int)(rtd.height * asset.RenderScale);
+
+                        return rtd;
+                    }
                 },
                 new RenderTexutreRegister() {
-                    tid = RenderConst.CAMERA_GLOW_TEXTURE_ID
+                    tid = RenderConst.CAMERA_GLOW_TEXTURE_ID,
+                    RTDHandler = (RenderTextureDescriptor rtd) => {
+                        rtd.width = (int)(rtd.width * asset.RenderScale);
+                        rtd.height = (int)(rtd.height * asset.RenderScale);
+
+                        return rtd;
+                    }
                 }
             };
 
@@ -34,6 +47,8 @@ namespace Koiyun.Render {
                 tid = RenderConst.CAMERA_DEPTH_TEXTURE_ID,
                 RTDHandler = (RenderTextureDescriptor rtd) => {
                     rtd.colorFormat = RenderTextureFormat.Depth;
+                    rtd.width = (int)(rtd.width * asset.RenderScale);
+                    rtd.height = (int)(rtd.height * asset.RenderScale);
 
                     return rtd;
                 }
@@ -68,7 +83,7 @@ namespace Koiyun.Render {
                 new CopyColorPass("Hidden/Lavi RP/Blit", RenderConst.PIXEL_TEXTURE_ID, finalRTR, false, true),
                 
                 // new CopyColorPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID, finalRTR, false, false),
-                new CopyDepthPass(),
+                new CopyDepthPass("Hidden/Lavi RP/Blit"),
             };
 
             this.culledPasses = new List<IRenderPass>(this.passes.Count);
@@ -85,7 +100,7 @@ namespace Koiyun.Render {
             var data = new RenderData() {
                 camera = camera,
                 cullingResults = cullingResults,
-                cameraRTD = RenderUtil.CreateCameraRenderTextureDescriptor(camera, MSAASamples.None, this.asset.RenderScale),
+                cameraRTD = RenderUtil.CreateCameraRenderTextureDescriptor(camera, MSAASamples.None),
                 mainLightIndex = RenderUtil.GetMainLightIndex(ref cullingResults)
             };
 
@@ -106,6 +121,12 @@ namespace Koiyun.Render {
             }
 
             context.Submit();
+        }
+
+        public void Dispose() {
+            for (int i = 0; i < this.passes.Count; i++) {
+                this.passes[i].Dispose();
+            }
         }
     }
 }

@@ -6,9 +6,8 @@ namespace Koiyun.Render {
         private Material blitMaterial;
         private int passIndex;
 
-        public CopyDepthPass() {
-            var shader = Shader.Find("Hidden/Lavi RP/Blit");
-            this.blitMaterial = new Material(shader);
+        public CopyDepthPass(string shaderName) {
+            this.blitMaterial = CoreUtils.CreateEngineMaterial(shaderName);
             this.passIndex = this.blitMaterial.FindPass("CopyDepth");
         }
 
@@ -33,6 +32,10 @@ namespace Koiyun.Render {
 
         public void Clean(ref ScriptableRenderContext context, ref RenderData data) {
 
+        }
+
+        public void Dispose() {
+            CoreUtils.Destroy(this.blitMaterial);
         }
     }
 }

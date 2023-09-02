@@ -25,5 +25,9 @@ namespace Koiyun.Render {
         public void Clean(ref ScriptableRenderContext context, ref RenderData data) {
             
         }
+
+        public void Dispose() {
+
+        }
     }
 }

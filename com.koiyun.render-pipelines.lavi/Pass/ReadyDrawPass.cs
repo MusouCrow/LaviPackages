@@ -42,5 +42,9 @@ namespace Koiyun.Render {
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
+
+        public void Dispose() {
+            
+        }
     }
 }

@@ -81,5 +81,9 @@ namespace Koiyun.Render {
 
             cmd.SetGlobalVector(RenderConst.PROJ_PARAMS_ID, projectionParams);
         }
+
+        public void Dispose() {
+            
+        }
     }
 }

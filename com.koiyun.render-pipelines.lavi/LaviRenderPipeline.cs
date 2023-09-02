@@ -1,14 +1,25 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.VFX;
 
 namespace Koiyun.Render {
-    public class LaviRenderPipeline : RenderPipeline {
+    public class LaviRenderPipeline : RenderPipeline, IDisposable {
         private Renderer renderer;
 
         public LaviRenderPipeline(LaviRenderPipelineAsset asset) {
             this.renderer = new Renderer(asset);
+        }
+
+        public void Dispose() {
+            this.renderer?.Dispose();
+            this.renderer = null;
+        }
+
+        protected override void Dispose(bool disposing) {
+            base.Dispose(disposing);
+            this.Dispose();
         }
 
         protected override void Render(ScriptableRenderContext context, Camera[] cameras) {

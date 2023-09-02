@@ -26,9 +26,9 @@ namespace Koiyun.Render {
             return settings;
         }
 
-        public static RenderTextureDescriptor CreateCameraRenderTextureDescriptor(Camera camera, MSAASamples msaaSamples, float renderScale) {
-            var width = (int)(camera.pixelWidth * renderScale);
-            var height = (int)(camera.pixelHeight * renderScale);
+        public static RenderTextureDescriptor CreateCameraRenderTextureDescriptor(Camera camera, MSAASamples msaaSamples) {
+            var width = camera.pixelWidth;
+            var height = camera.pixelHeight;
             var rtd = new RenderTextureDescriptor(width, height);
             // rtd.graphicsFormat = GraphicsFormat.B10G11R11_UFloatPack32;
             rtd.graphicsFormat = SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
