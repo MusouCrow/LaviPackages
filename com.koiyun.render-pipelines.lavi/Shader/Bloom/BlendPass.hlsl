@@ -10,7 +10,7 @@ float4 Frag(Varyings input) : SV_Target
     half brightness = Max3(color.r, color.g, color.b);
     
     color.rgb += blur.rgb * anti;
-    color.rgb = lerp(color.rgb, blur.rgb, blur.a * brightness * brightness * anti);
+    color.rgb = lerp(color.rgb, blur.rgb, saturate(blur.a * brightness * brightness * anti));
     
     return color;
 }
