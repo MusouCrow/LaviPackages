@@ -70,7 +70,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 },
 
                 // Port Mask
-                validVertexBlocks = new BlockFieldDescriptor[] {},
+                validVertexBlocks = new BlockFieldDescriptor[] { BlockFields.VertexDescription.Position, BlockFields.VertexDescription.Normal, BlockFields.VertexDescription.Tangent },
                 validPixelBlocks = validPixelBlocks.ToArray(),
 
                 // Fields
@@ -139,7 +139,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 },
 
                 // Port Mask
-                validVertexBlocks = new BlockFieldDescriptor[] {},
+                validVertexBlocks = new BlockFieldDescriptor[] { BlockFields.VertexDescription.Position, BlockFields.VertexDescription.Normal, BlockFields.VertexDescription.Tangent },
                 validPixelBlocks = validPixelBlocks.ToArray(),
 
                 // Fields
@@ -205,7 +205,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 },
 
                 // Port Mask
-                validVertexBlocks = new BlockFieldDescriptor[] {},
+                validVertexBlocks = new BlockFieldDescriptor[] { BlockFields.VertexDescription.Position, BlockFields.VertexDescription.Normal, BlockFields.VertexDescription.Tangent },
                 validPixelBlocks = validPixelBlocks.ToArray(),
 
                 // Fields
