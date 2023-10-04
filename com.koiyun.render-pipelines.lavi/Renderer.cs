@@ -57,8 +57,9 @@ namespace Koiyun.Render {
             var pixelRTR = new RenderTexutreRegister() {
                 tid = RenderConst.PIXEL_TEXTURE_ID,
                 RTDHandler = (RenderTextureDescriptor rtd) => {
-                    rtd.width = (int)(rtd.width * 0.75f);
-                    rtd.height = (int)(rtd.height * 0.75f);
+                    var scale = RenderUtil.GetPixelScale(rtd.width);
+                    rtd.width = (int)(rtd.width * scale);
+                    rtd.height = (int)(rtd.height * scale);
 
                     return rtd;
                 }
@@ -77,11 +78,11 @@ namespace Koiyun.Render {
                 new DrawObjectPass(lightModes, false),
                 new DrawGizmosPass(GizmoSubset.PreImageEffects),
                 new DrawGizmosPass(GizmoSubset.PostImageEffects),
+
                 new BloomPass("Hidden/Lavi RP/Bloom", RenderConst.POST_TEXTURE_ID, RenderConst.CAMERA_COLOR_TEXTURE_ID, RenderConst.CAMERA_GLOW_TEXTURE_ID, 5),
-                
                 new CopyColorPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID, pixelRTR, true, false),
                 new CopyColorPass("Hidden/Lavi RP/Blit", RenderConst.PIXEL_TEXTURE_ID, finalRTR, false, true),
-                
+
                 // new CopyColorPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID, finalRTR, false, false),
                 new CopyDepthPass("Hidden/Lavi RP/Blit"),
             };

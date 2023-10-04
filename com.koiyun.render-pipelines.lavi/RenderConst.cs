@@ -19,6 +19,9 @@ namespace Koiyun.Render {
         public static int PIXEL_TEXTURE_ID = Shader.PropertyToID("_PixelTexture");
         
         public static float SHADOW_BIAS_RADIUS = 2.5f;
+        public static int MAX_PIXEL_WIDTH = 1920;
+        public static int MAX_PIXEL_HEIGHT = 1080;
+        public static float PIXEL_RATE = 0.5f;
 
         public static string MAIN_LIGHT_SHADOW_KEYWORD = "_MAIN_LIGHT_SHADOWS";
         public static string SOFT_SHADOW_KEYWORD = "_SHADOWS_SOFT";

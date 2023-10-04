@@ -1,6 +1,12 @@
+using System;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
+
+#if UNITY_EDITOR
+    using UnityEditor;
+#endif
 
 namespace Koiyun.Render {
     public static class RenderUtil {
@@ -27,8 +33,8 @@ namespace Koiyun.Render {
         }
 
         public static RenderTextureDescriptor CreateCameraRenderTextureDescriptor(Camera camera, MSAASamples msaaSamples) {
-            var width = camera.pixelWidth;
-            var height = camera.pixelHeight;
+            var width = Mathf.Min(camera.pixelWidth, RenderConst.MAX_PIXEL_WIDTH);
+            var height = Mathf.Min(camera.pixelHeight, RenderConst.MAX_PIXEL_HEIGHT);
             var rtd = new RenderTextureDescriptor(width, height);
             // rtd.graphicsFormat = GraphicsFormat.B10G11R11_UFloatPack32;
             rtd.graphicsFormat = SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
@@ -82,6 +88,38 @@ namespace Koiyun.Render {
             cmd.GetTemporaryRT(tid, rtd, FilterMode.Bilinear);
             
             return rti;
+        }
+
+    #if UNITY_EDITOR
+        private static float GetGameViewScale() {
+            var unityEditorAssembly = typeof(EditorWindow).Assembly;
+            var gameViewType = unityEditorAssembly.GetType("UnityEditor.GameView");
+            var obj = Resources.FindObjectsOfTypeAll(gameViewType);
+            var gameViewWindow = obj[0] as EditorWindow;
+
+            if (gameViewWindow == null) {
+                return 1;
+            }
+
+            var areaField = gameViewType.GetField("m_ZoomArea", BindingFlags.Instance | BindingFlags.NonPublic);
+            var areaObj = areaField.GetValue(gameViewWindow);
+            var scaleField = areaObj.GetType().GetField("m_Scale", BindingFlags.Instance | BindingFlags.NonPublic);
+            var scale = (Vector2)scaleField.GetValue(areaObj);
+
+            return scale.x;
+        }
+    #else
+        private static float GetGameViewScale() {
+            return 1;
+        }
+    #endif
+
+        public static float GetPixelScale(int width) {
+            var scale = Mathf.Min(GetGameViewScale(), 1);
+            var rate = Mathf.Min(RenderConst.MAX_PIXEL_WIDTH / width, 1);
+            var ret = RenderConst.PIXEL_RATE * rate * scale;
+            
+            return ret;
         }
     }
 }
