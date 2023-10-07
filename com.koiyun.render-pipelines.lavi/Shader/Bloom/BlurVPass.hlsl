@@ -4,22 +4,31 @@
 
 float4 Frag(Varyings input) : SV_Target
 {
-    float texelSize = _MainTex_TexelSize.y;
+    float2 texelSize = _MainTex_TexelSize;
     float2 uv = input.uv;
-
-    float4 c0 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv - float2(0.0, texelSize * 3.23076923));
-    float4 c1 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv - float2(0.0, texelSize * 1.38461538));
-    float4 c2 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv);
-    float4 c3 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv + float2(0.0, texelSize * 1.38461538));
-    float4 c4 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv + float2(0.0, texelSize * 3.23076923));
+    // float4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv);
+    
+    float u = 1;
+    float4 c0 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv + texelSize * float2(u, 0));
+    float4 c1 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv + texelSize * float2(-u, 0));
+    float4 c2 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv + texelSize * float2(0, u));
+    float4 c3 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv + texelSize * float2(0, -u));
+    float4 c4 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv + texelSize * float2(u, u));
+    float4 c5 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv + texelSize * float2(u, -u));
+    float4 c6 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv + texelSize * float2(-u, u));
+    float4 c7 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv + texelSize * float2(-u, 0));
+    float4 c8 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv + texelSize * float2(0, 0));
 
     float4 color = 0;
-    color += HandleColor(c0, 0.07027027);
-    color += HandleColor(c1, 0.31621622);
-    color += HandleColor(c2, 0.22702703);
-    color += HandleColor(c3, 0.31621622);
-    color += HandleColor(c4, 0.07027027);
-    
+    color += c0 * 0.11111111;
+    color += c1 * 0.11111111;
+    color += c2 * 0.11111111;
+    color += c3 * 0.11111111;
+    color += c4 * 0.11111111;
+    color += c5 * 0.11111111;
+    color += c6 * 0.11111111;
+    color += c7 * 0.11111111;
+    color += c8 * 0.11111111;
+
     return color;
 }
-
