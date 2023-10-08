@@ -1,3 +1,4 @@
+using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Koiyun.Render {
@@ -24,10 +25,27 @@ namespace Koiyun.Render {
                 this.colorRTIs[i] = RenderUtil.ReadyRT(cmd, ref data, ref this.colorRTRs[i]);
             }
 
-            cmd.SetRenderTarget(this.colorRTIs, depthRTI);
-            cmd.ClearRenderTarget(true, true, data.camera.backgroundColor.linear);
+            if (data.camera.cameraType == CameraType.SceneView) {
+                // 先设置颜色贴图的背景颜色
+                cmd.SetRenderTarget(this.colorRTIs[0], depthRTI);
+                cmd.ClearRenderTarget(true, true, data.camera.backgroundColor.linear);
+                context.ExecuteCommandBuffer(cmd);
 
-            context.ExecuteCommandBuffer(cmd);
+                // 再清空Glow贴图
+                cmd.SetRenderTarget(this.colorRTIs[1]);
+                cmd.ClearRenderTarget(true, true, Color.clear);
+                context.ExecuteCommandBuffer(cmd);
+
+                // 最后进行总部署
+                cmd.SetRenderTarget(this.colorRTIs, depthRTI);
+                context.ExecuteCommandBuffer(cmd);
+            }
+            else {
+                cmd.SetRenderTarget(this.colorRTIs, depthRTI);
+                cmd.ClearRenderTarget(true, true, Color.clear);
+                context.ExecuteCommandBuffer(cmd);
+            }
+            
             CommandBufferPool.Release(cmd);
         }
 

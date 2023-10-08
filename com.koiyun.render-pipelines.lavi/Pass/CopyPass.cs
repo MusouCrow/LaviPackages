@@ -2,30 +2,34 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Koiyun.Render {
-    public class CopyColorPass : IRenderPass {
+    public class CopyPass : IRenderPass {
         private int srcTID;
         private RenderTexutreRegister dstRTR;
         private Material material;
         private int passIndex;
+        private string passName;
         private bool isPixel;
         private bool allocDST;
+        private bool onlyScene;
         
-        public CopyColorPass(string shaderName, int srcTID, RenderTexutreRegister dstRTR, bool allocDST, bool isPixel) {
+        public CopyPass(string shaderName, int srcTID, RenderTexutreRegister dstRTR, bool allocDST, bool isPixel=false, bool isDepth=false, bool onlyScene=false) {
             this.material = CoreUtils.CreateEngineMaterial(shaderName);
-            this.passIndex = this.material.FindPass("CopyColor");
+            this.passIndex = isDepth ? this.material.FindPass("CopyDepth") :  this.material.FindPass("CopyColor");
+            this.passName = isDepth ? "CopyDepthPass" : "CopyColorPass";
             
             this.srcTID = srcTID;
             this.dstRTR = dstRTR;
             this.allocDST = allocDST;
             this.isPixel = isPixel;
+            this.onlyScene = onlyScene;
         }
 
         public bool Setup(ref ScriptableRenderContext context, ref RenderData data) {
-            return true;
+            return this.onlyScene ? data.camera.cameraType == CameraType.SceneView : true;
         }
 
         public void Render(ref ScriptableRenderContext context, ref RenderData data) {
-            var cmd = CommandBufferPool.Get("CopyColorPass");
+            var cmd = CommandBufferPool.Get(this.passName);
             var srcRTI = new RenderTargetIdentifier(this.srcTID);
             var dstRTI = this.allocDST ? RenderUtil.ReadyRT(cmd, ref data, ref this.dstRTR) : new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget);
             
@@ -41,7 +45,7 @@ namespace Koiyun.Render {
         }
 
         public void Clean(ref ScriptableRenderContext context, ref RenderData data) {
-            var cmd = CommandBufferPool.Get("CopyColorPass");
+            var cmd = CommandBufferPool.Get(this.passName);
 
             if (this.allocDST) {
                 cmd.ReleaseTemporaryRT(this.dstRTR.tid);

@@ -80,11 +80,10 @@ namespace Koiyun.Render {
                 new DrawGizmosPass(GizmoSubset.PostImageEffects),
 
                 new BloomPass("Hidden/Lavi RP/Bloom", RenderConst.POST_TEXTURE_ID, RenderConst.CAMERA_COLOR_TEXTURE_ID, RenderConst.CAMERA_GLOW_TEXTURE_ID, 5),
-                new CopyColorPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID, pixelRTR, true, false),
-                new CopyColorPass("Hidden/Lavi RP/Blit", RenderConst.PIXEL_TEXTURE_ID, finalRTR, false, true),
-
-                // new CopyColorPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID, finalRTR, false, false),
-                new CopyDepthPass("Hidden/Lavi RP/Blit"),
+                new CopyPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID, pixelRTR, allocDST:true, isPixel:false, isDepth:false, onlyScene:false),
+                new CopyPass("Hidden/Lavi RP/Blit", RenderConst.PIXEL_TEXTURE_ID, finalRTR, allocDST:false, isPixel:true, isDepth:false, onlyScene:false),
+                
+                new CopyPass("Hidden/Lavi RP/Blit", RenderConst.CAMERA_DEPTH_TEXTURE_ID, finalRTR, allocDST:false, isPixel:false, isDepth:true, onlyScene:true),
             };
 
             this.culledPasses = new List<IRenderPass>(this.passes.Count);
