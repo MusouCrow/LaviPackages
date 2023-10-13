@@ -38,6 +38,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             if (surfaceType == SurfaceType.Transparent) {
                 validPixelBlocks.Add(BlockFields.SurfaceDescription.Alpha);
                 defines.Add(ShaderPropertyUtil.NeedAlphaKeyword, 1);
+
+                defines.Add(ShaderPropertyUtil.AdditiveKeyword, 1);
             }
             else if (surfaceType == SurfaceType.Opaque) {
                 validPixelBlocks.Add(BlockFields.SurfaceDescription.AlphaClipThreshold);

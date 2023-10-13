@@ -26,6 +26,10 @@ Output Frag(PackedVaryings packedInput)
     color.a = surfaceDescription.Alpha;
 #endif
 
+#ifdef _ADDITIVE
+    color.rgb *= color.a;
+#endif
+
     AlphaClip(surfaceDescription);
 
     output.color = color;

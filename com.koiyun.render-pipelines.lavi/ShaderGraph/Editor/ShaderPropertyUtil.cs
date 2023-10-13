@@ -42,6 +42,13 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             type = KeywordType.Boolean
         };
 
+        public static KeywordDescriptor AdditiveKeyword = new KeywordDescriptor() {
+            displayName = "Additive",
+            referenceName = "_ADDITIVE",
+            type = KeywordType.Boolean,
+            definition = KeywordDefinition.Predefined
+        };
+
         public static void AddFloatProperty(PropertyCollector collector, string referenceName, float defaultValue) {
             var property = new Vector1ShaderProperty() {
                 floatType = FloatType.Default,
