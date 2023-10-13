@@ -15,5 +15,7 @@ namespace Koiyun.Render.ShaderGraph {
         public static string ZWRITE_PROPERTY = "_ZWrite";
         public static string ZTEST_PROPERTY = "_ZTest";
         public static string CULL_PROPERTY = "_Cull";
+
+        public static string ADDITIVE_KEYWORD = "_ADDITIVE";
     }
 }

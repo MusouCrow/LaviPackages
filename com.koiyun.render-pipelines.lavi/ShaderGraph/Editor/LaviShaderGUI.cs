@@ -36,7 +36,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             }
 
             blendMode = LaviShaderSvc.GetBlendMode(material);
-            blendMode = (BlendMode)EditorGUILayout.EnumPopup("Blend Mode", blendMode);
+            blendMode = (BlendMode)EditorGUILayout.EnumPopup("混合模式", blendMode);
         }
 
         private void DrawCullMode(Material material, out CullMode cullMode) {
@@ -46,7 +46,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             }
 
             cullMode = LaviShaderSvc.GetCullMode(material);
-            cullMode = (CullMode)EditorGUILayout.EnumPopup("Cull Mode", cullMode);
+            cullMode = (CullMode)EditorGUILayout.EnumPopup("剔除模式", cullMode);
         }
 
         private void DrawZWrite(Material material, out bool zWrite) {
@@ -56,7 +56,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             }
 
             zWrite = LaviShaderSvc.GetZWrite(material);
-            zWrite = EditorGUILayout.Toggle("Z Write", zWrite);
+            zWrite = EditorGUILayout.Toggle("写入深度", zWrite);
         }
 
         private void DrawZTest(Material material, out ZTest zTest) {
@@ -66,7 +66,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             }
 
             zTest = LaviShaderSvc.GetZTest(material);
-            zTest = (ZTest)EditorGUILayout.EnumPopup("Z Test", zTest);
+            zTest = (ZTest)EditorGUILayout.EnumPopup("深度测试", zTest);
         }
     }
 }

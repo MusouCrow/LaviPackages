@@ -30,6 +30,22 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             stages = KeywordShaderStage.Fragment,
         };
 
+        public static KeywordDescriptor AdditiveKeyword = new KeywordDescriptor() {
+            displayName = "Additive",
+            referenceName = ShaderGraphConst.ADDITIVE_KEYWORD,
+            type = KeywordType.Boolean,
+            definition = KeywordDefinition.ShaderFeature,
+            scope = KeywordScope.Local,
+            stages = KeywordShaderStage.Fragment,
+        };
+
+         public static KeywordDescriptor AdditiveKeywordDefined = new KeywordDescriptor() {
+            displayName = "Additive",
+            referenceName = ShaderGraphConst.ADDITIVE_KEYWORD,
+            type = KeywordType.Boolean,
+            definition = KeywordDefinition.Predefined
+        };
+
         public static KeywordDescriptor NeedAlphaKeyword = new KeywordDescriptor() {
             displayName = "Surface Need Alpha",
             referenceName = "SURFACE_NEED_ALPHA",
@@ -40,13 +56,6 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             displayName = "Surface Need Alpha Clip",
             referenceName = "SURFACE_NEED_ALPHA_CLIP",
             type = KeywordType.Boolean
-        };
-
-        public static KeywordDescriptor AdditiveKeyword = new KeywordDescriptor() {
-            displayName = "Additive",
-            referenceName = "_ADDITIVE",
-            type = KeywordType.Boolean,
-            definition = KeywordDefinition.Predefined
         };
 
         public static void AddFloatProperty(PropertyCollector collector, string referenceName, float defaultValue) {

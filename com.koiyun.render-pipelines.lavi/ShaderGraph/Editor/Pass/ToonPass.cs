@@ -39,7 +39,12 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 validPixelBlocks.Add(BlockFields.SurfaceDescription.Alpha);
                 defines.Add(ShaderPropertyUtil.NeedAlphaKeyword, 1);
 
-                defines.Add(ShaderPropertyUtil.AdditiveKeyword, 1);
+                if (subTarget.target.blendMode == BlendMode.Additive && !subTarget.target.overrideBlendMode) {
+                    defines.Add(ShaderPropertyUtil.AdditiveKeywordDefined, 1);
+                }
+                else {
+                    keywords.Add(ShaderPropertyUtil.AdditiveKeyword);
+                }                
             }
             else if (surfaceType == SurfaceType.Opaque) {
                 validPixelBlocks.Add(BlockFields.SurfaceDescription.AlphaClipThreshold);

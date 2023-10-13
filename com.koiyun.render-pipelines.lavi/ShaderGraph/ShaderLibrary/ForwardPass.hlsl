@@ -29,11 +29,11 @@ Output Frag(PackedVaryings packedInput)
 #ifdef _ADDITIVE
     color.rgb *= color.a;
 #endif
-
+    
     AlphaClip(surfaceDescription);
 
     output.color = color;
-    output.glow = float4(surfaceDescription.Glow, 0, 0, color.a);
+    output.glow = float4(surfaceDescription.Glow * color.a, 0, 0, color.a);
 
     return output;
 }

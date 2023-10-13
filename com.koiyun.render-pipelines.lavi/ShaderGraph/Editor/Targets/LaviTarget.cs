@@ -127,6 +127,15 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 this.GetBlend(out var srcBlend, out var dstBlend);
                 material.SetFloat(ShaderGraphConst.SRC_BLEND_PROPERTY, (float)srcBlend);
                 material.SetFloat(ShaderGraphConst.DST_BLEND_PROPERTY, (float)dstBlend);
+
+                if (srcBlend == Blend.One && dstBlend == Blend.One) {
+                    material.EnableKeyword(ShaderGraphConst.ADDITIVE_KEYWORD);
+                }
+                else {
+                    material.DisableKeyword(ShaderGraphConst.ADDITIVE_KEYWORD);
+                }
+
+                Debug.Log(123);
             }
 
             if (this.overrideCullMode) {

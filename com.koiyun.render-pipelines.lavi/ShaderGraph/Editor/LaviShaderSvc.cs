@@ -70,11 +70,16 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 if (blendMode == BlendMode.Additive) {
                     src = Blend.One;
                     dst = Blend.One;
+                    material.EnableKeyword(ShaderGraphConst.ADDITIVE_KEYWORD);
                 }
                 else {
                     src = Blend.SrcAlpha;
                     dst = Blend.OneMinusSrcAlpha;
+                    material.DisableKeyword(ShaderGraphConst.ADDITIVE_KEYWORD);
                 }
+            }
+            else {
+                material.DisableKeyword(ShaderGraphConst.ADDITIVE_KEYWORD);
             }
 
             material.SetFloat(ShaderGraphConst.SRC_BLEND_PROPERTY, (float)src);
