@@ -134,8 +134,6 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 else {
                     material.DisableKeyword(ShaderGraphConst.ADDITIVE_KEYWORD);
                 }
-
-                Debug.Log(123);
             }
 
             if (this.overrideCullMode) {
