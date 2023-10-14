@@ -35,6 +35,7 @@ namespace Koiyun.Render {
                 new RenderTexutreRegister() {
                     tid = RenderConst.CAMERA_GLOW_TEXTURE_ID,
                     RTDHandler = (RenderTextureDescriptor rtd) => {
+                        rtd.graphicsFormat = SystemInfo.GetGraphicsFormat(DefaultFormat.HDR);
                         rtd.width = (int)(rtd.width * asset.RenderScale);
                         rtd.height = (int)(rtd.height * asset.RenderScale);
 

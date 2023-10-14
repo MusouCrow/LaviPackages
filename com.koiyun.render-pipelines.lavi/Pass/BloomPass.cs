@@ -75,8 +75,7 @@ namespace Koiyun.Render {
             }
 
             // Pack
-            cmd.SetGlobalTexture(this.glowTID, glowRTI);
-            cmd.Blit(colorRTI, postRTI, this.material, this.packPassIndex);
+            cmd.Blit(glowRTI, postRTI, this.material, this.packPassIndex);
             
             // Blur
             cmd.Blit(postRTI, this.blurHRTRs[0].RTI, this.material, this.blurHPassIndex);

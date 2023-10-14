@@ -33,7 +33,7 @@ Output Frag(PackedVaryings packedInput)
     AlphaClip(surfaceDescription);
 
     output.color = color;
-    output.glow = float4(surfaceDescription.Glow * color.a, 0, 0, color.a);
+    output.glow = float4(color.rgb * surfaceDescription.Glow * 10, color.a);
 
     return output;
 }

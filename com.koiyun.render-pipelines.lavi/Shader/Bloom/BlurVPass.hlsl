@@ -6,7 +6,6 @@ float4 Frag(Varyings input) : SV_Target
 {
     float2 texelSize = _MainTex_TexelSize;
     float2 uv = input.uv;
-    // float4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv);
     
     float u = 1;
     float4 c0 = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv + texelSize * float2(u, 0));

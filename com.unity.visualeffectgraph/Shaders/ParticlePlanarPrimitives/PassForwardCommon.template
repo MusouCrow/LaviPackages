@@ -147,7 +147,7 @@ ps_output frag(ps_input i,
 
 	// KOIYUN
 #if VFX_USE_GLOW_CURRENT
-	o.glow = float4(saturate(i.glow), 0, 0, o.color.a);
+	o.glow = float4(o.color.rgb * i.glow * 10, o.color.a);
 #endif
 
 /*
