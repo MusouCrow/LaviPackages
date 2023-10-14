@@ -19,3 +19,11 @@ void Rim_float(float3 ViewDir, float3 NormalWS, float2 Range, out float Rim)
     VDotN = 1 - saturate(VDotN);
     Rim = smoothstep(Range[0], Range[1], VDotN);
 }
+
+void HSV_float(float3 RGB, out float Hue, out float Saturation, out float Lightness)
+{
+    float3 hsv = RgbToHsv(RGB);
+    Hue = hsv.r;
+    Saturation = hsv.g;
+    Lightness = hsv.b;
+}
