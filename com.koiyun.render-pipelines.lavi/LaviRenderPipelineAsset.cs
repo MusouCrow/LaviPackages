@@ -7,12 +7,10 @@ namespace Koiyun.Render {
         public Shader DefaultShader;
         public Material DefaultMaterial;
         public Material DefaultSpriteMaterial;
-        [Range(0.25f, 2)]
-        [HideInInspector]
-        public float RenderScale = 1;
         public ShadowResolution ShadowResolution = ShadowResolution._2048;
         public float ShadowDistance = 50;
         public bool SRPBatch = true;
+        public bool pixel = true;
 
         private LaviRenderPipeline renderPipeline;
 
@@ -31,6 +29,12 @@ namespace Koiyun.Render {
         public override Shader defaultShader {
             get {
                 return this.DefaultShader;
+            }
+        }
+
+        public float RenderScale {
+            get {
+                return this.pixel ? 1 : 2;
             }
         }
 
