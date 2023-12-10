@@ -49,7 +49,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             else if (surfaceType == SurfaceType.Opaque) {
                 validPixelBlocks.Add(BlockFields.SurfaceDescription.AlphaClipThreshold);
 
-                if (subTarget.alphaClipMode == AlphaClipMode.Swtich) {
+                if (subTarget.alphaClipMode == AlphaClipMode.Switch) {
                     keywords.Add(ShaderPropertyUtil.AlphaClipKeyword);
                 }
                 else if (subTarget.alphaClipMode == AlphaClipMode.Enabled) {
@@ -119,7 +119,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             if (subTarget.target.surfaceType == SurfaceType.Opaque) {
                 validPixelBlocks.Add(BlockFields.SurfaceDescription.AlphaClipThreshold);
 
-                if (subTarget.alphaClipMode == AlphaClipMode.Swtich) {
+                if (subTarget.alphaClipMode == AlphaClipMode.Switch) {
                     keywords.Add(ShaderPropertyUtil.AlphaClipKeyword);
                 }
                 else if (subTarget.alphaClipMode == AlphaClipMode.Enabled) {
@@ -190,7 +190,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             if (subTarget.target.surfaceType == SurfaceType.Opaque) {
                 validPixelBlocks.Add(BlockFields.SurfaceDescription.AlphaClipThreshold);
 
-                if (subTarget.alphaClipMode == AlphaClipMode.Swtich) {
+                if (subTarget.alphaClipMode == AlphaClipMode.Switch) {
                     keywords.Add(ShaderPropertyUtil.AlphaClipKeyword);
                 }
                 else if (subTarget.alphaClipMode == AlphaClipMode.Enabled) {
