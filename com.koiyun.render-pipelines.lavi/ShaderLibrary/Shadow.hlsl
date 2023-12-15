@@ -5,6 +5,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Shadow/ShadowSamplingTent.hlsl"
 
 TEXTURE2D_SHADOW(_ShadowTexture);
+TEXTURE2D_SHADOW(_CharShadowTexture);
 SAMPLER_CMP(sampler_ShadowTexture);
 
 CBUFFER_START(MainLightShadows)
@@ -14,12 +15,12 @@ float4 _ShadowParams; // x: Depth Bias, y: Normal Bias, z: Shadow Strength, w: I
 float4 _ShadowTexture_TexelSize; // x: 1 / width, y: 1 / height, z: width, h: height
 CBUFFER_END
 
-float SampleShadowMap(float4 shadowCoord)
+float SampleShadowMap(TEXTURE2D(textureName), float4 shadowCoord)
 {
-    return SAMPLE_TEXTURE2D_SHADOW(_ShadowTexture, sampler_ShadowTexture, shadowCoord.xyz);
+    return SAMPLE_TEXTURE2D_SHADOW(textureName, sampler_ShadowTexture, shadowCoord.xyz);
 }
 
-float SampleShadowMapSoft(float4 shadowCoord)
+float SampleShadowMapSoft(TEXTURE2D(textureName), float4 shadowCoord)
 {
     real tentWeights[9];
 	real2 tentUVs[9];
@@ -30,7 +31,7 @@ float SampleShadowMapSoft(float4 shadowCoord)
     for (int i = 0; i < 9; i++)
     {
         float4 coord = float4(tentUVs[i].xy, shadowCoord.z, 0);
-        attenuation += tentWeights[i] * SampleShadowMap(coord);
+        attenuation += tentWeights[i] * SampleShadowMap(textureName, coord);
     }
 
     return attenuation;
@@ -41,20 +42,35 @@ float4 TransformWorldToShadowCoord(float3 positionWS)
     return mul(_WorldToShadowMatrix, float4(positionWS, 1.0));
 }
 
-float ShadowAttenuation(float3 positionWS)
+float ShadowAttenuation(float4 shadowCoord)
 {
 #ifdef _MAIN_LIGHT_SHADOWS
-    float4 shadowCoord = TransformWorldToShadowCoord(positionWS);
-    
     #ifdef _SHADOWS_SOFT
-        float attenuation = SampleShadowMapSoft(shadowCoord);
+        float attenuation = SampleShadowMapSoft(_ShadowTexture, shadowCoord);
     #else
-        float attenuation = SampleShadowMap(shadowCoord);
+        float attenuation = SampleShadowMap(_ShadowTexture, shadowCoord);
     #endif
     
     attenuation = LerpWhiteTo(attenuation, _ShadowParams.z);
 #else
     float attenuation = 1;
+#endif
+    
+    return attenuation;
+}
+
+float CharShadowAttenuation(float4 shadowCoord)
+{
+#ifdef _MAIN_LIGHT_SHADOWS
+    #ifdef _SHADOWS_SOFT
+        float attenuation = SampleShadowMapSoft(_CharShadowTexture, shadowCoord);
+    #else
+        float attenuation = SampleShadowMap(_CharShadowTexture, shadowCoord);
+    #endif
+
+    attenuation = 1 - LerpWhiteTo(attenuation, _ShadowParams.z);
+#else
+    float attenuation = 0;
 #endif
     
     return attenuation;

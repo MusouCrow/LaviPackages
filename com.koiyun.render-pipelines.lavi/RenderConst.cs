@@ -6,6 +6,7 @@ namespace Koiyun.Render {
         public static int CAMERA_GLOW_TEXTURE_ID = Shader.PropertyToID("_CameraGlowTexture");
         public static int CAMERA_DEPTH_TEXTURE_ID = Shader.PropertyToID("_CameraDepthTexture");
         public static int SHADOW_TEXTURE_ID = Shader.PropertyToID("_ShadowTexture");
+        public static int CHAR_SHADOW_TEXTURE_ID = Shader.PropertyToID("_CharShadowTexture");
         public static int SHADOW_TEXUTRE_SIZE_ID = Shader.PropertyToID("_ShadowTexture_TexelSize");
         public static int WORLD_TO_SHADOW_MTX_ID = Shader.PropertyToID("_WorldToShadowMatrix");
         public static int MAIN_LIGHT_DIRECTION_ID = Shader.PropertyToID("_LightDirection");

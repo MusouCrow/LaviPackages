@@ -4,7 +4,9 @@
 
 void ShadowAttenuation_float(float3 PositionWS, out float Attenuation)
 {
-    Attenuation = ShadowAttenuation(PositionWS);
+    float4 shadowCoord = TransformWorldToShadowCoord(PositionWS);
+    Attenuation = ShadowAttenuation(shadowCoord);
+    Attenuation = max(Attenuation - CharShadowAttenuation(shadowCoord), 0.2);
 }
 
 void LerpColor_float(float4 BaseColor, float4 LerpColor, out float4 Color)

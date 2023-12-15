@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -7,7 +8,7 @@ namespace Koiyun.Render {
         public Camera camera;
         public CullingResults cullingResults;
         public RenderTextureDescriptor cameraRTD;
-        public int mainLightIndex;
+        public List<int> mainLightIndexes;
     }
 
     public enum ShadowResolution {

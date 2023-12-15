@@ -114,7 +114,7 @@ namespace Koiyun.Render {
                 camera = camera,
                 cullingResults = cullingResults,
                 cameraRTD = RenderUtil.CreateCameraRenderTextureDescriptor(camera, MSAASamples.None),
-                mainLightIndex = RenderUtil.GetMainLightIndex(ref cullingResults)
+                mainLightIndexes = RenderUtil.GetMainLightIndexes(ref cullingResults)
             };
 
             this.culledPasses.Clear();

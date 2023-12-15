@@ -4,6 +4,11 @@ using UnityEngine.Experimental.Rendering;
 
 namespace Koiyun.Render {
     public class MainLightShadowPass : IRenderPass {
+        private static int[] ShadowTextureIDs = new int[] {
+            RenderConst.SHADOW_TEXTURE_ID,
+            RenderConst.CHAR_SHADOW_TEXTURE_ID
+        };
+
         private LaviRenderPipelineAsset asset;
 
         public MainLightShadowPass(LaviRenderPipelineAsset asset) {
@@ -11,7 +16,7 @@ namespace Koiyun.Render {
         }
 
         public bool Setup(ref ScriptableRenderContext context, ref RenderData data) {
-            var ok = data.mainLightIndex > -1 && data.cullingResults.GetShadowCasterBounds(data.mainLightIndex, out var bounds);
+            var ok = data.mainLightIndexes.Count > -1 && data.cullingResults.GetShadowCasterBounds(data.mainLightIndexes[0], out var bounds);
             var cmd = CommandBufferPool.Get("MainLightShadowPass");
 
             CoreUtils.SetKeyword(cmd, RenderConst.MAIN_LIGHT_SHADOW_KEYWORD, ok);
@@ -24,29 +29,30 @@ namespace Koiyun.Render {
         public void Render(ref ScriptableRenderContext context, ref RenderData data) {
             var cmd = CommandBufferPool.Get("MainLightShadowPass");
 
-            int shadowResolution = (int)this.asset.ShadowResolution;
-            var rti = this.ReadyTexture(cmd, ref context, ref data, shadowResolution);
-
-            var light = data.cullingResults.visibleLights[data.mainLightIndex];
+            int shadowResolution = (int)this.asset.ShadowResolution;            
+            var viewport = new Rect(0, 0, shadowResolution, shadowResolution);
+            var light = data.cullingResults.visibleLights[data.mainLightIndexes[0]];
+            
             data.cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(0, 0, 1, new Vector3(1, 0, 0), shadowResolution, light.light.shadowNearPlane,
             out var viewMatrix, out var projMatrix, out var shadowSplitData);
-            
-            var viewport = new Rect(0, 0, shadowResolution, shadowResolution);
-            cmd.SetViewport(viewport);
 
-            cmd.SetGlobalDepthBias(1.0f, 2.5f);
-            cmd.SetViewProjectionMatrices(viewMatrix, projMatrix);
-            context.ExecuteCommandBuffer(cmd);
-            cmd.Clear();
+            for (int i = 0; i < data.mainLightIndexes.Count; i++) {
+                this.ReadyTexture(cmd, ref context, ref data, ShadowTextureIDs[i], shadowResolution);
 
-            var shadowSettings = new ShadowDrawingSettings(data.cullingResults, 0, BatchCullingProjectionType.Orthographic);
-            shadowSettings.splitData = shadowSplitData;
+                cmd.SetViewport(viewport);
+                cmd.SetGlobalDepthBias(1.0f, 2.5f);
+                cmd.SetViewProjectionMatrices(viewMatrix, projMatrix);
+                context.ExecuteCommandBuffer(cmd);
+                cmd.Clear();
+
+                var shadowSettings = new ShadowDrawingSettings(data.cullingResults, data.mainLightIndexes[i], BatchCullingProjectionType.Orthographic);
+                shadowSettings.splitData = shadowSplitData;
+                shadowSettings.useRenderingLayerMaskTest = true;
+                context.DrawShadows(ref shadowSettings);
+            }
 
             var worldToShadowMatrix = this.CalculateWorldToShadowMatrix(ref viewMatrix, ref projMatrix);
-            context.DrawShadows(ref shadowSettings);
-
             cmd.SetGlobalDepthBias(0.0f, 0.0f);
-            cmd.SetGlobalTexture(RenderConst.SHADOW_TEXTURE_ID, rti);
             cmd.SetGlobalMatrix(RenderConst.WORLD_TO_SHADOW_MTX_ID, worldToShadowMatrix);
 
             var lightDirection = -light.localToWorldMatrix.GetColumn(2);
@@ -59,6 +65,7 @@ namespace Koiyun.Render {
             
             var shadowTextureSize = new Vector4(1.0f / shadowResolution, 1.0f / shadowResolution, shadowResolution, shadowResolution);
             cmd.SetGlobalVector(RenderConst.SHADOW_TEXUTRE_SIZE_ID, shadowTextureSize);
+            // cmd.SetGlobalTexture(RenderConst.SHADOW_TEXTURE_ID, new RenderTargetIdentifier(ShadowTextureIDs[0]));
 
             CoreUtils.SetKeyword(cmd, RenderConst.SOFT_SHADOW_KEYWORD, softShadow);
 
@@ -71,14 +78,17 @@ namespace Koiyun.Render {
 
         public void Clean(ref ScriptableRenderContext context, ref RenderData data) {
             var cmd = CommandBufferPool.Get("MainLightShadowPass");
-            var tid = RenderConst.SHADOW_TEXTURE_ID;
-            cmd.ReleaseTemporaryRT(tid);
-            context.ExecuteCommandBuffer(cmd);
+
+            for (int i = 0; i < ShadowTextureIDs.Length; i++) {
+                cmd.ReleaseTemporaryRT(ShadowTextureIDs[i]);
+                context.ExecuteCommandBuffer(cmd);
+                cmd.Clear();
+            }
+
             CommandBufferPool.Release(cmd);
         }
 
-        private RenderTargetIdentifier ReadyTexture(CommandBuffer cmd, ref ScriptableRenderContext context, ref RenderData data, int size) {
-            var tid = RenderConst.SHADOW_TEXTURE_ID;
+        private void ReadyTexture(CommandBuffer cmd, ref ScriptableRenderContext context, ref RenderData data, int tid, int size) {
             var rtd = this.CreateRenderTextureDescriptor(size);
             var rti = new RenderTargetIdentifier(tid);
 
@@ -87,11 +97,11 @@ namespace Koiyun.Render {
                 RenderBufferLoadAction.Load, RenderBufferStoreAction.Store,
                 RenderBufferLoadAction.Load, RenderBufferStoreAction.Store
             );
+
             cmd.ClearRenderTarget(true, true, data.camera.backgroundColor.linear);
+            cmd.SetGlobalTexture(tid, rti);
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
-
-            return rti;
         }
 
         private RenderTextureDescriptor CreateRenderTextureDescriptor(int size) {

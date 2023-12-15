@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
@@ -10,6 +11,8 @@ using UnityEngine.Experimental.Rendering;
 
 namespace Koiyun.Render {
     public static class RenderUtil {
+        private static List<int> MainLightIndexes = new List<int>();
+
         public static DrawingSettings CreateDrawingSettings(ref RenderData data, string lightMode, bool isOpaque) {
             var criteria = isOpaque ? SortingCriteria.CommonOpaque : SortingCriteria.CommonTransparent;
             var sortingSettings = new SortingSettings(data.camera) {criteria = criteria};
@@ -47,20 +50,19 @@ namespace Koiyun.Render {
             return rtd;
         }
 
-        public static int GetMainLightIndex(ref CullingResults cullingResults) {
-            if (cullingResults.visibleLights.Length == 0) {
-                return -1;
-            }
+        public static List<int> GetMainLightIndexes(ref CullingResults cullingResults) {
+            MainLightIndexes.Clear();
 
             for (int i = 0; i < cullingResults.visibleLights.Length; i++) {
                 var light = cullingResults.visibleLights[i];
 
                 if (light.lightType == LightType.Directional && light.light.shadows != LightShadows.None) {
-                    return i;
+                    light.light.renderingLayerMask = i + 1;
+                    MainLightIndexes.Add(i);
                 }
             }
 
-            return -1;
+            return MainLightIndexes;
         }
 
         public static Vector2 GetShadowBias(ref VisibleLight light, Matrix4x4 projMatrix, int shadowResolution) {
