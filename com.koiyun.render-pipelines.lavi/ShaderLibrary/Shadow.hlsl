@@ -59,7 +59,7 @@ float ShadowAttenuation(float4 shadowCoord)
     return attenuation;
 }
 
-float CharShadowAttenuation(float4 shadowCoord)
+float CharShadowAttenuation(float4 shadowCoord, float strength)
 {
 #ifdef _MAIN_LIGHT_SHADOWS
     #ifdef _SHADOWS_SOFT
@@ -68,7 +68,7 @@ float CharShadowAttenuation(float4 shadowCoord)
         float attenuation = SampleShadowMap(_CharShadowTexture, shadowCoord);
     #endif
 
-    attenuation = 1 - LerpWhiteTo(attenuation, _ShadowParams.z);
+    attenuation = 1 - LerpWhiteTo(attenuation, strength);
 #else
     float attenuation = 0;
 #endif
@@ -86,4 +86,3 @@ float3 ApplyShadowBias(float3 positionWS, float3 normalWS)
     
     return positionWS;
 }
-
