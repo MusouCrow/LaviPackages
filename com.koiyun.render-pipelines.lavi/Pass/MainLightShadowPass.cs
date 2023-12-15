@@ -16,7 +16,7 @@ namespace Koiyun.Render {
         }
 
         public bool Setup(ref ScriptableRenderContext context, ref RenderData data) {
-            var ok = data.mainLightIndexes.Count > -1 && data.cullingResults.GetShadowCasterBounds(data.mainLightIndexes[0], out var bounds);
+            var ok = data.mainLightIndexes.Count > 0 && data.cullingResults.GetShadowCasterBounds(data.mainLightIndexes[0], out var bounds);
             var cmd = CommandBufferPool.Get("MainLightShadowPass");
 
             CoreUtils.SetKeyword(cmd, RenderConst.MAIN_LIGHT_SHADOW_KEYWORD, ok);
