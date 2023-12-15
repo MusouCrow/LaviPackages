@@ -51,5 +51,5 @@ void SampleColorTable_float(UnityTexture2D ColorMap, float2 UV, float Attenuatio
     
     float4 bright = ColorMap.Sample(sampler_LinearClamp, UV);
     float4 dark = ColorMap.Sample(sampler_LinearClamp, uv);
-    Color = lerp(bright, dark, Attenuation);
+    Color = lerp(bright, dark, saturate(Attenuation * 2));
 }
