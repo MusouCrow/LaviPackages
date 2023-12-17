@@ -7,6 +7,7 @@
 TEXTURE2D_SHADOW(_ShadowTexture);
 TEXTURE2D_SHADOW(_CharShadowTexture);
 SAMPLER_CMP(sampler_ShadowTexture);
+SAMPLER_CMP(sampler_CharShadowTexture);
 
 CBUFFER_START(MainLightShadows)
 float4x4 _WorldToShadowMatrix;
@@ -15,12 +16,12 @@ float4 _ShadowParams; // x: Depth Bias, y: Normal Bias, z: Shadow Strength, w: I
 float4 _ShadowTexture_TexelSize; // x: 1 / width, y: 1 / height, z: width, h: height
 CBUFFER_END
 
-float SampleShadowMap(TEXTURE2D(textureName), float4 shadowCoord)
+float SampleShadowMap(TEXTURE2D_SHADOW_PARAM(shadowMap, sampler_shadowMap), float4 shadowCoord)
 {
-    return SAMPLE_TEXTURE2D_SHADOW(textureName, sampler_ShadowTexture, shadowCoord.xyz);
+    return SAMPLE_TEXTURE2D_SHADOW(shadowMap, sampler_shadowMap, shadowCoord.xyz);
 }
 
-float SampleShadowMapSoft(TEXTURE2D(textureName), float4 shadowCoord)
+float SampleShadowMapSoft(TEXTURE2D_SHADOW_PARAM(shadowMap, sampler_shadowMap), float4 shadowCoord)
 {
     real tentWeights[9];
 	real2 tentUVs[9];
@@ -31,7 +32,7 @@ float SampleShadowMapSoft(TEXTURE2D(textureName), float4 shadowCoord)
     for (int i = 0; i < 9; i++)
     {
         float4 coord = float4(tentUVs[i].xy, shadowCoord.z, 0);
-        attenuation += tentWeights[i] * SampleShadowMap(textureName, coord);
+        attenuation += tentWeights[i] * SampleShadowMap(TEXTURE2D_SHADOW_ARGS(shadowMap, sampler_shadowMap), coord);
     }
 
     return attenuation;
@@ -42,37 +43,22 @@ float4 TransformWorldToShadowCoord(float3 positionWS)
     return mul(_WorldToShadowMatrix, float4(positionWS, 1.0));
 }
 
-float ShadowAttenuation(float4 shadowCoord)
+float ShadowAttenuation(TEXTURE2D_SHADOW_PARAM(shadowMap, sampler_shadowMap), float4 shadowCoord)
 {
+
 #ifdef _MAIN_LIGHT_SHADOWS
     #ifdef _SHADOWS_SOFT
-        float attenuation = SampleShadowMapSoft(_ShadowTexture, shadowCoord);
+        float attenuation = SampleShadowMapSoft(TEXTURE2D_SHADOW_ARGS(shadowMap, sampler_shadowMap), shadowCoord);
     #else
-        float attenuation = SampleShadowMap(_ShadowTexture, shadowCoord);
+        float attenuation = SampleShadowMap(TEXTURE2D_SHADOW_ARGS(shadowMap, sampler_shadowMap), shadowCoord);
     #endif
     
-    attenuation = LerpWhiteTo(attenuation, _ShadowParams.z);
+    attenuation = LerpWhiteTo(attenuation, 1);
+    attenuation = step(0.7, attenuation);
 #else
     float attenuation = 1;
 #endif
-    
-    return attenuation;
-}
 
-float CharShadowAttenuation(float4 shadowCoord, float strength)
-{
-#ifdef _MAIN_LIGHT_SHADOWS
-    #ifdef _SHADOWS_SOFT
-        float attenuation = SampleShadowMapSoft(_CharShadowTexture, shadowCoord);
-    #else
-        float attenuation = SampleShadowMap(_CharShadowTexture, shadowCoord);
-    #endif
-
-    attenuation = 1 - LerpWhiteTo(attenuation, strength);
-#else
-    float attenuation = 0;
-#endif
-    
     return attenuation;
 }
 

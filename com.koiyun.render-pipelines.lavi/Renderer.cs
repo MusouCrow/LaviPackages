@@ -75,7 +75,7 @@ namespace Koiyun.Render {
                 new MainLightShadowPass(this.asset),
                 new ReadyDrawPass(colorRTRs, depthRTR),
                 new DrawObjectPass(lightModes, true),
-                new DrawObjectPass(new string[] {"Outline"}, true),
+                // new DrawObjectPass(new string[] {"Outline"}, true),
                 new DrawObjectPass(lightModes, false),
                 new DrawGizmosPass(GizmoSubset.PreImageEffects),
                 new DrawGizmosPass(GizmoSubset.PostImageEffects),
