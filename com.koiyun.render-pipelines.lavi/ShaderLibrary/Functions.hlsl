@@ -59,9 +59,10 @@ void SampleColorTable_float(UnityTexture2D ColorMap, float2 UV, float3 PositionW
 
     float unit = ColorMap.texelSize.x * 32;
     float index = floor(UV.x / unit);
+    float base = floor(index / 3) * 3;
     float rate = 1 - char;
     float2 uv = UV;
-    uv.x = (index + 1) * unit;
+    uv.x = (base + 1) * unit;
 
     float4 bright = ColorMap.Sample(sampler_PointClamp, UV);
     float4 dark = ColorMap.Sample(sampler_PointClamp, uv);
