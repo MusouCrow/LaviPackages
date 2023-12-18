@@ -80,13 +80,8 @@ namespace Koiyun.Render {
                 new DrawGizmosPass(GizmoSubset.PreImageEffects),
                 new DrawGizmosPass(GizmoSubset.PostImageEffects),
 
+                new StencilTestPass(this.asset, "Hidden/Lavi RP/StencilTest", RenderConst.CAMERA_COLOR_TEXTURE_ID, RenderConst.CAMERA_DEPTH_TEXTURE_ID),
                 new BloomPass("Hidden/Lavi RP/Bloom", RenderConst.POST_TEXTURE_ID, RenderConst.CAMERA_COLOR_TEXTURE_ID, RenderConst.CAMERA_GLOW_TEXTURE_ID, 5),
-                // new CopyPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID, finalRTR, allocDST:false, isPixel:false, isDepth:false, onlyScene:false),
-
-                // new CopyPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID, pixelRTR, allocDST:true, isPixel:false, isDepth:false, onlyScene:false),
-                // new CopyPass("Hidden/Lavi RP/Blit", RenderConst.PIXEL_TEXTURE_ID, finalRTR, allocDST:false, isPixel:true, isDepth:false, onlyScene:false),
-                
-                // new CopyPass("Hidden/Lavi RP/Blit", RenderConst.CAMERA_DEPTH_TEXTURE_ID, finalRTR, allocDST:false, isPixel:false, isDepth:true, onlyScene:true),
             };
 
             if (this.asset.pixel) {

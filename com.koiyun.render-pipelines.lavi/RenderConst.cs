@@ -18,6 +18,7 @@ namespace Koiyun.Render {
         public static int POST_TEXTURE_ID = Shader.PropertyToID("_PostTexture");
         public static int BLOOM_BLUR_TEXTURE_ID = Shader.PropertyToID("_BloomBlurTexture");
         public static int PIXEL_TEXTURE_ID = Shader.PropertyToID("_PixelTexture");
+        public static int BLIT_TEXTURE_ID = Shader.PropertyToID("_MainTex");
         
         public static float SHADOW_BIAS_RADIUS = 2.5f;
         public static int MAX_PIXEL_WIDTH = 1920;

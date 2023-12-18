@@ -4,6 +4,7 @@ namespace Koiyun.Render.ShaderGraph {
     public enum AlphaClipMode {None, Switch, Enabled}
     public enum StencilType {
         None = 0,
-        Scene = 1
+        Scene = 1,
+        Character = 2,
     }
 }
