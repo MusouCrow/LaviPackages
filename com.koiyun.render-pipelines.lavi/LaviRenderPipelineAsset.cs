@@ -10,7 +10,6 @@ namespace Koiyun.Render {
         public ShadowResolution ShadowResolution = ShadowResolution._2048;
         public float ShadowDistance = 50;
         public bool SRPBatch = true;
-        public bool pixel = true;
 
         private LaviRenderPipeline renderPipeline;
 
@@ -34,7 +33,7 @@ namespace Koiyun.Render {
 
         public float RenderScale {
             get {
-                return this.pixel ? 1 : 2;
+                return 2;
             }
         }
 

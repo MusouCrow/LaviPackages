@@ -6,96 +6,22 @@ using UnityEngine.Experimental.Rendering;
 
 namespace Koiyun.Render {
     public class Renderer : IDisposable {
-        private List<IRenderPass> passes;
-        private List<IRenderPass> culledPasses;
+        private List<RenderPass> passes;
+        private List<RenderTexutreRegister> rtrs;
+        private List<Material> materials;
         private LaviRenderPipelineAsset asset;
 
         public Renderer(LaviRenderPipelineAsset asset) {
             this.asset = asset;
-            var lightModes = new string[] {"Forward", "SRPDefaultUnlit"};
-            var postRTR = new RenderTexutreRegister() {
-                tid = RenderConst.POST_TEXTURE_ID,
-                RTDHandler = (RenderTextureDescriptor rtd) => {
-                    rtd.graphicsFormat = SystemInfo.GetGraphicsFormat(DefaultFormat.HDR);
+            this.passes = new List<RenderPass>();
+            this.rtrs = new List<RenderTexutreRegister>();
+            this.materials = new List<Material>();
 
-                    return rtd;
-                }
-            };
-            
-            var colorRTRs = new RenderTexutreRegister[] {
-                new RenderTexutreRegister() {
-                    tid = RenderConst.CAMERA_COLOR_TEXTURE_ID,
-                    RTDHandler = (RenderTextureDescriptor rtd) => {
-                        rtd.width = (int)(rtd.width * asset.RenderScale);
-                        rtd.height = (int)(rtd.height * asset.RenderScale);
-
-                        return rtd;
-                    }
-                },
-                new RenderTexutreRegister() {
-                    tid = RenderConst.CAMERA_GLOW_TEXTURE_ID,
-                    RTDHandler = (RenderTextureDescriptor rtd) => {
-                        rtd.graphicsFormat = SystemInfo.GetGraphicsFormat(DefaultFormat.HDR);
-                        rtd.width = (int)(rtd.width * asset.RenderScale);
-                        rtd.height = (int)(rtd.height * asset.RenderScale);
-
-                        return rtd;
-                    }
-                }
-            };
-
-            var depthRTR = new RenderTexutreRegister() {
-                tid = RenderConst.CAMERA_DEPTH_TEXTURE_ID,
-                RTDHandler = (RenderTextureDescriptor rtd) => {
-                    rtd.colorFormat = RenderTextureFormat.Depth;
-                    rtd.width = (int)(rtd.width * asset.RenderScale);
-                    rtd.height = (int)(rtd.height * asset.RenderScale);
-
-                    return rtd;
-                }
-            };
-
-            var pixelRTR = new RenderTexutreRegister() {
-                tid = RenderConst.PIXEL_TEXTURE_ID,
-                RTDHandler = (RenderTextureDescriptor rtd) => {
-                    var scale = RenderUtil.GetPixelScale(rtd.width);
-                    rtd.width = (int)(rtd.width * scale);
-                    rtd.height = (int)(rtd.height * scale);
-
-                    return rtd;
-                }
-            };
-
-            var finalRTR = new RenderTexutreRegister() {
-                tid = (int)BuiltinRenderTextureType.CameraTarget
-            };
-
-            this.passes = new List<IRenderPass>() {
-                new SetupPass(this.asset, postRTR),
-                new MainLightShadowPass(this.asset),
-                new ReadyDrawPass(colorRTRs, depthRTR),
-                new DrawObjectPass(lightModes, true),
-                // new DrawObjectPass(new string[] {"Outline"}, true),
-                new DrawObjectPass(lightModes, false),
-                new DrawGizmosPass(GizmoSubset.PreImageEffects),
-                new DrawGizmosPass(GizmoSubset.PostImageEffects),
-
-                new StencilTestPass(this.asset, "Hidden/Lavi RP/StencilTest", RenderConst.CAMERA_COLOR_TEXTURE_ID, RenderConst.CAMERA_DEPTH_TEXTURE_ID),
-                new BloomPass("Hidden/Lavi RP/Bloom", RenderConst.POST_TEXTURE_ID, RenderConst.CAMERA_COLOR_TEXTURE_ID, RenderConst.CAMERA_GLOW_TEXTURE_ID, 5),
-            };
-
-            if (this.asset.pixel) {
-                this.passes.Add(new CopyPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID, pixelRTR, allocDST:true, isPixel:false, isDepth:false, onlyScene:false));
-                this.passes.Add(new CopyPass("Hidden/Lavi RP/Blit", RenderConst.PIXEL_TEXTURE_ID, finalRTR, allocDST:false, isPixel:true, isDepth:false, onlyScene:false));
-            }
-            else {
-                this.passes.Add(new CopyPass("Hidden/Lavi RP/Blit", RenderConst.POST_TEXTURE_ID, finalRTR, allocDST:false, isPixel:false, isDepth:false, onlyScene:false));
-            }
-
-            this.passes.Add(new CopyPass("Hidden/Lavi RP/Blit", RenderConst.CAMERA_DEPTH_TEXTURE_ID, finalRTR, allocDST:false, isPixel:false, isDepth:true, onlyScene:true));
-
-            this.culledPasses = new List<IRenderPass>(this.passes.Count);
             GraphicsSettings.useScriptableRenderPipelineBatching = this.asset.SRPBatch;
+        }
+
+        public void Ready() {
+            
         }
 
         public void Render(ref ScriptableRenderContext context, Camera camera) {
@@ -112,29 +38,33 @@ namespace Koiyun.Render {
                 mainLightIndexes = RenderUtil.GetMainLightIndexes(ref cullingResults)
             };
 
-            this.culledPasses.Clear();
-
-            for (int i = 0; i < this.passes.Count; i++) {
-                if (this.passes[i].Setup(ref context, ref data)) {
-                    this.culledPasses.Add(this.passes[i]);
-                }
-            }
-
-            for (int i = 0; i < this.culledPasses.Count; i++) {
-                this.culledPasses[i].Render(ref context, ref data);
-            }
-
-            for (int i = this.culledPasses.Count - 1; i >= 0; i--) {
-                this.culledPasses[i].Clean(ref context, ref data);
-            }
-
             context.Submit();
         }
 
         public void Dispose() {
-            for (int i = 0; i < this.passes.Count; i++) {
-                this.passes[i].Dispose();
+            foreach (var material in this.materials) {
+                CoreUtils.Destroy(material);
             }
+        }
+
+        private RenderTexutreRegister NewRTR(string name, int width, int height, GraphicsFormat format) {
+            var rtr = new RenderTexutreRegister() {
+                tid = Shader.PropertyToID(name),
+                width = width,
+                height = height,
+                format = format
+            };
+
+            this.rtrs.Add(rtr);
+            
+            return rtr;
+        }
+
+        private Material NewMaterial(string shaderName) {
+            var material = CoreUtils.CreateEngineMaterial(shaderName);
+            this.materials.Add(material);
+
+            return material;
         }
     }
 }

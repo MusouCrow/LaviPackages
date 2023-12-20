@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 
 namespace Koiyun.Render {
@@ -21,16 +21,10 @@ namespace Koiyun.Render {
 
     public struct RenderTexutreRegister {
         public int tid;
-        public Func<RenderTextureDescriptor, RenderTextureDescriptor> RTDHandler;
+        public int width;
+        public int height;
+        public GraphicsFormat format;
 
         public RenderTargetIdentifier RTI => new RenderTargetIdentifier(this.tid);
-
-        public RenderTextureDescriptor HandleRTD(RenderTextureDescriptor rtd) {
-            if (RTDHandler != null) {
-                return RTDHandler(rtd);
-            }
-
-            return rtd;
-        }
     }
 }
