@@ -10,6 +10,7 @@ namespace Koiyun.Render {
 
         public LaviRenderPipeline(LaviRenderPipelineAsset asset) {
             this.renderer = new Renderer(asset);
+            this.renderer.Ready();
         }
 
         public void Dispose() {

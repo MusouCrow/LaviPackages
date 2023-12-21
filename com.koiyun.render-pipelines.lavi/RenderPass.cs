@@ -6,6 +6,6 @@ namespace Koiyun.Render {
             return true;
         }
 
-        public virtual void Render(ref ScriptableRenderContext context, ref RenderData data) {}
+        public virtual void Execute(ref ScriptableRenderContext context, ref RenderData data) {}
     }
 }

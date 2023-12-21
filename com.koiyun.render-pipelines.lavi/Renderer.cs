@@ -21,7 +21,32 @@ namespace Koiyun.Render {
         }
 
         public void Ready() {
+            var blitMaterial = this.NewMaterial("Hidden/Lavi RP/Blit");
+
+            var colorRTR = this.NewRTR("_ColorMap", TextureFormat.LDR, true);
+            var depthRTR = this.NewRTR("_DepthMap", TextureFormat.Depth, true);
+            var glowRTR = this.NewRTR("_GlowMap", TextureFormat.HDR, true, true);
             
+            var setupPass = new SetupPass(this.asset, this.rtrs);
+            var testPass = new TestPass(colorRTR, depthRTR);
+            var packGlowPass = new PackGlowPass(glowRTR);
+            var drawTransparentPass = new DrawTransparentPass("Transparent", colorRTR, glowRTR, depthRTR);
+            var drawGizmosPass = new DrawGizmosPass(colorRTR, depthRTR);
+            var finalBlitPass = new FinalBlitPass(colorRTR, blitMaterial);
+            var finalDepthBlitPass = new FinalBlitPass(depthRTR, blitMaterial);
+            var cleanPass = new CleanPass(this.rtrs);
+            
+            this.passes.Add(setupPass);
+            this.passes.Add(testPass);
+
+            this.passes.Add(packGlowPass);
+            this.passes.Add(drawTransparentPass);
+            
+            this.passes.Add(drawGizmosPass);
+
+            this.passes.Add(finalBlitPass);
+            this.passes.Add(finalDepthBlitPass);
+            this.passes.Add(cleanPass);
         }
 
         public void Render(ref ScriptableRenderContext context, Camera camera) {
@@ -38,6 +63,12 @@ namespace Koiyun.Render {
                 mainLightIndexes = RenderUtil.GetMainLightIndexes(ref cullingResults)
             };
 
+            foreach (var pass in this.passes) {
+                if (pass.IsActived(ref data)) {
+                    pass.Execute(ref context, ref data);
+                }
+            }
+
             context.Submit();
         }
 
@@ -47,12 +78,13 @@ namespace Koiyun.Render {
             }
         }
 
-        private RenderTexutreRegister NewRTR(string name, int width, int height, GraphicsFormat format) {
+        private RenderTexutreRegister NewRTR(string name, TextureFormat format = TextureFormat.LDR, bool scaling = true, bool global = false, int size = 0) {
             var rtr = new RenderTexutreRegister() {
                 tid = Shader.PropertyToID(name),
-                width = width,
-                height = height,
-                format = format
+                size = size,
+                scaling = scaling,
+                format = format,
+                global = global
             };
 
             this.rtrs.Add(rtr);
