@@ -4,28 +4,31 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Shadow/ShadowSamplingTent.hlsl"
 
-TEXTURE2D_SHADOW(_ShadowTexture);
-TEXTURE2D_SHADOW(_CharShadowTexture);
-SAMPLER_CMP(sampler_ShadowTexture);
-SAMPLER_CMP(sampler_CharShadowTexture);
+TEXTURE2D_SHADOW(_SceneShadowMap);
+TEXTURE2D_SHADOW(_UnitShadowMap);
+SAMPLER_CMP(sampler_SceneShadowMap);
+SAMPLER_CMP(sampler_UnitShadowMap);
 
 CBUFFER_START(MainLightShadows)
 float4x4 _WorldToShadowMatrix;
 float3 _LightDirection;
 float4 _ShadowParams; // x: Depth Bias, y: Normal Bias, z: Shadow Strength, w: Is Soft Shadow
-float4 _ShadowTexture_TexelSize; // x: 1 / width, y: 1 / height, z: width, h: height
+float4 _SceneShadowMap_TexelSize;
+float4 _UnitShadowMap_TexelSize;
 CBUFFER_END
+
+#define SAMPLE_SHADOW(name, shadowCoord) ShadowAttenuation(TEXTURE2D_SHADOW_ARGS(name, sampler##name), name##_TexelSize, shadowCoord)
 
 float SampleShadowMap(TEXTURE2D_SHADOW_PARAM(shadowMap, sampler_shadowMap), float4 shadowCoord)
 {
     return SAMPLE_TEXTURE2D_SHADOW(shadowMap, sampler_shadowMap, shadowCoord.xyz);
 }
 
-float SampleShadowMapSoft(TEXTURE2D_SHADOW_PARAM(shadowMap, sampler_shadowMap), float4 shadowCoord)
+float SampleShadowMapSoft(TEXTURE2D_SHADOW_PARAM(shadowMap, sampler_shadowMap), float4 texelSize, float4 shadowCoord)
 {
     real tentWeights[9];
 	real2 tentUVs[9];
-    SampleShadow_ComputeSamples_Tent_5x5(_ShadowTexture_TexelSize, shadowCoord.xy, tentWeights, tentUVs);
+    SampleShadow_ComputeSamples_Tent_5x5(texelSize, shadowCoord.xy, tentWeights, tentUVs);
 
     float attenuation = 0;
 
@@ -43,15 +46,11 @@ float4 TransformWorldToShadowCoord(float3 positionWS)
     return mul(_WorldToShadowMatrix, float4(positionWS, 1.0));
 }
 
-float ShadowAttenuation(TEXTURE2D_SHADOW_PARAM(shadowMap, sampler_shadowMap), float4 shadowCoord)
+float ShadowAttenuation(TEXTURE2D_SHADOW_PARAM(shadowMap, sampler_shadowMap), float4 texelSize, float4 shadowCoord)
 {
 
 #ifdef _MAIN_LIGHT_SHADOWS
-    #ifdef _SHADOWS_SOFT
-        float attenuation = SampleShadowMapSoft(TEXTURE2D_SHADOW_ARGS(shadowMap, sampler_shadowMap), shadowCoord);
-    #else
-        float attenuation = SampleShadowMap(TEXTURE2D_SHADOW_ARGS(shadowMap, sampler_shadowMap), shadowCoord);
-    #endif
+    float attenuation = SampleShadowMapSoft(TEXTURE2D_SHADOW_ARGS(shadowMap, sampler_shadowMap), texelSize, shadowCoord);
     
     attenuation = LerpWhiteTo(attenuation, 1);
     attenuation = step(0.7, attenuation);

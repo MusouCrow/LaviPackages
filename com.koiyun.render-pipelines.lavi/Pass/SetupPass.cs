@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Koiyun.Render {
@@ -16,12 +17,14 @@ namespace Koiyun.Render {
             
             foreach (var rtr in this.rtrs) {
                 var rtd = rtr.GetRTD(data.camera, this.asset.RenderScale);
-                cmd.GetTemporaryRT(rtr.tid, rtd);
+                cmd.GetTemporaryRT(rtr.tid, rtd, FilterMode.Bilinear);
                 
                 if (rtr.global) {
                     cmd.SetGlobalTexture(rtr.tid, rtr.RTI);
                 }
             }
+
+            CoreUtils.SetKeyword(cmd, RenderConst.MAIN_LIGHT_SHADOW_KEYWORD, data.mainLightIndexes.Count > 0);
 
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);

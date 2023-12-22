@@ -50,7 +50,7 @@ namespace Koiyun.Render {
                     case TextureFormat.HDR:
                         return SystemInfo.GetGraphicsFormat(DefaultFormat.HDR);
                     case TextureFormat.Normal:
-                        return GraphicsFormat.R8G8B8_SNorm;
+                        return GraphicsFormat.R8G8B8A8_SNorm;
                     case TextureFormat.Shadow:
                         return SystemInfo.GetGraphicsFormat(DefaultFormat.Shadow);
                     case TextureFormat.Depth:
@@ -90,6 +90,7 @@ namespace Koiyun.Render {
             }
             else if (this.format == TextureFormat.Shadow) {
                 rtd.depthBufferBits = 16;
+                rtd.colorFormat = RenderTextureFormat.Shadowmap;
             }
 
             return rtd;
