@@ -1,20 +1,21 @@
-Shader "Hidden/Lavi RP/Deferred"
+Shader "Hidden/Lavi RP/CopyTexture"
 {
     SubShader
     {
         Pass
         {
+            Name "CopyDepth"
+            
             ZTest Always
-            ZWrite Off
+            ZWrite On
             Cull Off
+            ColorMask R
 
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
 
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
-
-            #include "./Pass.hlsl"
+            #include "./CopyDepthPass.hlsl"
 
             ENDHLSL
         }

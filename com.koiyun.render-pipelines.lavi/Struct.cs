@@ -7,7 +7,6 @@ namespace Koiyun.Render {
     public struct RenderData {
         public Camera camera;
         public CullingResults cullingResults;
-        public RenderTextureDescriptor cameraRTD;
         public List<int> mainLightIndexes;
     }
 

@@ -21,34 +21,37 @@ namespace Koiyun.Render {
         }
 
         public void Ready() {
-            var blitMaterial = this.NewMaterial("Hidden/Lavi RP/Blit");
+            var copyTextureMaterial = this.NewMaterial("Hidden/Lavi RP/CopyTexture");
             var deferredMaterial = this.NewMaterial("Hidden/Lavi RP/Deferred");
+            var blitMaterial = this.NewMaterial("Hidden/Lavi RP/Blit");
 
             var sceneShadowRTR = this.NewRTR("_SceneShadowMap", TextureFormat.Shadow, false, true, (int)this.asset.ShadowResolution);
             var unitShadowRTR = this.NewRTR("_UnitShadowMap", TextureFormat.Shadow, false, true, (int)this.asset.ShadowResolution);
+            var rawDepthRTR = this.NewRTR("_RawDepthMap", TextureFormat.Depth, true, true);
             var gBufferColorRTR = this.NewRTR("_GBufferColor", TextureFormat.LDR, true, true);
             var gBufferOtherRTR = this.NewRTR("_GBufferOther", TextureFormat.LDR, true, true);
             var gBufferNormalRTR = this.NewRTR("_GBufferNormal", TextureFormat.Normal, true, true);
-            var colorRTR = this.NewRTR("_ColorMap", TextureFormat.LDR, true);
             var depthRTR = this.NewRTR("_DepthMap", TextureFormat.Depth, true);
+            var colorRTR = this.NewRTR("_ColorMap", TextureFormat.LDR, true);
             var glowRTR = this.NewRTR("_GlowMap", TextureFormat.HDR, true, true);
             
             var setupPass = new SetupPass(this.asset, this.rtrs);
             var mainShadowPass = new MainShadowPass(this.asset, sceneShadowRTR, unitShadowRTR);
-            var gBufferPass = new GBufferPass("GBuffer", gBufferColorRTR, gBufferOtherRTR, gBufferNormalRTR, depthRTR);
-            var deferredPass = new DeferredPass(deferredMaterial, colorRTR, depthRTR);
+            var gBufferPass = new GBufferPass("GBuffer", gBufferColorRTR, gBufferOtherRTR, gBufferNormalRTR, rawDepthRTR);
+            var copyDepthPass = new CopyDepthPass(copyTextureMaterial, depthRTR);
+            var deferredPass = new DeferredPass(deferredMaterial, colorRTR, rawDepthRTR);
             var packGlowPass = new PackGlowPass(glowRTR);
-            var drawTransparentPass = new DrawTransparentPass("Transparent", colorRTR, glowRTR, depthRTR);
-            var drawErrorPass = new DrawErrorPass("SRPDefaultUnlit", colorRTR, depthRTR);
-            var drawGizmosPass = new DrawGizmosPass(colorRTR, depthRTR);
+            var drawTransparentPass = new DrawTransparentPass("Transparent", colorRTR, glowRTR, rawDepthRTR);
+            var drawErrorPass = new DrawErrorPass("SRPDefaultUnlit", colorRTR, rawDepthRTR);
+            var drawGizmosPass = new DrawGizmosPass(colorRTR, rawDepthRTR);
             var finalBlitPass = new FinalBlitPass(colorRTR, blitMaterial);
-            var finalDepthBlitPass = new FinalBlitPass(depthRTR, blitMaterial);
+            var finalDepthBlitPass = new FinalBlitPass(rawDepthRTR, blitMaterial);
             var cleanPass = new CleanPass(this.rtrs);
             
             this.passes.Add(setupPass);
             this.passes.Add(mainShadowPass);
             this.passes.Add(gBufferPass);
-            
+            this.passes.Add(copyDepthPass);
             this.passes.Add(deferredPass);
             this.passes.Add(packGlowPass);
             this.passes.Add(drawTransparentPass);
@@ -70,7 +73,6 @@ namespace Koiyun.Render {
             var data = new RenderData() {
                 camera = camera,
                 cullingResults = cullingResults,
-                cameraRTD = RenderUtil.CreateCameraRenderTextureDescriptor(camera, MSAASamples.None),
                 mainLightIndexes = RenderUtil.GetMainLightIndexes(ref cullingResults)
             };
 
