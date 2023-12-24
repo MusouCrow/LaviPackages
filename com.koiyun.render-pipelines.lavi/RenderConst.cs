@@ -10,16 +10,19 @@ namespace Koiyun.Render {
         public static int PROJ_PARAMS_ID = Shader.PropertyToID("_ProjectionParams");
         public static int CAMERA_POSWS_ID = Shader.PropertyToID("_WorldSpaceCameraPos");
         public static int SCREEN_TO_WROLD_ID = Shader.PropertyToID("_ScreenToWorld");
+
+        public static int BLOOM_BLUR_MAP_ID = Shader.PropertyToID("_BloomBlurMap");
+        public static int BLOOM_BLUR_H_MAP_ID = Shader.PropertyToID("_BloomBlurHMap");
+        public static int BLOOM_BLUR_V_MAP_ID = Shader.PropertyToID("_BloomBlurVMap");
         
         public static float SHADOW_BIAS_RADIUS = 2.5f;
         public static int MAX_PIXEL_WIDTH = 1920;
         public static int MAX_PIXEL_HEIGHT = 1080;
         public static float PIXEL_RATE = 0.5f;
+        public static int BLOOM_STEP = 5;
 
         public static string MAIN_LIGHT_SHADOW_KEYWORD = "_MAIN_LIGHT_SHADOWS";
         public static string SOFT_SHADOW_KEYWORD = "_SHADOWS_SOFT";
         public static string POINT_FILTER_KEYWORD = "_POINT_FILTER";
-        public static string BLOOM_BLUR_H_TEXTURE_NAME = "_BloomBlurHTexture";
-        public static string BLOOM_BLUR_V_TEXTURE_NAME = "_BloomBlurVTexture";
     }
 }

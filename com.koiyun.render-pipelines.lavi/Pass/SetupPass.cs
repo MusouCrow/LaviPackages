@@ -16,7 +16,7 @@ namespace Koiyun.Render {
             var cmd = CommandBufferPool.Get("SetupPass");
             
             foreach (var rtr in this.rtrs) {
-                var rtd = rtr.GetRTD(data.camera, this.asset.RenderScale);
+                var rtd = rtr.GetRTD(data.camera);
                 cmd.GetTemporaryRT(rtr.tid, rtd, FilterMode.Bilinear);
                 
                 if (rtr.global) {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.SocialPlatforms;
 
 namespace Koiyun.Render {
     public class Renderer : IDisposable {
@@ -21,27 +22,43 @@ namespace Koiyun.Render {
         }
 
         public void Ready() {
+            var scale = this.asset.RenderScale;
+
             var copyTextureMaterial = this.NewMaterial("Hidden/Lavi RP/CopyTexture");
             var deferredMaterial = this.NewMaterial("Hidden/Lavi RP/Deferred");
+            var packGlowMaterial = this.NewMaterial("Hidden/Lavi RP/PackGlow");
+            var bloomMaterial = this.NewMaterial("Hidden/Lavi RP/Bloom");
             var blitMaterial = this.NewMaterial("Hidden/Lavi RP/Blit");
 
-            var sceneShadowRTR = this.NewRTR("_SceneShadowMap", TextureFormat.Shadow, false, true, (int)this.asset.ShadowResolution);
-            var unitShadowRTR = this.NewRTR("_UnitShadowMap", TextureFormat.Shadow, false, true, (int)this.asset.ShadowResolution);
-            var rawDepthRTR = this.NewRTR("_RawDepthMap", TextureFormat.Depth, true, true);
-            var gBufferColorRTR = this.NewRTR("_GBufferColor", TextureFormat.LDR, true, true);
-            var gBufferOtherRTR = this.NewRTR("_GBufferOther", TextureFormat.LDR, true, true);
-            var gBufferNormalRTR = this.NewRTR("_GBufferNormal", TextureFormat.Normal, true, true);
-            var depthRTR = this.NewRTR("_DepthMap", TextureFormat.Depth, true);
-            var colorRTR = this.NewRTR("_ColorMap", TextureFormat.LDR, true);
-            var glowRTR = this.NewRTR("_GlowMap", TextureFormat.HDR, true, true);
+            var sceneShadowRTR = this.NewRTR("_SceneShadowMap", TextureFormat.Shadow, 1, true, (int)this.asset.ShadowResolution);
+            var unitShadowRTR = this.NewRTR("_UnitShadowMap", TextureFormat.Shadow, 1, true, (int)this.asset.ShadowResolution);
+            var rawDepthRTR = this.NewRTR("_RawDepthMap", TextureFormat.Depth, scale, true);
+            var gBufferColorRTR = this.NewRTR("_GBufferColor", TextureFormat.LDR, scale, true);
+            var gBufferOtherRTR = this.NewRTR("_GBufferOther", TextureFormat.Data, scale, true);
+            var gBufferNormalRTR = this.NewRTR("_GBufferNormal", TextureFormat.Normal, scale, true);
+            var depthRTR = this.NewRTR("_DepthMap", TextureFormat.Depth, scale);
+            var colorRTR = this.NewRTR("_ColorMap", TextureFormat.LDR, scale);
+            var glowRTR = this.NewRTR("_GlowMap", TextureFormat.HDR, scale, true);
+            var bloomRTR = this.NewRTR("_BloomMap", TextureFormat.LDR, 1, true);
+            var bloomBlurHRTRs = new RenderTexutreRegister[RenderConst.BLOOM_STEP];
+            var bloomBlurVRTRs = new RenderTexutreRegister[RenderConst.BLOOM_STEP];
+
+            var bloomScale = 1.0f;
+
+            for (var i = 0; i < RenderConst.BLOOM_STEP; i++) {
+                bloomScale /= 2;
+                bloomBlurHRTRs[i] = this.NewRTR("_BloomBlurHMap" + i, TextureFormat.LDR, bloomScale);
+                bloomBlurVRTRs[i] = this.NewRTR("_BloomBlurVMap" + i, TextureFormat.LDR, bloomScale);
+            }
             
             var setupPass = new SetupPass(this.asset, this.rtrs);
             var mainShadowPass = new MainShadowPass(this.asset, sceneShadowRTR, unitShadowRTR);
             var gBufferPass = new GBufferPass("GBuffer", gBufferColorRTR, gBufferOtherRTR, gBufferNormalRTR, rawDepthRTR);
             var copyDepthPass = new CopyDepthPass(copyTextureMaterial, depthRTR);
             var deferredPass = new DeferredPass(deferredMaterial, colorRTR, rawDepthRTR);
-            var packGlowPass = new PackGlowPass(glowRTR);
+            var packGlowPass = new PackGlowPass(packGlowMaterial, glowRTR);
             var drawTransparentPass = new DrawTransparentPass("Transparent", colorRTR, glowRTR, rawDepthRTR);
+            var bloomPass = new BloomPass(bloomMaterial, colorRTR, glowRTR, bloomRTR, bloomBlurHRTRs, bloomBlurVRTRs);
             var drawErrorPass = new DrawErrorPass("SRPDefaultUnlit", colorRTR, rawDepthRTR);
             var drawGizmosPass = new DrawGizmosPass(colorRTR, rawDepthRTR);
             var finalBlitPass = new FinalBlitPass(colorRTR, blitMaterial);
@@ -55,6 +72,7 @@ namespace Koiyun.Render {
             this.passes.Add(deferredPass);
             this.passes.Add(packGlowPass);
             this.passes.Add(drawTransparentPass);
+            this.passes.Add(bloomPass);
             this.passes.Add(drawErrorPass);
             this.passes.Add(drawGizmosPass);
 
@@ -91,11 +109,11 @@ namespace Koiyun.Render {
             }
         }
 
-        private RenderTexutreRegister NewRTR(string name, TextureFormat format = TextureFormat.LDR, bool scaling = true, bool global = false, int size = 0) {
+        private RenderTexutreRegister NewRTR(string name, TextureFormat format = TextureFormat.LDR, float scale = 1, bool global = false, int size = 0) {
             var rtr = new RenderTexutreRegister() {
                 tid = Shader.PropertyToID(name),
                 size = size,
-                scaling = scaling,
+                scale = scale,
                 format = format,
                 global = global
             };

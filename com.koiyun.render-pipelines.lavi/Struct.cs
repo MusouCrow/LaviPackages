@@ -23,13 +23,14 @@ namespace Koiyun.Render {
         HDR,
         Normal,
         Shadow,
-        Depth
+        Depth,
+        Data
     }
 
     public struct RenderTexutreRegister {
         public int tid;
         public int size;
-        public bool scaling;
+        public float scale;
         public TextureFormat format;
         public bool global;
 
@@ -50,6 +51,8 @@ namespace Koiyun.Render {
                         return SystemInfo.GetGraphicsFormat(DefaultFormat.HDR);
                     case TextureFormat.Normal:
                         return GraphicsFormat.R8G8B8A8_SNorm;
+                    case TextureFormat.Data:
+                        return GraphicsFormat.R8G8B8A8_UNorm; 
                     case TextureFormat.Shadow:
                         return SystemInfo.GetGraphicsFormat(DefaultFormat.Shadow);
                     case TextureFormat.Depth:
@@ -60,7 +63,7 @@ namespace Koiyun.Render {
             }
         }
 
-        public RenderTextureDescriptor GetRTD(Camera camera, float scale) {
+        public RenderTextureDescriptor GetRTD(Camera camera) {
             int width;
             int height;
 
@@ -73,10 +76,8 @@ namespace Koiyun.Render {
                 height = camera.pixelHeight;
             }
 
-            if (this.scaling) {
-                width = Mathf.FloorToInt(width * scale);
-                height = Mathf.FloorToInt(height * scale);
-            }
+            width = Mathf.FloorToInt(width * this.scale);
+            height = Mathf.FloorToInt(height * this.scale);
 
             var rtd = new RenderTextureDescriptor(width, height) {
                 graphicsFormat = this.GraphicsFormat,
