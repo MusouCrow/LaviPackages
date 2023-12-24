@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEditor.ShaderGraph;
 
 namespace Koiyun.Render.ShaderGraph.Editor {
-    static class ToonPasses {
+    static class ToonPass {
         public static SubShaderDescriptor SubShader(ToonSubTarget subTarget, string renderType, string renderQueue) {
             var passes = new PassCollection() {
                 GBuffer(subTarget)

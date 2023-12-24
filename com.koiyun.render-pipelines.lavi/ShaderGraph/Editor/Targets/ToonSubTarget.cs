@@ -5,7 +5,7 @@ using UnityEditor.ShaderGraph;
 
 namespace Koiyun.Render.ShaderGraph.Editor {
     class ToonSubTarget : SubTarget<LaviTarget> {
-        private static readonly GUID SOURCE_GUID = new GUID("1cee6872c31e642e7ba7a3142abca5eb"); // LaviSubTarget.cs
+        private static readonly GUID SOURCE_GUID = new GUID("1cee6872c31e642e7ba7a3142abca5eb"); // ToonSubTarget.cs
 
         public AlphaClipMode alphaClipMode;
         public bool shadowCasterPass;
@@ -22,7 +22,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             this.target.surfaceType = SurfaceType.Opaque;
 
             context.AddAssetDependency(SOURCE_GUID, AssetCollection.Flags.SourceDependency);
-            context.AddSubShader(ToonPasses.SubShader(this, this.target.RenderType, this.target.RenderQueue));
+            context.AddSubShader(ToonPass.SubShader(this, this.target.RenderType, this.target.RenderQueue));
         }
 
         public override void GetFields(ref TargetFieldContext context) {
