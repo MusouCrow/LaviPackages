@@ -47,8 +47,8 @@ namespace Koiyun.Render {
 
             for (var i = 0; i < RenderConst.BLOOM_STEP; i++) {
                 bloomScale /= 2;
-                bloomBlurHRTRs[i] = this.NewRTR("_BloomBlurHMap" + i, TextureFormat.LDR, bloomScale);
-                bloomBlurVRTRs[i] = this.NewRTR("_BloomBlurVMap" + i, TextureFormat.LDR, bloomScale);
+                bloomBlurHRTRs[i] = this.NewRTR("_BloomBlurHMap" + i, TextureFormat.HDR, bloomScale);
+                bloomBlurVRTRs[i] = this.NewRTR("_BloomBlurVMap" + i, TextureFormat.HDR, bloomScale);
             }
             
             var setupPass = new SetupPass(this.asset, this.rtrs);
