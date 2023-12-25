@@ -29,21 +29,6 @@ namespace Koiyun.Render {
             return settings;
         }
 
-        public static RenderTextureDescriptor CreateCameraRenderTextureDescriptor(Camera camera, MSAASamples msaaSamples) {
-            var width = Mathf.Min(camera.pixelWidth, RenderConst.MAX_PIXEL_WIDTH);
-            var height = Mathf.Min(camera.pixelHeight, RenderConst.MAX_PIXEL_HEIGHT);
-            var rtd = new RenderTextureDescriptor(width, height);
-            // rtd.graphicsFormat = GraphicsFormat.B10G11R11_UFloatPack32;
-            rtd.graphicsFormat = SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
-            rtd.depthBufferBits = 32;
-            rtd.msaaSamples = (int)msaaSamples;
-            rtd.sRGB = true;
-            rtd.bindMS = false;
-            rtd.enableRandomWrite = false;
-
-            return rtd;
-        }
-
         public static List<int> GetMainLightIndexes(ref CullingResults cullingResults) {
             MainLightIndexes.Clear();
 

@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Rendering;
 using UnityEditor;
 using UnityEditor.ShaderGraph;
 
@@ -22,6 +23,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         public static void CreateSpriteGraph() {
             var target = (LaviTarget)Activator.CreateInstance(typeof(LaviTarget));
             target.TrySetActiveSubTarget(typeof(SpriteSubTarget));
+            target.cullMode = CullMode.Off;
+            target.zWrite = false;
 
             var blockDescriptors = new BlockFieldDescriptor[] {
                 BlockFields.SurfaceDescription.BaseColor,

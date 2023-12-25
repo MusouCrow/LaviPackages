@@ -4,17 +4,17 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Shadow/ShadowSamplingTent.hlsl"
 
-TEXTURE2D_SHADOW(_SceneShadowMap);
-TEXTURE2D_SHADOW(_UnitShadowMap);
-SAMPLER_CMP(sampler_SceneShadowMap);
-SAMPLER_CMP(sampler_UnitShadowMap);
+TEXTURE2D_SHADOW(_SceneShadowTexture);
+TEXTURE2D_SHADOW(_UnitShadowTexture);
+SAMPLER_CMP(sampler_SceneShadowTexture);
+SAMPLER_CMP(sampler_UnitShadowTexture);
 
 CBUFFER_START(MainLightShadows)
 float4x4 _WorldToShadowMatrix;
 float3 _LightDirection;
 float4 _ShadowParams; // x: Depth Bias, y: Normal Bias, z: Shadow Strength, w: Is Soft Shadow
-float4 _SceneShadowMap_TexelSize;
-float4 _UnitShadowMap_TexelSize;
+float4 _SceneShadowTexture_TexelSize;
+float4 _UnitShadowTexture_TexelSize;
 CBUFFER_END
 
 #define SAMPLE_SHADOW(name, shadowCoord) ShadowAttenuation(TEXTURE2D_SHADOW_ARGS(name, sampler##name), name##_TexelSize, shadowCoord)

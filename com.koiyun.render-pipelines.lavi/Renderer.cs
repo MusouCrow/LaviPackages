@@ -30,16 +30,16 @@ namespace Koiyun.Render {
             var bloomMaterial = this.NewMaterial("Hidden/Lavi RP/Bloom");
             var blitMaterial = this.NewMaterial("Hidden/Lavi RP/Blit");
 
-            var sceneShadowRTR = this.NewRTR("_SceneShadowMap", TextureFormat.Shadow, 1, true, (int)this.asset.ShadowResolution);
-            var unitShadowRTR = this.NewRTR("_UnitShadowMap", TextureFormat.Shadow, 1, true, (int)this.asset.ShadowResolution);
-            var rawDepthRTR = this.NewRTR("_RawDepthMap", TextureFormat.Depth, scale, true);
+            var sceneShadowRTR = this.NewRTR("_SceneShadowTexture", TextureFormat.Shadow, 1, true, (int)this.asset.ShadowResolution);
+            var unitShadowRTR = this.NewRTR("_UnitShadowTexture", TextureFormat.Shadow, 1, true, (int)this.asset.ShadowResolution);
+            var rawDepthRTR = this.NewRTR("_RawDepthTexture", TextureFormat.Depth, scale, true);
             var gBufferColorRTR = this.NewRTR("_GBufferColor", TextureFormat.LDR, scale, true);
             var gBufferOtherRTR = this.NewRTR("_GBufferOther", TextureFormat.Data, scale, true);
             var gBufferNormalRTR = this.NewRTR("_GBufferNormal", TextureFormat.Normal, scale, true);
-            var depthRTR = this.NewRTR("_DepthMap", TextureFormat.Depth, scale);
-            var colorRTR = this.NewRTR("_ColorMap", TextureFormat.LDR, scale);
-            var glowRTR = this.NewRTR("_GlowMap", TextureFormat.HDR, scale, true);
-            var bloomRTR = this.NewRTR("_BloomMap", TextureFormat.LDR, 1, true);
+            var depthRTR = this.NewRTR("_DepthTexture", TextureFormat.Depth, scale);
+            var colorRTR = this.NewRTR("_ColorTexture", TextureFormat.LDR, scale);
+            var glowRTR = this.NewRTR("_GlowTexture", TextureFormat.HDR, scale, true);
+            var bloomRTR = this.NewRTR("_BloomTexture", TextureFormat.LDR, 1, true);
             var bloomBlurHRTRs = new RenderTexutreRegister[RenderConst.BLOOM_STEP];
             var bloomBlurVRTRs = new RenderTexutreRegister[RenderConst.BLOOM_STEP];
 
@@ -47,8 +47,8 @@ namespace Koiyun.Render {
 
             for (var i = 0; i < RenderConst.BLOOM_STEP; i++) {
                 bloomScale /= 2;
-                bloomBlurHRTRs[i] = this.NewRTR("_BloomBlurHMap" + i, TextureFormat.HDR, bloomScale);
-                bloomBlurVRTRs[i] = this.NewRTR("_BloomBlurVMap" + i, TextureFormat.HDR, bloomScale);
+                bloomBlurHRTRs[i] = this.NewRTR("_BloomBlurHTexture" + i, TextureFormat.HDR, bloomScale);
+                bloomBlurVRTRs[i] = this.NewRTR("_BloomBlurVTexture" + i, TextureFormat.HDR, bloomScale);
             }
             
             var setupPass = new SetupPass(this.asset, this.rtrs);

@@ -3,8 +3,8 @@
 #include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 
-TEXTURE2D_FLOAT(_RawDepthMap);
-SAMPLER(sampler_RawDepthMap);
+TEXTURE2D_FLOAT(_RawDepthTexture);
+SAMPLER(sampler_RawDepthTexture);
 
 struct Attributes
 {
@@ -30,7 +30,7 @@ Varyings Vert(Attributes input)
 
 float Frag(Varyings input) : SV_DEPTH
 {
-    float depth = SAMPLE_DEPTH_TEXTURE(_RawDepthMap, sampler_RawDepthMap, input.uv);
+    float depth = SAMPLE_DEPTH_TEXTURE(_RawDepthTexture, sampler_RawDepthTexture, input.uv);
 
     return depth;
 }

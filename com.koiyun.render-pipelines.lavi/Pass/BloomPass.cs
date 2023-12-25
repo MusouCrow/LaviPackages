@@ -44,11 +44,11 @@ namespace Koiyun.Render {
             // Blur Loop
             for (int i = 0; i < step; i++) {
                 cmd.SetRenderTarget(this.bloomBlurHRTRs[i].RTI);
-                cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_MAP_ID, bloomBlurRTR.RTI);
+                cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_TEXTURE_ID, bloomBlurRTR.RTI);
                 cmd.DrawProcedural(Matrix4x4.identity, this.material, this.blurHPassIndex, MeshTopology.Triangles, 3, 1);
 
                 cmd.SetRenderTarget(this.bloomBlurVRTRs[i].RTI);
-                cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_MAP_ID, this.bloomBlurHRTRs[i].RTI);
+                cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_TEXTURE_ID, this.bloomBlurHRTRs[i].RTI);
                 cmd.DrawProcedural(Matrix4x4.identity, this.material, this.blurVPassIndex, MeshTopology.Triangles, 3, 1);
 
                 bloomBlurRTR = this.bloomBlurVRTRs[i];
@@ -56,14 +56,14 @@ namespace Koiyun.Render {
 
             // UpSample
             for (int i = step - 2; i >= 0; i--) {
-                cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_H_MAP_ID, this.bloomBlurHRTRs[i + 1].RTI);
-                cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_V_MAP_ID, this.bloomBlurVRTRs[i].RTI);
+                cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_H_TEXTURE_ID, this.bloomBlurHRTRs[i + 1].RTI);
+                cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_V_TEXTURE_ID, this.bloomBlurVRTRs[i].RTI);
                 cmd.SetRenderTarget(this.bloomBlurHRTRs[i].RTI);
                 cmd.DrawProcedural(Matrix4x4.identity, this.material, this.upSamplePassIndex, MeshTopology.Triangles, 3, 1);
             }
             
             // Blend
-            cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_MAP_ID, this.bloomBlurHRTRs[0].RTI);
+            cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_TEXTURE_ID, this.bloomBlurHRTRs[0].RTI);
             cmd.SetRenderTarget(this.colorRTR.RTI);
             cmd.DrawProcedural(Matrix4x4.identity, this.material, this.blendPassIndex, MeshTopology.Triangles, 3, 1);
             
