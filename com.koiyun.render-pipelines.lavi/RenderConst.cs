@@ -17,7 +17,7 @@ namespace Koiyun.Render {
         public static int COLOR_TABLE_TEXTURE_ID = Shader.PropertyToID("_ColorTableTexture");
         
         public static float SHADOW_BIAS_RADIUS = 2.5f;
-        public static int BLOOM_STEP = 5;
+        public static int BLOOM_STEP = 4;
 
         public static string MAIN_LIGHT_SHADOW_KEYWORD = "_MAIN_LIGHT_SHADOWS";
     }

@@ -28,14 +28,14 @@ namespace Koiyun.Render {
             var bloomMaterial = this.NewMaterial("Hidden/Lavi RP/Bloom");
             var blitMaterial = this.NewMaterial("Hidden/Lavi RP/Blit");
 
-            var sceneShadowRTR = this.NewRTR("_SceneShadowTexture", TextureFormat.Shadow, 1, true, (int)this.asset.ShadowResolution);
-            var unitShadowRTR = this.NewRTR("_UnitShadowTexture", TextureFormat.Shadow, 1, true, (int)this.asset.ShadowResolution);
+            var sceneShadowRTR = this.NewRTR("_SceneShadowTexture", TextureFormat.Shadow, 1, true, false, (int)this.asset.ShadowResolution);
+            var unitShadowRTR = this.NewRTR("_UnitShadowTexture", TextureFormat.Shadow, 1, true, false, (int)this.asset.ShadowResolution);
             var rawDepthRTR = this.NewRTR("_RawDepthTexture", TextureFormat.Depth, scale, true);
-            var colorRTR = this.NewRTR("_ColorTexture", TextureFormat.LDR, scale);
-            var glowRTR = this.NewRTR("_GlowTexture", TextureFormat.HDR, scale, true);
+            var colorRTR = this.NewRTR("_ColorTexture", TextureFormat.LDR, scale, false, true);
+            var glowRTR = this.NewRTR("_GlowTexture", TextureFormat.HDR, scale, true, true);
             var normalRTR = this.NewRTR("_NormalTexture", TextureFormat.Normal, scale, true);
             var depthRTR = this.NewRTR("_DepthTexture", TextureFormat.Depth, scale);            
-            var bloomRTR = this.NewRTR("_BloomTexture", TextureFormat.LDR, 1, true);
+            var bloomRTR = this.NewRTR("_BloomTexture", TextureFormat.LDR, 1, true, true);
             var bloomBlurHRTRs = new RenderTexutreRegister[RenderConst.BLOOM_STEP];
             var bloomBlurVRTRs = new RenderTexutreRegister[RenderConst.BLOOM_STEP];
 
@@ -100,13 +100,14 @@ namespace Koiyun.Render {
             }
         }
 
-        private RenderTexutreRegister NewRTR(string name, TextureFormat format = TextureFormat.LDR, float scale = 1, bool global = false, int size = 0) {
+        private RenderTexutreRegister NewRTR(string name, TextureFormat format = TextureFormat.LDR, float scale = 1, bool global = false, bool srgb = false, int size = 0) {
             var rtr = new RenderTexutreRegister() {
                 tid = Shader.PropertyToID(name),
                 size = size,
                 scale = scale,
                 format = format,
-                global = global
+                global = global,
+                srgb = srgb
             };
 
             this.rtrs.Add(rtr);

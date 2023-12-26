@@ -32,14 +32,9 @@ namespace Koiyun.Render {
         public float scale;
         public TextureFormat format;
         public bool global;
+        public bool srgb;
 
         public RenderTargetIdentifier RTI => new RenderTargetIdentifier(this.tid);
-
-        public bool SRGB {
-            get {
-                return this.format == TextureFormat.LDR || this.format == TextureFormat.HDR;
-            }
-        }
 
         public GraphicsFormat GraphicsFormat {
             get {
@@ -78,7 +73,7 @@ namespace Koiyun.Render {
 
             var rtd = new RenderTextureDescriptor(width, height) {
                 graphicsFormat = this.GraphicsFormat,
-                sRGB = this.SRGB
+                sRGB = this.srgb
             };
 
             if (this.format == TextureFormat.Depth) {
