@@ -26,6 +26,7 @@ namespace Koiyun.Render {
             }
 
             CoreUtils.SetKeyword(cmd, RenderConst.MAIN_LIGHT_SHADOW_KEYWORD, data.mainLightIndexes.Count > 0);
+            cmd.SetGlobalTexture(RenderConst.COLOR_TABLE_TEXTURE_ID, this.asset.ColorTableTexture);
 
             this.SetScreenParams(cmd, ref data);
             this.SetZBufferParams(cmd, ref data);

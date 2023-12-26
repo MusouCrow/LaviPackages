@@ -23,8 +23,7 @@ namespace Koiyun.Render {
         HDR,
         Normal,
         Shadow,
-        Depth,
-        Data
+        Depth
     }
 
     public struct RenderTexutreRegister {
@@ -51,8 +50,6 @@ namespace Koiyun.Render {
                         return SystemInfo.GetGraphicsFormat(DefaultFormat.HDR);
                     case TextureFormat.Normal:
                         return GraphicsFormat.R8G8B8A8_SNorm;
-                    case TextureFormat.Data:
-                        return GraphicsFormat.R8G8B8A8_UNorm; 
                     case TextureFormat.Shadow:
                         return SystemInfo.GetGraphicsFormat(DefaultFormat.Shadow);
                     case TextureFormat.Depth:

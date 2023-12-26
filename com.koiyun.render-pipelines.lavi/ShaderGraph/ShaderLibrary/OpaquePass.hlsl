@@ -22,9 +22,9 @@ OpaqueOutput Frag(PackedVaryings packedInput)
     
     AlphaClip(surfaceDescription);
 
-    output.gBufferColor = surfaceDescription.Color;
-    output.gBufferOther = float3(surfaceDescription.Glow, surfaceDescription.LutUV);
-    output.gBufferNormal = unpacked.normalWS;
+    output.color = float4(surfaceDescription.BaseColor, 1);
+    output.glow = float4(surfaceDescription.BaseColor * surfaceDescription.Glow * 10, 1);
+    output.normal = unpacked.normalWS;
 
     return output;
 }

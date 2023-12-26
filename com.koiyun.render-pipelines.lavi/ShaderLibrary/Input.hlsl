@@ -74,9 +74,9 @@ struct TransparentOutput
 
 struct OpaqueOutput
 {
-    float4 gBufferColor : SV_Target0; // Base Color(RGBA)
-    float3 gBufferOther : SV_Target1; // Glow(0-1), Lut.ux, Lut.uy
-    float3 gBufferNormal : SV_Target2; // Normal (XYZ, -1..1)
+    float4 color : SV_Target0; // RGBA
+    float4 glow : SV_Target1; // RGBA(HDR)
+    float3 normal : SV_Target2; // Normal (XYZ, -1..1)
 };
 
 // VFX may also redefine UNITY_MATRIX_M / UNITY_MATRIX_I_M as static per-particle global matrices.

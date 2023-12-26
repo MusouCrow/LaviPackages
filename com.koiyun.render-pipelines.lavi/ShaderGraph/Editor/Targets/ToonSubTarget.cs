@@ -8,7 +8,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         private static readonly GUID SOURCE_GUID = new GUID("1cee6872c31e642e7ba7a3142abca5eb"); // ToonSubTarget.cs
 
         public AlphaClipMode alphaClipMode;
-        public bool shadowCasterPass;
+        public bool shadowCasterPass = true;
         
         public ToonSubTarget() {
             this.displayName = "Toon";
@@ -34,9 +34,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             context.AddBlock(BlockFields.VertexDescription.Normal);
             context.AddBlock(BlockFields.VertexDescription.Tangent);
             
-            context.AddBlock(ShaderPropertyUtil.SurfaceDescription.Color);
+            context.AddBlock(BlockFields.SurfaceDescription.BaseColor);
             context.AddBlock(ShaderPropertyUtil.SurfaceDescription.Glow);
-            context.AddBlock(ShaderPropertyUtil.SurfaceDescription.LutUV);
 
             if (this.alphaClipMode > AlphaClipMode.None) {
                 context.AddBlock(BlockFields.SurfaceDescription.AlphaClipThreshold);

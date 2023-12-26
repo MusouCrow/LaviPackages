@@ -25,6 +25,13 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 ShaderPropertyUtil.SurfaceDescription.Glow
             };
 
+            if (subTarget.target.blendMode == BlendMode.Additive && !subTarget.target.overrideBlendMode) {
+                defines.Add(ShaderPropertyUtil.AdditiveKeywordDefined, 1);
+            }
+            else {
+                keywords.Add(ShaderPropertyUtil.AdditiveKeyword);
+            }
+
             return new PassDescriptor() {
                 // Definition
                 displayName = "Transparent",

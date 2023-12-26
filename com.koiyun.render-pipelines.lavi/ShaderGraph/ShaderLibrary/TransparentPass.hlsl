@@ -21,6 +21,11 @@ TransparentOutput Frag(PackedVaryings packedInput)
     SurfaceDescription surfaceDescription = BuildSurfaceDescription(unpacked);
 
     float4 color = float4(surfaceDescription.BaseColor, surfaceDescription.Alpha);
+
+#ifdef _ADDITIVE
+    color.rgb *= color.a;
+#endif
+
     output.color = color;
     output.glow = float4(color.rgb * surfaceDescription.Glow * 10, color.a);
 

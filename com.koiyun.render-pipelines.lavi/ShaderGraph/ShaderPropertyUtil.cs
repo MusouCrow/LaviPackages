@@ -3,6 +3,15 @@ using UnityEditor.ShaderGraph.Internal;
 
 namespace Koiyun.Render.ShaderGraph.Editor {
     static class ShaderPropertyUtil {
+        public static KeywordDescriptor MainLightShadowsKeyword = new KeywordDescriptor() {
+            displayName = "Main Light Shadows",
+            referenceName = "_MAIN_LIGHT_SHADOWS",
+            type = KeywordType.Boolean,
+            definition = KeywordDefinition.MultiCompile,
+            scope = KeywordScope.Global,
+            stages = KeywordShaderStage.Fragment,
+        };
+
         public static KeywordDescriptor AlphaClipKeyword = new KeywordDescriptor() {
             displayName = "Alpha Clip",
             referenceName = "_ALPHA_CLIP",
@@ -56,14 +65,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
         [GenerateBlocks]
         public struct SurfaceDescription {
-            public static BlockFieldDescriptor Color = new BlockFieldDescriptor(BlockFields.SurfaceDescription.name, "Color", "Color", "SURFACEDESCRIPTION_COLOR",
-                    new ColorRGBAControl(UnityEngine.Color.clear), ShaderStage.Fragment);
-
             public static BlockFieldDescriptor Glow = new BlockFieldDescriptor(BlockFields.SurfaceDescription.name, "Glow", "Glow", "SURFACEDESCRIPTION_GLOW",
                     new FloatControl(0), ShaderStage.Fragment);
-
-            public static BlockFieldDescriptor LutUV = new BlockFieldDescriptor(BlockFields.SurfaceDescription.name, "LutUV", "LutUV", "SURFACEDESCRIPTION_LUT_UV",
-                    new Vector2Control(UnityEngine.Vector2.zero), ShaderStage.Fragment);
         }
 
         public static RenderStateCollection GetRenderState(LaviTarget target, bool blendMode, bool cullMode, bool zWrite, bool zTest, bool stencil, bool colorMask) {

@@ -14,6 +14,7 @@ namespace Koiyun.Render {
         public static int BLOOM_BLUR_TEXTURE_ID = Shader.PropertyToID("_BloomBlurTexture");
         public static int BLOOM_BLUR_H_TEXTURE_ID = Shader.PropertyToID("_BloomBlurHTexture");
         public static int BLOOM_BLUR_V_TEXTURE_ID = Shader.PropertyToID("_BloomBlurVTexture");
+        public static int COLOR_TABLE_TEXTURE_ID = Shader.PropertyToID("_ColorTableTexture");
         
         public static float SHADOW_BIAS_RADIUS = 2.5f;
         public static int BLOOM_STEP = 5;

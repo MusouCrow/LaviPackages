@@ -7,6 +7,7 @@ namespace Koiyun.Render {
         public Shader DefaultShader;
         public Material DefaultMaterial;
         public Material DefaultSpriteMaterial;
+        public Texture2D ColorTableTexture;
         public ShadowResolution ShadowResolution = ShadowResolution._2048;
         public float ShadowDistance = 50;
         public bool SRPBatch = true;

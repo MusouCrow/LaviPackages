@@ -5,7 +5,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
     static class ToonPass {
         public static SubShaderDescriptor SubShader(ToonSubTarget subTarget, string renderType, string renderQueue) {
             var passes = new PassCollection() {
-                GBuffer(subTarget)
+                Opaque(subTarget)
             };
             
             if (subTarget.shadowCasterPass) {
@@ -20,13 +20,12 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             };
         }
 
-        public static PassDescriptor GBuffer(ToonSubTarget subTarget) {
+        public static PassDescriptor Opaque(ToonSubTarget subTarget) {
             var keywords = new KeywordCollection();
             var defines = new DefineCollection();
             var validPixelBlocks = new List<BlockFieldDescriptor>() {
-                ShaderPropertyUtil.SurfaceDescription.Color,
-                ShaderPropertyUtil.SurfaceDescription.Glow,
-                ShaderPropertyUtil.SurfaceDescription.LutUV
+                BlockFields.SurfaceDescription.BaseColor,
+                ShaderPropertyUtil.SurfaceDescription.Glow
             };
 
             if (subTarget.alphaClipMode > 0) {
@@ -40,11 +39,15 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 }
             }
 
+            if (subTarget.shadowCasterPass) {
+                keywords.Add(ShaderPropertyUtil.MainLightShadowsKeyword);
+            }
+
             return new PassDescriptor() {
                 // Definition
-                displayName = "GBuffer",
-                referenceName = "SHADERPASS_GBUFFER",
-                lightMode = "GBuffer",
+                displayName = "Opaque",
+                referenceName = "SHADERPASS_OPAQUE",
+                lightMode = "Opaque",
                 useInPreview = true,
 
                 // Template
@@ -84,7 +87,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 includes = new IncludeCollection() {
                     {ShaderGraphConst.SHADERLIB_CORE, IncludeLocation.Pregraph},
                     {ShaderGraphConst.SHADERLIB_FUNCTIONS, IncludeLocation.Pregraph},
-                    {ShaderGraphConst.SHADERLIB_GBUFFER_PASS, IncludeLocation.Postgraph},
+                    {ShaderGraphConst.SHADERLIB_OPAQUE_PASS, IncludeLocation.Postgraph},
                 },
             };
         }

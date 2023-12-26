@@ -2,36 +2,36 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Koiyun.Render {
-    public class GBufferPass : RenderPass {
+    public class DrawOpaquePass : RenderPass {
         private string lightMode;
         private FilteringSettings filteringSettings;
-        private RenderTexutreRegister gBufferColorRTR;
-        private RenderTexutreRegister gBufferOtherRTR;
-        private RenderTexutreRegister gBufferNormalRTR;
+        private RenderTexutreRegister colorRTR;
+        private RenderTexutreRegister glowRTR;
+        private RenderTexutreRegister normalRTR;
         private RenderTexutreRegister depthRTR;
 
         private RenderTargetIdentifier[] colorRTIs;
 
-        public GBufferPass(string lightMode, RenderTexutreRegister gBufferColorRTR, RenderTexutreRegister gBufferOtherRTR, RenderTexutreRegister gBufferNormalRTR, RenderTexutreRegister depthRTR) {
+        public DrawOpaquePass(string lightMode, RenderTexutreRegister colorRTR, RenderTexutreRegister glowRTR, RenderTexutreRegister normalRTR, RenderTexutreRegister depthRTR) {
             this.lightMode = lightMode;
 
             var renderQueueRange = RenderQueueRange.opaque;
             this.filteringSettings = new FilteringSettings(renderQueueRange);
 
-            this.gBufferColorRTR = gBufferColorRTR;
-            this.gBufferOtherRTR = gBufferOtherRTR;
-            this.gBufferNormalRTR = gBufferNormalRTR;
+            this.colorRTR = colorRTR;
+            this.glowRTR = glowRTR;
+            this.normalRTR = normalRTR;
             this.depthRTR = depthRTR;
 
             this.colorRTIs = new RenderTargetIdentifier[] {
-                this.gBufferColorRTR.RTI,
-                this.gBufferOtherRTR.RTI,
-                this.gBufferNormalRTR.RTI
+                this.colorRTR.RTI,
+                this.glowRTR.RTI,
+                this.normalRTR.RTI
             };
         }
 
         public override void Execute(ref ScriptableRenderContext context, ref RenderData data) {
-            var cmd = CommandBufferPool.Get("GBufferPass");
+            var cmd = CommandBufferPool.Get("DrawOpaquePass");
             cmd.SetRenderTarget(this.colorRTIs, this.depthRTR.RTI);
             cmd.ClearRenderTarget(true, true, Color.black);
             context.ExecuteCommandBuffer(cmd);
