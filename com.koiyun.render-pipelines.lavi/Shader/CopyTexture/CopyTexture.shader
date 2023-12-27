@@ -4,11 +4,26 @@ Shader "Hidden/Lavi RP/CopyTexture"
     {
         Pass
         {
+            Name "CopyColor"
+            
+            ZTest Always
+            ZWrite On
+
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag
+
+            #include "./CopyColorPass.hlsl"
+
+            ENDHLSL
+        }
+
+        Pass
+        {
             Name "CopyDepth"
             
             ZTest Always
             ZWrite On
-            Cull Off
             ColorMask R
 
             HLSLPROGRAM

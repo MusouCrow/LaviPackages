@@ -2,18 +2,20 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Koiyun.Render {
-    public class CopyDepthPass : RenderPass {
+    public class OutlinePass : RenderPass {
         private Material material;
-        private RenderTexutreRegister targetRTR;
+        private RenderTexutreRegister colorRTR;
+        private RenderTexutreRegister depthRTR;
 
-        public CopyDepthPass(Material material, RenderTexutreRegister targetRTR) {
+        public OutlinePass(Material material, RenderTexutreRegister colorRTR, RenderTexutreRegister depthRTR) {
             this.material = material;
-            this.targetRTR = targetRTR;
+            this.colorRTR = colorRTR;
+            this.depthRTR = depthRTR;
         }
 
         public override void Execute(ref ScriptableRenderContext context, ref RenderData data) {
-            var cmd = CommandBufferPool.Get("CopyDepthPass");
-            cmd.SetRenderTarget(this.targetRTR.RTI);
+            var cmd = CommandBufferPool.Get("OutlinePass");
+            cmd.SetRenderTarget(this.colorRTR.RTI, this.depthRTR.RTI);
             cmd.DrawProcedural(Matrix4x4.identity, this.material, 0, MeshTopology.Triangles, 3, 1);
 
             context.ExecuteCommandBuffer(cmd);

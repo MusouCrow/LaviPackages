@@ -13,7 +13,6 @@ Shader "Hidden/Lavi RP/Blit"
             
             ZTest Always
             ZWrite Off
-            Cull Off
 
             HLSLPROGRAM
             #pragma vertex Vert
@@ -30,7 +29,6 @@ Shader "Hidden/Lavi RP/Blit"
             
             ZTest Always
             ZWrite On
-            Cull Off
             ColorMask 0
 
             HLSLPROGRAM

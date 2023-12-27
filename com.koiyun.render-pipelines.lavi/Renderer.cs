@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Experimental.Rendering;
-using UnityEngine.SocialPlatforms;
 
 namespace Koiyun.Render {
     public class Renderer : IDisposable {
@@ -25,6 +23,7 @@ namespace Koiyun.Render {
             var scale = this.asset.RenderScale;
 
             var copyTextureMaterial = this.NewMaterial("Hidden/Lavi RP/CopyTexture");
+            var outlineMaterial = this.NewMaterial("Hidden/Lavi RP/Outline");
             var bloomMaterial = this.NewMaterial("Hidden/Lavi RP/Bloom");
             var blitMaterial = this.NewMaterial("Hidden/Lavi RP/Blit");
 
@@ -35,7 +34,7 @@ namespace Koiyun.Render {
             var glowRTR = this.NewRTR("_GlowTexture", TextureFormat.HDR, scale, true, true);
             var normalRTR = this.NewRTR("_NormalTexture", TextureFormat.Normal, scale, true);
             var depthRTR = this.NewRTR("_DepthTexture", TextureFormat.Depth, scale);            
-            var bloomRTR = this.NewRTR("_BloomTexture", TextureFormat.LDR, 1, true, true);
+            var tempColorRTR = this.NewRTR("_TempColorTexture", TextureFormat.LDR, 1, true, true);
             var bloomBlurHRTRs = new RenderTexutreRegister[RenderConst.BLOOM_STEP];
             var bloomBlurVRTRs = new RenderTexutreRegister[RenderConst.BLOOM_STEP];
 
@@ -50,9 +49,11 @@ namespace Koiyun.Render {
             var setupPass = new SetupPass(this.asset, this.rtrs);
             var mainShadowPass = new MainShadowPass(this.asset, sceneShadowRTR, unitShadowRTR);
             var drawOpaquePass = new DrawOpaquePass("Opaque", colorRTR, glowRTR, normalRTR, rawDepthRTR);
-            var copyDepthPass = new CopyDepthPass(copyTextureMaterial, depthRTR);
+            var copyDepthPass = new CopyTexturePass(copyTextureMaterial, depthRTR);
+            var copyColorPass = new CopyTexturePass(copyTextureMaterial, tempColorRTR);
+            var outlinePass = new OutlinePass(outlineMaterial, colorRTR, rawDepthRTR);
             var drawTransparentPass = new DrawTransparentPass("Transparent", colorRTR, glowRTR, rawDepthRTR);
-            var bloomPass = new BloomPass(bloomMaterial, colorRTR, glowRTR, bloomRTR, bloomBlurHRTRs, bloomBlurVRTRs);
+            var bloomPass = new BloomPass(bloomMaterial, colorRTR, glowRTR, bloomBlurHRTRs, bloomBlurVRTRs);
             var drawErrorPass = new DrawErrorPass("SRPDefaultUnlit", colorRTR, rawDepthRTR);
             var drawGizmosPass = new DrawGizmosPass(colorRTR, rawDepthRTR);
             var finalBlitPass = new FinalBlitPass(colorRTR, blitMaterial);
@@ -63,7 +64,10 @@ namespace Koiyun.Render {
             this.passes.Add(mainShadowPass);
             this.passes.Add(drawOpaquePass);
             this.passes.Add(copyDepthPass);
+            this.passes.Add(copyColorPass);
+            this.passes.Add(outlinePass);
             this.passes.Add(drawTransparentPass);
+            this.passes.Add(copyColorPass);
             this.passes.Add(bloomPass);
             this.passes.Add(drawErrorPass);
             this.passes.Add(drawGizmosPass);
