@@ -12,7 +12,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
             var blockDescriptors = new BlockFieldDescriptor[] {
                 BlockFields.SurfaceDescription.BaseColor,
-                ShaderPropertyUtil.SurfaceDescription.Glow
+                ShaderPropertyUtil.SurfaceDescription.Glow,
+                ShaderPropertyUtil.SurfaceDescription.Layer,
             };
             
             GraphUtil.CreateNewGraphWithOutputs(new [] {target}, blockDescriptors);

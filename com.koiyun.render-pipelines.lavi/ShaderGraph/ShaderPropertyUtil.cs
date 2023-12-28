@@ -67,6 +67,9 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         public struct SurfaceDescription {
             public static BlockFieldDescriptor Glow = new BlockFieldDescriptor(BlockFields.SurfaceDescription.name, "Glow", "Glow", "SURFACEDESCRIPTION_GLOW",
                     new FloatControl(0), ShaderStage.Fragment);
+
+            public static BlockFieldDescriptor Layer = new BlockFieldDescriptor(BlockFields.SurfaceDescription.name, "Layer", "Layer", "SURFACEDESCRIPTION_LAYER",
+                    new FloatControl(0), ShaderStage.Fragment);
         }
 
         public static RenderStateCollection GetRenderState(LaviTarget target, bool blendMode, bool cullMode, bool zWrite, bool zTest, bool stencil, bool colorMask) {

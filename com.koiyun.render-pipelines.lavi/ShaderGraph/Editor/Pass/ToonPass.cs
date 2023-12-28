@@ -25,7 +25,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             var defines = new DefineCollection();
             var validPixelBlocks = new List<BlockFieldDescriptor>() {
                 BlockFields.SurfaceDescription.BaseColor,
-                ShaderPropertyUtil.SurfaceDescription.Glow
+                ShaderPropertyUtil.SurfaceDescription.Glow,
+                ShaderPropertyUtil.SurfaceDescription.Layer
             };
 
             if (subTarget.alphaClipMode > 0) {

@@ -36,6 +36,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             
             context.AddBlock(BlockFields.SurfaceDescription.BaseColor);
             context.AddBlock(ShaderPropertyUtil.SurfaceDescription.Glow);
+            context.AddBlock(ShaderPropertyUtil.SurfaceDescription.Layer);
 
             if (this.alphaClipMode > AlphaClipMode.None) {
                 context.AddBlock(BlockFields.SurfaceDescription.AlphaClipThreshold);

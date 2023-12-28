@@ -34,7 +34,7 @@ namespace Koiyun.Render {
             var glowRTR = this.NewRTR("_GlowTexture", TextureFormat.HDR, scale, true, true);
             var normalRTR = this.NewRTR("_NormalTexture", TextureFormat.Normal, scale, true);
             var depthRTR = this.NewRTR("_DepthTexture", TextureFormat.Depth, scale);            
-            var tempColorRTR = this.NewRTR("_TempColorTexture", TextureFormat.LDR, 1, true, true);
+            var tempColorRTR = this.NewRTR("_TempColorTexture", TextureFormat.LDR, scale, true, true);
             var bloomBlurHRTRs = new RenderTexutreRegister[RenderConst.BLOOM_STEP];
             var bloomBlurVRTRs = new RenderTexutreRegister[RenderConst.BLOOM_STEP];
 

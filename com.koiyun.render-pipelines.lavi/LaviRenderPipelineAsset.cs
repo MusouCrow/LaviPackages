@@ -34,7 +34,7 @@ namespace Koiyun.Render {
 
         public float RenderScale {
             get {
-                return 1;
+                return 2;
             }
         }
 
