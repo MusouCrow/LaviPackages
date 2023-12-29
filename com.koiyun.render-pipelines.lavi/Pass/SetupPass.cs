@@ -26,11 +26,11 @@ namespace Koiyun.Render {
             }
 
             CoreUtils.SetKeyword(cmd, RenderConst.MAIN_LIGHT_SHADOW_KEYWORD, data.mainLightIndexes.Count > 0);
-            cmd.SetGlobalTexture(RenderConst.COLOR_TABLE_TEXTURE_ID, this.asset.ColorTableTexture);
 
             this.SetScreenParams(cmd, ref data);
             this.SetZBufferParams(cmd, ref data);
             this.SetScreenToWorld(cmd, ref data);
+            this.SetOutlineParams(cmd);
 
             var cameraPos = data.camera.transform.position;
             cmd.SetGlobalVector(RenderConst.CAMERA_POSWS_ID, cameraPos);
@@ -49,6 +49,7 @@ namespace Koiyun.Render {
 
             var scaledScreenParams = new Vector4(scaledCameraWidth, scaledCameraHeight, 1.0f + 1.0f / scaledCameraWidth, 1.0f + 1.0f / scaledCameraHeight);
             cmd.SetGlobalVector(RenderConst.SCALED_SCREEN_PARAMS_ID, scaledScreenParams);
+            cmd.SetGlobalFloat(RenderConst.RENDER_SCALE_ID, this.asset.RenderScale);
         }
 
         private void SetZBufferParams(CommandBuffer cmd, ref RenderData data) {
@@ -91,6 +92,11 @@ namespace Koiyun.Render {
             var mtx = Matrix4x4.Inverse(toScreen * gpuProj * view);
 
             cmd.SetGlobalMatrix(RenderConst.SCREEN_TO_WROLD_ID, mtx);
+        }
+
+        private void SetOutlineParams(CommandBuffer cmd) {
+            var param = new Vector2(this.asset.OutlineBrightness, this.asset.OutlineThickness);
+            cmd.SetGlobalVector(RenderConst.OUTLINE_PARAMS_ID, param);
         }
     }
 }

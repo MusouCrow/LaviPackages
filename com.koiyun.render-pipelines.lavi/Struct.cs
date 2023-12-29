@@ -3,6 +3,10 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+#endif
+
 namespace Koiyun.Render {
     public struct RenderData {
         public Camera camera;
@@ -10,6 +14,20 @@ namespace Koiyun.Render {
         public List<int> mainLightIndexes;
     }
 
+#if ODIN_INSPECTOR
+    public enum ShadowResolution {
+        [LabelText("256")]
+        _256 = 256,
+        [LabelText("512")]
+        _512 = 512,
+        [LabelText("1024")]
+        _1024 = 1024,
+        [LabelText("2048")]
+        _2048 = 2048,
+        [LabelText("4096")]
+        _4096 = 4096
+    }
+#else
     public enum ShadowResolution {
         _256 = 256,
         _512 = 512,
@@ -17,6 +35,7 @@ namespace Koiyun.Render {
         _2048 = 2048,
         _4096 = 4096
     }
+#endif
 
     public enum TextureFormat {
         LDR,

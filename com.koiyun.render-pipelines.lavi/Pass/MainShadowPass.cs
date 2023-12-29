@@ -50,10 +50,7 @@ namespace Koiyun.Render {
             var lightDirection = -light.localToWorldMatrix.GetColumn(2);
             cmd.SetGlobalVector(RenderConst.MAIN_LIGHT_DIRECTION_ID, lightDirection);
 
-            var softShadow = light.light.shadows == LightShadows.Soft;
-            var shadowBias = RenderUtil.GetShadowBias(ref light, projMatrix, shadowResolution);
-            var shadowParam = new Vector4(shadowBias.x, shadowBias.y, light.light.shadowStrength, softShadow ? 1 : 0);
-            cmd.SetGlobalVector(RenderConst.SHADOW_PARAMS_ID, shadowParam);
+            this.SetShadowParams(cmd, shadowResolution, ref projMatrix);
             
             context.ExecuteCommandBuffer(cmd);
             context.SetupCameraProperties(data.camera);
@@ -75,6 +72,23 @@ namespace Koiyun.Render {
 		    scaleOffset.m03 = scaleOffset.m13 = scaleOffset.m23 = 0.5f;
 
             return scaleOffset * (projMatrix * viewMatrix);
+        }
+
+        private void SetShadowParams(CommandBuffer cmd, int shadowResolution, ref Matrix4x4 projMatrix) {
+            float frustumSize = 2.0f / projMatrix.m00;
+            float texelSize = frustumSize / shadowResolution;
+            float depthBias = -this.asset.DepthBias* texelSize;
+            float normalBias = -this.asset.NormalBias * texelSize;
+
+            depthBias *= RenderConst.SHADOW_BIAS_RADIUS;
+            normalBias *= RenderConst.SHADOW_BIAS_RADIUS;
+            
+            var shadowBias = new Vector2(depthBias, normalBias);
+            var shadowAtten = new Vector4(this.asset.ShadowAttenRange.x, this.asset.ShadowAttenRange.y, this.asset.DarkBrightAttenRange.x, this.asset.DarkBrightAttenRange.y);
+
+            cmd.SetGlobalVector(RenderConst.SHADOW_BIAS_ID, shadowBias);
+            cmd.SetGlobalFloat(RenderConst.SHADOW_STEP_ID, this.asset.ShadowStep);
+            cmd.SetGlobalVector(RenderConst.SHADOW_ATTEN_ID, shadowAtten);
         }
     }
 }

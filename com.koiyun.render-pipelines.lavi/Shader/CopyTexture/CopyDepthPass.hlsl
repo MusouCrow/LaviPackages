@@ -2,9 +2,9 @@
 
 #include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
 
 TEXTURE2D_FLOAT(_RawDepthTexture);
-SAMPLER(sampler_PointClamp);
 
 struct Attributes
 {
