@@ -49,7 +49,7 @@ void SampleColorTable_float(UnityTexture2D ColorTableMap, float2 UV, float3 Posi
     uv.x = (base + 1) * pixel;
     
     float4 bright = ColorTableMap.Sample(sampler_PointClamp, UV);
-    float4 dark = ColorTableMap.Sample(sampler_PointClamp, UV);
+    float4 dark = ColorTableMap.Sample(sampler_PointClamp, uv);
 
     float attenuationBright = lerp(_ShadowAttens.w, 1, scene);
     float attenuationDark = lerp(_ShadowAttens.z, 1, scene);
