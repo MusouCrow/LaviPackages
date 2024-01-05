@@ -4,7 +4,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
 
-TEXTURE2D(_ColorTexture);
+TEXTURE2D(_RawColorTexture);
 
 struct Attributes
 {
@@ -30,7 +30,7 @@ Varyings Vert(Attributes input)
 
 float4 Frag(Varyings input) : SV_TARGET
 {
-    float4 color = SAMPLE_TEXTURE2D_LOD(_ColorTexture, sampler_PointClamp, input.uv, 0);
+    float4 color = SAMPLE_TEXTURE2D_LOD(_RawColorTexture, sampler_PointClamp, input.uv, 0);
 
     return color;
 }

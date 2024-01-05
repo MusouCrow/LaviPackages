@@ -70,7 +70,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                     Structs.VertexDescriptionInputs
                 },
                 requiredFields = new FieldCollection() {
-                    StructFields.Varyings.normalWS
+                    // StructFields.Varyings.normalWS
                 },
                 fieldDependencies = new DependencyCollection() {
                     FieldDependencies.Default

@@ -7,12 +7,11 @@ namespace Koiyun.Render {
         private FilteringSettings filteringSettings;
         private RenderTexutreRegister colorRTR;
         private RenderTexutreRegister glowRTR;
-        private RenderTexutreRegister normalRTR;
         private RenderTexutreRegister depthRTR;
 
         private RenderTargetIdentifier[] colorRTIs;
 
-        public DrawOpaquePass(string lightMode, RenderTexutreRegister colorRTR, RenderTexutreRegister glowRTR, RenderTexutreRegister normalRTR, RenderTexutreRegister depthRTR) {
+        public DrawOpaquePass(string lightMode, RenderTexutreRegister colorRTR, RenderTexutreRegister glowRTR, RenderTexutreRegister depthRTR) {
             this.lightMode = lightMode;
 
             var renderQueueRange = RenderQueueRange.opaque;
@@ -20,13 +19,11 @@ namespace Koiyun.Render {
 
             this.colorRTR = colorRTR;
             this.glowRTR = glowRTR;
-            this.normalRTR = normalRTR;
             this.depthRTR = depthRTR;
 
             this.colorRTIs = new RenderTargetIdentifier[] {
                 this.colorRTR.RTI,
-                this.glowRTR.RTI,
-                this.normalRTR.RTI
+                this.glowRTR.RTI
             };
         }
 
