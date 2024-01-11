@@ -4,6 +4,7 @@ namespace Koiyun.Render.ShaderGraph {
         public static string INNER_TEMPLATE_PATH = "Packages/com.unity.shadergraph/Editor/Generation/Templates";
         public static string SHADER_PASS_PATH = TEMPLATE_PATH + "/ShaderPass.template";
         public static string SHADERLIB_CORE = "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Core.hlsl";
+        public static string SHADERLIB_SG_FUNCTIONS = "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/ShaderGraphFunctions.hlsl";
         public static string SHADERLIB_FUNCTIONS = "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl";
         public static string SHADERLIB_OPAQUE_PASS = "Packages/com.koiyun.render-pipelines.lavi/ShaderGraph/ShaderLibrary/OpaquePass.hlsl";
         public static string SHADERLIB_TRANSPARENT_PASS = "Packages/com.koiyun.render-pipelines.lavi/ShaderGraph/ShaderLibrary/TransparentPass.hlsl";

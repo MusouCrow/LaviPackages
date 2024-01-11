@@ -73,6 +73,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 keywords = keywords,
                 includes = new IncludeCollection() {
                     {ShaderGraphConst.SHADERLIB_CORE, IncludeLocation.Pregraph},
+                    {ShaderGraphConst.SHADERLIB_SG_FUNCTIONS, IncludeLocation.Pregraph},
                     {ShaderGraphConst.SHADERLIB_FUNCTIONS, IncludeLocation.Pregraph},
                     {ShaderGraphConst.SHADERLIB_TRANSPARENT_PASS, IncludeLocation.Postgraph},
                 },

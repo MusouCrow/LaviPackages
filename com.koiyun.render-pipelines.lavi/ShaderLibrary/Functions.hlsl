@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./Shadow.hlsl"
+#include "./View.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
 
@@ -55,4 +56,29 @@ void SampleColorTable_float(UnityTexture2D ColorTableMap, float2 UV, float3 Posi
     float attenuationDark = lerp(_ShadowAttens.z, 1, scene);
 
     Color = lerp(bright * attenuationBright, dark * attenuationDark, rate);
+}
+
+void Gradient_float(float Value, float2 Range, float Power, out float Gradient)
+{
+    float v = pow(Value, lerp(0, 2, Power));
+    Gradient = lerp(Range.x, Range.y, saturate(v));
+    // Gradient = 1;
+    /*
+    float v = (Posiiton.y + Bounds.y * 0.5) / Bounds.y;
+    v = pow(saturate(v), lerp(0, 4, Power));
+    Gradient = lerp(Range.x, Range.y, saturate(v));
+    */
+}
+
+void Metallic_float(float3 PosiitonWS, float3 NormalWS, float Rate, out float Metallic, out float Glow)
+{
+    float3 viewDir = GetWorldSpaceNormalizeViewDir(PosiitonWS * 10);
+    float v = dot(viewDir, NormalWS);
+    
+    // float r = lerp(0, 2, Rate);
+    // v = saturate(v * r);
+
+    Metallic = lerp(0, 1, v);
+    Glow = 0;
+    // Glow = lerp(0, saturate(lerp(0, 0.1, v * v)), Rate);
 }

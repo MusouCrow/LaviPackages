@@ -24,6 +24,10 @@ float4 unity_LODFade;
 half4 unity_WorldTransformParams;
 CBUFFER_END
 
+// Renderer bounding box.
+float4 unity_RendererBounds_Min;
+float4 unity_RendererBounds_Max;
+
 float4x4 glstate_matrix_projection;
 float4x4 unity_MatrixV;
 float4x4 unity_MatrixInvV;
