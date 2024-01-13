@@ -28,12 +28,18 @@ void Rim_float(float3 ViewDir, float3 NormalWS, float2 Range, out float Rim)
     Rim = smoothstep(Range[0], Range[1], VDotN);
 }
 
-void HSV_float(float3 RGB, out float Hue, out float Saturation, out float Lightness)
+void RGBToHSV_float(float3 RGB, out float Hue, out float Saturation, out float Lightness)
 {
     float3 hsv = RgbToHsv(RGB);
     Hue = hsv.r;
     Saturation = hsv.g;
     Lightness = hsv.b;
+}
+
+void HSVToRGB_float(float Hue, float Saturation, float Lightness, out float3 RGB)
+{
+    float3 hsv = float3(Hue, Saturation, Lightness);
+    RGB = HsvToRgb(hsv);
 }
 
 void SampleColorTable_float(UnityTexture2D ColorTableMap, float2 UV, float3 PositionWS, out float4 Color)
@@ -58,27 +64,19 @@ void SampleColorTable_float(UnityTexture2D ColorTableMap, float2 UV, float3 Posi
     Color = lerp(bright * attenuationBright, dark * attenuationDark, rate);
 }
 
-void Gradient_float(float Value, float2 Range, float Power, out float Gradient)
+void Gradient_float(float Value, float Power, out float Gradient)
 {
     float v = pow(Value, lerp(0, 2, Power));
-    Gradient = lerp(Range.x, Range.y, saturate(v));
-    // Gradient = 1;
-    /*
-    float v = (Posiiton.y + Bounds.y * 0.5) / Bounds.y;
-    v = pow(saturate(v), lerp(0, 4, Power));
-    Gradient = lerp(Range.x, Range.y, saturate(v));
-    */
+    Gradient = saturate(v);
 }
 
-void Metallic_float(float3 PosiitonWS, float3 NormalWS, float Rate, out float Metallic, out float Glow)
+void Metallic_float(float3 PosiitonWS, float3 NormalWS, float Rate, float Gradient, out float Metallic, out float Glow)
 {
-    float3 viewDir = GetWorldSpaceNormalizeViewDir(PosiitonWS * 10);
-    float v = dot(viewDir, NormalWS);
-    
-    // float r = lerp(0, 2, Rate);
-    // v = saturate(v * r);
+    float3 viewDir = GetWorldSpaceNormalizeViewDir(PosiitonWS);
+    float3 normalDir = normalize(NormalWS - Gradient);
+    float3 reflectDir = reflect(-_LightDirection, normalDir);
+    float v = saturate(dot(viewDir, reflectDir) + Gradient);
 
-    Metallic = lerp(0, 1, v);
-    Glow = 0;
-    // Glow = lerp(0, saturate(lerp(0, 0.1, v * v)), Rate);
+    Metallic = v * Rate;
+    Glow = v * 0.05 * Rate;
 }
