@@ -11,8 +11,8 @@ float4 Frag(Varyings input) : SV_Target
     float4 blur = SAMPLE_TEXTURE2D_LOD(_BloomBlurTexture, sampler_LinearClamp, input.uv, 0);
     
     float3 hsv = RgbToHsv(blur.rgb); // 色相、飽和度、明度
-    float saturation = lerp(0.5, 0, hsv.b);
-    hsv.g = saturate(hsv.g + saturation);
+    float saturation = lerp(2, 1, hsv.b);
+    hsv.g = saturate(hsv.g * saturation);
     blur.rgb = HsvToRgb(hsv);
     
     color.rgb += blur.rgb;
