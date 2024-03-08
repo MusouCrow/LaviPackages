@@ -69,7 +69,10 @@ float4 Frag(Varyings input) : SV_TARGET
 {
     float4 color = SAMPLE_TEXTURE2D_LOD(_ColorTexture, sampler_PointClamp, input.uv, 0);
     float edge = SobelLayer(input.uv);
-    color.rgb *= lerp(_OutlineParams.x, 1, 1 - edge);
+    float noOutline = step(1, color.a);
+    float3 hsv = RgbToHsv(color.rgb);
+    
+    color.rgb *= lerp(lerp(lerp(_OutlineParams.x * 2, _OutlineParams.x * 0.5, hsv.b), 1, noOutline), 1, (1 - edge));
 
     return color;
 }
