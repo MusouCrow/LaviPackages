@@ -76,7 +76,8 @@ void Metallic_float(float3 PosiitonWS, float3 NormalWS, float Rate, float Gradie
     float3 normalDir = normalize(NormalWS - Gradient);
     float3 reflectDir = reflect(-_LightDirection, normalDir);
     float v = saturate(dot(viewDir, reflectDir) + Gradient);
+    v = lerp(-0.5, 1, v);
 
     Metallic = v * Rate;
-    Glow = v * 0.05 * Rate;
+    Glow = v * 0.01 * Rate;
 }
