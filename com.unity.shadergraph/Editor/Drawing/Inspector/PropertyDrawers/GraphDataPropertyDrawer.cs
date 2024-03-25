@@ -112,8 +112,9 @@ namespace UnityEditor.ShaderGraph.Drawing.Inspector.PropertyDrawers
 
 #if VFX_GRAPH_10_0_0_OR_NEWER
             // Inform the user that VFXTarget is deprecated, if they are using one.
-            var activeTargetSRP = graphData.m_ActiveTargets.Where(t => !(t.value is VFXTarget));
-            if (graphData.m_ActiveTargets.Any(t => t.value is VFXTarget) //Use Old VFXTarget
+            // KOIYUN
+            var activeTargetSRP = graphData.m_ActiveTargets.Where(t => !(t.value is IMaySupportVFX));
+            if (graphData.m_ActiveTargets.Any(t => t.value is IMaySupportVFX) //Use Old VFXTarget
                 && activeTargetSRP.Any()
                 && activeTargetSRP.All(o => o.value.CanSupportVFX()))
             {

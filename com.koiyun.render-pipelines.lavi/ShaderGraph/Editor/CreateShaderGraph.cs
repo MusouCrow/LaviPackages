@@ -34,5 +34,18 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             
             GraphUtil.CreateNewGraphWithOutputs(new [] {target}, blockDescriptors);
         }
+
+        [MenuItem("Assets/Create/Shader Graph/VFX Shader Graph", priority = CoreUtils.Sections.section2 + CoreUtils.Priorities.assetsCreateShaderMenuPriority)]
+        public static void CreateVFXGraph() {
+            var target = (VEGTarget)Activator.CreateInstance(typeof(VEGTarget));
+
+            var blockDescriptors = new[] {
+                BlockFields.SurfaceDescription.BaseColor,
+                BlockFields.SurfaceDescription.Alpha,
+                ShaderPropertyUtil.SurfaceDescription.Glow
+            };
+
+            GraphUtil.CreateNewGraphWithOutputs(new[] {target}, blockDescriptors);
+        }
     }
 }

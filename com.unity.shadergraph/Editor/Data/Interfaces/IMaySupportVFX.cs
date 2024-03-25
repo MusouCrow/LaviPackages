@@ -1,9 +1,10 @@
 namespace UnityEditor.ShaderGraph
 {
-    public interface IMaySupportVFX
+    interface IMaySupportVFX
     {
         bool SupportsVFX();
         bool CanSupportVFX();
+        bool HasBlock(BlockFieldDescriptor descriptor, out int slotID);
     }
 
     static class MaySupportVFXExtensions

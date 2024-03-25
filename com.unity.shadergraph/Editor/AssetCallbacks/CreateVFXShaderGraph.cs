@@ -7,7 +7,8 @@ namespace UnityEditor.ShaderGraph
 {
     static class CreateVFXShaderGraph
     {
-        [MenuItem("Assets/Create/Shader Graph/VFX Shader Graph", priority = CoreUtils.Sections.section2 + CoreUtils.Priorities.assetsCreateShaderMenuPriority)]
+        // KOIYUN
+        // [MenuItem("Assets/Create/Shader Graph/VFX Shader Graph", priority = CoreUtils.Sections.section2 + CoreUtils.Priorities.assetsCreateShaderMenuPriority)]
         public static void CreateVFXGraph()
         {
             var target = (VFXTarget)Activator.CreateInstance(typeof(VFXTarget));

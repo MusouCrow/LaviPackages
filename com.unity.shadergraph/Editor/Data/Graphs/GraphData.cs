@@ -559,13 +559,14 @@ namespace UnityEditor.ShaderGraph
                 supports &= !isSubGraph;
                 supports &= activeTargets.Any();
                 // Maintain support for VFXTarget and VFX compatible targets.
-                supports &= activeTargets.OfType<VFXTarget>().Any() || hasVFXCompatibleTarget;
+                // KOIYUN
+                supports &= activeTargets.OfType<IMaySupportVFX>().Any() || hasVFXCompatibleTarget;
                 return supports;
             }
         }
-
+        // KOIYUN
         public bool isOnlyVFXTarget => activeTargets.Count() == 1 &&
-        activeTargets.Count(t => t is VFXTarget) == 1;
+        activeTargets.Count(t => t is IMaySupportVFX) == 1;
 #else
         public bool isVFXTarget => false;
         public bool isOnlyVFXTarget => false;

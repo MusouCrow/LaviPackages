@@ -68,9 +68,8 @@ namespace UnityEditor.ShaderGraph
 
         public static Dictionary<BlockFieldDescriptor, int> s_BlockMap = new Dictionary<BlockFieldDescriptor, int>()
         {
-            { BlockFields.SurfaceDescription.BaseColor, ShaderGraphVfxAsset.ColorSlotId },
-            { BlockFields.SurfaceDescription.Alpha, ShaderGraphVfxAsset.AlphaSlotId },
-            { BlockFields.SurfaceDescription.AlphaClipThreshold, ShaderGraphVfxAsset.AlphaThresholdSlotId },
+            { BlockFields.SurfaceDescription.BaseColor, 1 },
+            { BlockFields.SurfaceDescription.Alpha, 2 },
         };
 
         public override bool WorksWithSRP(RenderPipelineAsset scriptableRenderPipeline)
@@ -80,6 +79,10 @@ namespace UnityEditor.ShaderGraph
 
         public bool SupportsVFX() => true;
         public bool CanSupportVFX() => true;
+
+        public bool HasBlock(BlockFieldDescriptor descriptor, out int slotID) {
+            return s_BlockMap.TryGetValue(descriptor, out slotID);
+        }
     }
 }
 #endif

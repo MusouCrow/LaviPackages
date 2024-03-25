@@ -528,8 +528,12 @@ Shader ""Hidden/GraphErrorShader2""
             var asset = ScriptableObject.CreateInstance<ShaderGraphVfxAsset>();
             var result = asset.compilationResult = new GraphCompilationResult();
             var mode = GenerationMode.ForReals;
+            var vfxTarget = target as IMaySupportVFX;
 
             // KOIYUN
+            asset.alphaClipping = false;
+            asset.generatesWithShaderGraph = vfxTarget == null;
+            /*
             if (target is VFXTarget vfxTarget)
             {
                 asset.alphaClipping = vfxTarget.alphaTest;
@@ -540,7 +544,7 @@ Shader ""Hidden/GraphErrorShader2""
                 asset.alphaClipping = false;
                 asset.generatesWithShaderGraph = true;
             }
-
+            */
             var assetGuid = graph.assetGuid;
             var assetPath = AssetDatabase.GUIDToAssetPath(assetGuid);
             var hlslName = NodeUtils.GetHLSLSafeName(Path.GetFileNameWithoutExtension(assetPath));
@@ -822,11 +826,18 @@ Shader ""Hidden/GraphErrorShader2""
             // VFX Code heavily relies on the slotId from the original MasterNodes
             // Since we keep these around for upgrades anyway, for now it is simpler to use them
             // Therefore we remap the output blocks back to the original Ids here
+            // KOIYUN
             var originialPortIds = new int[ports.Count];
             for (int i = 0; i < originialPortIds.Length; i++)
             {
+                /*
                 if (!VFXTarget.s_BlockMap.TryGetValue((ports[i].owner as BlockNode).descriptor, out var originalId))
                     continue;
+                */
+                // KOIYUN
+                if (!vfxTarget.HasBlock((ports[i].owner as BlockNode).descriptor, out var originalId)) {
+                    continue;
+                }
 
                 // In Master Nodes we had a different BaseColor/Color slot id between Unlit/Lit
                 // In the stack we use BaseColor for both cases. Catch this here.
