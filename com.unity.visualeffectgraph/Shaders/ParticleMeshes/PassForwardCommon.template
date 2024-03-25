@@ -25,6 +25,12 @@ struct ps_input
 	#if VFX_NEEDS_COLOR_INTERPOLATOR
 	nointerpolation float4 color : COLOR0;
 	#endif
+
+	// KOIYUN
+	#if VFX_USE_GLOW_CURRENT
+	nointerpolation float glow : COLOR2;
+	#endif
+
 	#if USE_SOFT_PARTICLE || USE_ALPHA_TEST || USE_FLIPBOOK_INTERPOLATION || USE_EXPOSURE_WEIGHT || VFX_FEATURE_MOTION_VECTORS_FORWARD
 	// x: inverse soft particles fade distance
 	// y: alpha threshold
@@ -62,9 +68,13 @@ struct ps_input
 struct ps_output
 {
 	float4 color : SV_Target0;
+// KOIYUN
+	float4 glow : SV_Target1;
+/*
 #if VFX_FEATURE_MOTION_VECTORS_FORWARD
 	float4 outMotionVector : SV_Target1;
 #endif
+*/
 };
 
 #define VFX_VARYING_PS_INPUTS ps_input
@@ -97,8 +107,10 @@ ${VFXPassForwardDefine}
 #endif
 
 ${VFXInclude("Shaders/ParticleMeshes/Pass.template")}
-
-${SHADERGRAPH_PIXEL_CODE_FORWARD}
+#if VFX_SHADERGRAPH
+// KOIYUN
+${SHADERGRAPH_PIXEL_CODE_TRANSPARENT}
+#endif
 
 #pragma fragment frag
 ps_output frag(ps_input i)
@@ -116,21 +128,17 @@ ps_output frag(ps_input i)
 
 	#if VFX_SHADERGRAPH
 		${VFXAdditionalInterpolantsPreparation}
-		${SHADERGRAPH_PIXEL_CALL_FORWARD}
+		// KOIYUN
+		${SHADERGRAPH_PIXEL_CALL_TRANSPARENT}
+		o.color = VFXGetFragmentColor(i);
 
 		#if HAS_SHADERGRAPH_PARAM_BASECOLOR
-			o.color.rgb = OUTSG.${SHADERGRAPH_PARAM_BASECOLOR}.rgb;
+			o.color.rgb *= OUTSG.${SHADERGRAPH_PARAM_BASECOLOR}.rgb;
 			o.color = VFXApplyPreExposure(o.color, i);
 		#endif
 
-		#if HAS_SHADERGRAPH_PARAM_EMISSION
-			float4 emission = float4(OUTSG.${SHADERGRAPH_PARAM_EMISSION}.rgb, 0.0f);
-			emission = VFXApplyPreExposure(emission, 1.0f);
-			o.color.rgb += emission.rgb;
-		#endif
-
 		#if HAS_SHADERGRAPH_PARAM_ALPHA
-			o.color.a = OUTSG.${SHADERGRAPH_PARAM_ALPHA};
+			o.color.a *= OUTSG.${SHADERGRAPH_PARAM_ALPHA};
 		#endif
 	#else
 		#define VFX_TEXTURE_COLOR VFXGetTextureColor(VFX_SAMPLER(mainTexture),i)
@@ -144,10 +152,16 @@ ps_output frag(ps_input i)
 	o.color.a = saturate(o.color.a);
 	o.color = VFXTransformFinalColor(o.color);
 
+	// KOIYUN
+#if VFX_USE_GLOW_CURRENT
+	o.glow = float4(o.color.rgb * i.glow * 10, o.color.a);
+#endif
+/*
 #if VFX_FEATURE_MOTION_VECTORS_FORWARD
 	${VFXComputeOutputMotionVector}
 	o.outMotionVector = encodedMotionVector;
 	o.outMotionVector.a = o.color.a < i.VFX_VARYING_ALPHATHRESHOLD ? 0.0f : 1.0f; //Independant clipping for motion vector pass
 #endif
+*/
 	return o;
 }

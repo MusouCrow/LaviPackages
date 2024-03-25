@@ -20,8 +20,9 @@ namespace UnityEditor.VFX
         }
         public override string codeGeneratorTemplate { get { return RenderPipeTemplate("VFXParticleMeshes"); } }
         public override VFXTaskType taskType { get { return VFXTaskType.ParticleMeshOutput; } }
-        public override bool supportsUV { get { return GetOrRefreshShaderGraphObject() == null; } }
-        public override bool implementsMotionVector { get { return true; } }
+        // KOIYUN
+        public override bool supportsUV { get { return true; } }
+        public override bool implementsMotionVector { get { return false; } }
         public override CullMode defaultCullMode { get { return CullMode.Back; } }
 
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), Range(1, 4), Tooltip("Specifies the number of different meshes (up to 4). Mesh per particle can be specified with the meshIndex attribute."), SerializeField]
@@ -75,6 +76,9 @@ namespace UnityEditor.VFX
                 yield return new VFXAttributeInfo(VFXAttribute.ScaleX, VFXAttributeMode.Read);
                 yield return new VFXAttributeInfo(VFXAttribute.ScaleY, VFXAttributeMode.Read);
                 yield return new VFXAttributeInfo(VFXAttribute.ScaleZ, VFXAttributeMode.Read);
+
+                // KOIYUN
+                yield return new VFXAttributeInfo(VFXAttribute.Glow, VFXAttributeMode.Read);
 
                 if (usesFlipbook)
                     yield return new VFXAttributeInfo(VFXAttribute.TexIndex, VFXAttributeMode.Read);
