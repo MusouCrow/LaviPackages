@@ -98,7 +98,8 @@ ${VFXPassForwardDefine}
 
 ${VFXInclude("Shaders/ParticlePlanarPrimitives/Pass.template")}
 #if VFX_SHADERGRAPH
-${SHADERGRAPH_PIXEL_CODE_FORWARD}
+// KOIYUN
+${SHADERGRAPH_PIXEL_CODE_TRANSPARENT}
 #endif
 
 #pragma fragment frag
@@ -115,22 +116,17 @@ ps_output frag(ps_input i,
 #endif
 #if VFX_SHADERGRAPH
 	${VFXAdditionalInterpolantsPreparation}
-
-	${SHADERGRAPH_PIXEL_CALL_FORWARD}
+	// KOIYUN
+	${SHADERGRAPH_PIXEL_CALL_TRANSPARENT}
+	o.color = VFXGetFragmentColor(i);
 
 	#if HAS_SHADERGRAPH_PARAM_BASECOLOR
-		o.color.rgb = OUTSG.${SHADERGRAPH_PARAM_BASECOLOR}.rgb;
+		o.color.rgb *= OUTSG.${SHADERGRAPH_PARAM_BASECOLOR}.rgb;
 		o.color = VFXApplyPreExposure(o.color, i);
 	#endif
 
-	#if HAS_SHADERGRAPH_PARAM_EMISSION
-		float4 emission = float4(OUTSG.${SHADERGRAPH_PARAM_EMISSION}.rgb, 0.0f);
-		emission = VFXApplyPreExposure(emission, 1.0f);
-		o.color.rgb += emission.rgb;
-	#endif
-
 	#if HAS_SHADERGRAPH_PARAM_ALPHA
-		o.color.a = OUTSG.${SHADERGRAPH_PARAM_ALPHA};
+		o.color.a *= OUTSG.${SHADERGRAPH_PARAM_ALPHA};
 	#endif
 #else
 
