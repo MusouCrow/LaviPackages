@@ -1,3 +1,4 @@
+using UnityEditor.VFX;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -76,7 +77,11 @@ namespace Koiyun.Render {
         public float NormalBias;
         public float ShadowStep;
         public Vector2 ShadowAttenRange;
-        public Vector2 BrightDarkAttenRange;
+        public Vector2 DarkBrightAttenRange;
+        [Range(0, 1)]
+        public float OutlineBrightness;
+        [Range(0, 1)]
+        public float OutlineThickness;
         public bool SRPBatch = true;
     #endif
 
