@@ -58,7 +58,7 @@ namespace UnityEditor
         public const string editorResourcesFolder = "Editor/UIResources";
         public static string editorResourcesPath => VisualEffectGraphPackageInfo.assetPackagePath + "/" + editorResourcesFolder;
 
-        [MenuItem("GameObject/Visual Effects/Visual Effect", priority = 12)]
+        [MenuItem("GameObject/特效/粒子", priority = 12)]
         public static void CreateVisualEffectGameObject(MenuCommand menuCommand)
         {
             var parent = menuCommand.context as GameObject;
@@ -67,7 +67,7 @@ namespace UnityEditor
                 parent = parentTransform.gameObject;
             }
 
-            var go = new GameObject(GameObjectUtility.GetUniqueNameForSibling(parent != null ? parent.transform : null, "Visual Effect"));
+            var go = new GameObject(GameObjectUtility.GetUniqueNameForSibling(parent != null ? parent.transform : null, "vfx_effect"));
             GameObjectUtility.SetParentAndAlign(go, parent);
             var vfxComp = go.AddComponent<VisualEffect>();
 
