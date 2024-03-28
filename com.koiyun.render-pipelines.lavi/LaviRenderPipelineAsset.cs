@@ -23,12 +23,12 @@ namespace Koiyun.Render {
         public Material DefaultSpriteMaterial;
 
         [TitleGroup("初始资源")]
-        [LabelText("默认特效材质")]
-        public Material DefaultEffectMaterial;
-
-        [TitleGroup("初始资源")]
         [LabelText("面片特效模型")]
         public Mesh QuadEffectMesh;
+
+        [TitleGroup("初始资源")]
+        [LabelText("刀光特效模型")]
+        public Mesh SlashEffectMesh;
 
         [TitleGroup("阴影")]
         [LabelText("阴影分辨率")]
@@ -79,8 +79,8 @@ namespace Koiyun.Render {
         public Shader DefaultShader;
         public Material DefaultMaterial;
         public Material DefaultSpriteMaterial;
-        public Material DefaultEffectMaterial;
         public Mesh QuadEffectMesh;
+        public Mesh SlashEffectMesh;
         public ShadowResolution ShadowResolution = ShadowResolution._2048;
         public float ShadowDistance = 50;
         public float DepthBias;
