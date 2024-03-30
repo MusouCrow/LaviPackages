@@ -81,3 +81,12 @@ void Metallic_float(float3 PosiitonWS, float3 NormalWS, float Rate, float Gradie
     Metallic = v * Rate;
     Glow = v * 0.01 * Rate;
 }
+
+void TexIndexToUV_float(float Index, float2 SheetSize, out float2 UV)
+{
+    float hang = Index % SheetSize.x;
+    float lie = floor(Index / SheetSize.x);
+    
+    UV = float2(hang, (lie + 1)) / SheetSize;
+    UV.y = 1 - UV.y;
+}
