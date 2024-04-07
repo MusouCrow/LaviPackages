@@ -52,8 +52,15 @@ namespace Koiyun.Render {
 
             // UpSample
             for (int i = step - 2; i >= 0; i--) {
-                cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_H_TEXTURE_ID, this.bloomBlurHRTRs[i + 1].RTI);
-                cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_V_TEXTURE_ID, this.bloomBlurVRTRs[i].RTI);
+                if (i == step - 2) {
+                    cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_HIGH_TEXTURE_ID, this.bloomBlurVRTRs[i].RTI);
+                    cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_LOW_TEXTURE_ID, this.bloomBlurVRTRs[i + 1].RTI);
+                }
+                else {
+                    cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_HIGH_TEXTURE_ID, this.bloomBlurVRTRs[i].RTI);
+                    cmd.SetGlobalTexture(RenderConst.BLOOM_BLUR_LOW_TEXTURE_ID, this.bloomBlurHRTRs[i + 1].RTI);
+                }
+
                 cmd.SetRenderTarget(this.bloomBlurHRTRs[i].RTI);
                 cmd.DrawProcedural(Matrix4x4.identity, this.material, this.upSamplePassIndex, MeshTopology.Triangles, 3, 1);
             }

@@ -19,11 +19,11 @@ namespace Koiyun.Render {
         public static int OUTLINE_PARAMS_ID = Shader.PropertyToID("_OutlineParams");
 
         public static int BLOOM_BLUR_TEXTURE_ID = Shader.PropertyToID("_BloomBlurTexture");
-        public static int BLOOM_BLUR_H_TEXTURE_ID = Shader.PropertyToID("_BloomBlurHTexture");
-        public static int BLOOM_BLUR_V_TEXTURE_ID = Shader.PropertyToID("_BloomBlurVTexture");
+        public static int BLOOM_BLUR_LOW_TEXTURE_ID = Shader.PropertyToID("_BloomBlurLowTexture");
+        public static int BLOOM_BLUR_HIGH_TEXTURE_ID = Shader.PropertyToID("_BloomBlurHighTexture");
         
         public static float SHADOW_BIAS_RADIUS = 2.5f;
-        public static int BLOOM_STEP = 4;
+        public static int BLOOM_STEP = 5;
 
         public static string MAIN_LIGHT_SHADOW_KEYWORD = "_MAIN_LIGHT_SHADOWS";
     }
