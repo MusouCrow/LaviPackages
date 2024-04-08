@@ -12,9 +12,9 @@ PackedVaryings Vert(Attributes input)
     return packedOutput;
 }
 
-TransparentOutput Frag(PackedVaryings packedInput)
+Output Frag(PackedVaryings packedInput)
 {
-    TransparentOutput output;
+    Output output;
     Varyings unpacked = UnpackVaryings(packedInput);
     UNITY_SETUP_INSTANCE_ID(unpacked);
 
@@ -27,7 +27,7 @@ TransparentOutput Frag(PackedVaryings packedInput)
 #endif
 
     output.color = color;
-    output.glow = float4(color.rgb * surfaceDescription.Glow * 10, color.a);
+    output.param = float4(surfaceDescription.Glow, 0, 0, color.a);
 
     return output;
 }

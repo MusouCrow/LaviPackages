@@ -90,7 +90,6 @@ namespace Koiyun.Render {
         public Vector2 DarkBrightAttenRange;
         [Range(0, 1)]
         public float OutlineBrightness;
-        [Range(0, 1)]
         public float OutlineThickness;
         public bool SRPBatch = true;
     #endif

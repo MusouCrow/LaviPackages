@@ -59,7 +59,7 @@ struct ps_output
 {
 	float4 color : SV_Target0;
 // KOIYUN
-	float4 glow : SV_Target1;
+	float4 param : SV_Target1;
 /*
 #if VFX_FEATURE_MOTION_VECTORS_FORWARD
 	float4 outMotionVector : SV_Target1;
@@ -147,7 +147,7 @@ ps_output frag(ps_input i,
 
 	// KOIYUN
 #if VFX_USE_GLOW_CURRENT
-	o.glow = float4(o.color.rgb * i.glow * 10, o.color.a);
+	o.param = float4(i.glow, 0, 0, o.color.a);
 #endif
 
 /*

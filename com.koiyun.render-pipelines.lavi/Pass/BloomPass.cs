@@ -5,22 +5,24 @@ namespace Koiyun.Render {
     public class BloomPass : RenderPass {
         private Material material;
         private RenderTexutreRegister colorRTR;
-        private RenderTexutreRegister glowRTR;
+        private RenderTexutreRegister bloomRTR;
         private RenderTexutreRegister[] bloomBlurHRTRs;
         private RenderTexutreRegister[] bloomBlurVRTRs;
 
+        private int packPassIndex;
         private int blurHPassIndex;
         private int blurVPassIndex;
         private int upSamplePassIndex;
         private int blendPassIndex;
 
-        public BloomPass(Material material, RenderTexutreRegister colorRTR, RenderTexutreRegister glowRTR, RenderTexutreRegister[] bloomBlurHRTRs, RenderTexutreRegister[] bloomBlurVRTRs) {
+        public BloomPass(Material material, RenderTexutreRegister colorRTR, RenderTexutreRegister bloomRTR, RenderTexutreRegister[] bloomBlurHRTRs, RenderTexutreRegister[] bloomBlurVRTRs) {
             this.material = material;
             this.colorRTR = colorRTR;
-            this.glowRTR = glowRTR;
+            this.bloomRTR = bloomRTR;
             this.bloomBlurHRTRs = bloomBlurHRTRs;
             this.bloomBlurVRTRs = bloomBlurVRTRs;
             
+            this.packPassIndex = this.material.FindPass("Pack");
             this.blurHPassIndex = this.material.FindPass("BlurH");
             this.blurVPassIndex = this.material.FindPass("BlurV");
             this.upSamplePassIndex = this.material.FindPass("UpSample");
@@ -31,10 +33,10 @@ namespace Koiyun.Render {
             var cmd = CommandBufferPool.Get("BloomPass");
 
             // Pack
-            // cmd.SetRenderTarget(this.bloomRTR.RTI);
-            // cmd.DrawProcedural(Matrix4x4.identity, this.material, this.packPassIndex, MeshTopology.Triangles, 3, 1);
+            cmd.SetRenderTarget(this.bloomRTR.RTI);
+            cmd.DrawProcedural(Matrix4x4.identity, this.material, this.packPassIndex, MeshTopology.Triangles, 3, 1);
            
-            var bloomBlurRTR = this.glowRTR;
+            var bloomBlurRTR = this.bloomRTR;
             var step = this.bloomBlurHRTRs.Length;
 
             // Blur Loop

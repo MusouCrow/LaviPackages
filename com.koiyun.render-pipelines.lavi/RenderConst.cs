@@ -18,6 +18,7 @@ namespace Koiyun.Render {
 
         public static int OUTLINE_PARAMS_ID = Shader.PropertyToID("_OutlineParams");
 
+        public static int COPIED_TEXTURE_ID = Shader.PropertyToID("_CopiedTexture");
         public static int BLOOM_BLUR_TEXTURE_ID = Shader.PropertyToID("_BloomBlurTexture");
         public static int BLOOM_BLUR_LOW_TEXTURE_ID = Shader.PropertyToID("_BloomBlurLowTexture");
         public static int BLOOM_BLUR_HIGH_TEXTURE_ID = Shader.PropertyToID("_BloomBlurHighTexture");

@@ -12,9 +12,9 @@ PackedVaryings Vert(Attributes input)
     return packedOutput;
 }
 
-OpaqueOutput Frag(PackedVaryings packedInput)
+Output Frag(PackedVaryings packedInput)
 {
-    OpaqueOutput output;
+    Output output;
     Varyings unpacked = UnpackVaryings(packedInput);
     UNITY_SETUP_INSTANCE_ID(unpacked);
 
@@ -22,8 +22,8 @@ OpaqueOutput Frag(PackedVaryings packedInput)
     
     AlphaClip(surfaceDescription);
 
-    output.color = float4(surfaceDescription.BaseColor, surfaceDescription.Layer);
-    output.glow = float4(surfaceDescription.BaseColor * surfaceDescription.Glow * 10, 1);
+    output.color = float4(surfaceDescription.BaseColor, 1);
+    output.param = float4(surfaceDescription.Glow, surfaceDescription.Layer, 0, 1);
 
     return output;
 }

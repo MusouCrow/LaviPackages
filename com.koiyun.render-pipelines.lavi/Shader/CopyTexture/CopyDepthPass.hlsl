@@ -4,7 +4,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
 
-TEXTURE2D_FLOAT(_RawDepthTexture);
+TEXTURE2D_FLOAT(_CopiedTexture);
 
 struct Attributes
 {
@@ -30,7 +30,7 @@ Varyings Vert(Attributes input)
 
 float Frag(Varyings input) : SV_DEPTH
 {
-    float depth = SAMPLE_DEPTH_TEXTURE_LOD(_RawDepthTexture, sampler_PointClamp, input.uv, 0);
+    float depth = SAMPLE_DEPTH_TEXTURE_LOD(_CopiedTexture, sampler_PointClamp, input.uv, 0);
 
     return depth;
 }

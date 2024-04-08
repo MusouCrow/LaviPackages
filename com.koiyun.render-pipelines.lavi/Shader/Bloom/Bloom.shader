@@ -4,6 +4,19 @@ Shader "Hidden/Lavi RP/Bloom"
     {
         ZTest Always
         ZWrite Off
+
+        Pass
+        {
+            Name "Pack"
+
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag
+
+            #include "./PackPass.hlsl"
+
+            ENDHLSL
+        }
         
         Pass
         {

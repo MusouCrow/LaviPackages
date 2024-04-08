@@ -5,22 +5,18 @@ namespace Koiyun.Render {
         private string lightMode;
         private FilteringSettings filteringSettings;
         private RenderTargetIdentifier[] colorRTIs;
-        private RenderTexutreRegister colorRTR;
-        private RenderTexutreRegister glowRTR;
         private RenderTexutreRegister depthRTR;
         
-        public DrawTransparentPass(string lightMode, RenderTexutreRegister colorRTR, RenderTexutreRegister glowRTR, RenderTexutreRegister depthRTR) {
+        public DrawTransparentPass(string lightMode, RenderTexutreRegister colorRTR, RenderTexutreRegister paramRTR, RenderTexutreRegister depthRTR) {
             this.lightMode = lightMode;
             
             var renderQueueRange = RenderQueueRange.transparent;
             this.filteringSettings = new FilteringSettings(renderQueueRange);
 
-            this.colorRTR = colorRTR;
-            this.glowRTR = glowRTR;
             this.depthRTR = depthRTR;
             this.colorRTIs = new RenderTargetIdentifier[] {
-                this.colorRTR.RTI,
-                this.glowRTR.RTI
+                colorRTR.RTI,
+                paramRTR.RTI
             };
         }
 
