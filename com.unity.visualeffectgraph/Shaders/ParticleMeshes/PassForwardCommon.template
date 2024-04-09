@@ -142,7 +142,7 @@ ps_output frag(ps_input i)
 		#endif
 
 		#if HAS_SHADERGRAPH_PARAM_GLOW
-			i.glow += OUTSG.${SHADERGRAPH_PARAM_GLOW};
+			i.glow *= OUTSG.${SHADERGRAPH_PARAM_GLOW};
 		#endif
 	#else
 		#define VFX_TEXTURE_COLOR VFXGetTextureColor(VFX_SAMPLER(mainTexture),i)
