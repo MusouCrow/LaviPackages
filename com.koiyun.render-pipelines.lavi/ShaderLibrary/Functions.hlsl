@@ -42,7 +42,7 @@ void HSVToRGB_float(float Hue, float Saturation, float Lightness, out float3 RGB
     RGB = HsvToRgb(hsv);
 }
 
-void SampleColorTable_float(UnityTexture2D ColorTableMap, float2 UV, float3 PositionWS, out float4 Color)
+void SampleColorTable_float(UnityTexture2D ColorTableMap, float2 UV, float3 PositionWS, float AntiShadow, out float4 Color)
 {
     float4 shadowCoord = TransformWorldToShadowCoord(PositionWS);
     float scene = SAMPLE_SHADOW(_SceneShadowTexture, shadowCoord);
@@ -51,17 +51,18 @@ void SampleColorTable_float(UnityTexture2D ColorTableMap, float2 UV, float3 Posi
     float pixel = ColorTableMap.texelSize.x * 32;
     float index = floor(UV.x / pixel);
     float base = floor(index / 3) * 3;
-    float rate = 1 - unit;
+    float sceneRate = lerp(scene, 1, AntiShadow);
+    float unitRate = 1 - unit;
     float2 uv = UV;
     uv.x = (base + 1) * pixel;
     
     float4 bright = ColorTableMap.Sample(sampler_PointClamp, UV);
     float4 dark = ColorTableMap.Sample(sampler_PointClamp, uv);
 
-    float attenuationBright = lerp(_ShadowAttens.w, 1, scene);
-    float attenuationDark = lerp(_ShadowAttens.z, 1, scene);
+    float attenuationBright = lerp(_ShadowAttens.w, 1, sceneRate);
+    float attenuationDark = lerp(_ShadowAttens.z, 1, sceneRate);
 
-    Color = lerp(bright * attenuationBright, dark * attenuationDark, rate);
+    Color = lerp(bright * attenuationBright, dark * attenuationDark, unitRate);
 }
 
 void Gradient_float(float Value, float Power, out float Gradient)

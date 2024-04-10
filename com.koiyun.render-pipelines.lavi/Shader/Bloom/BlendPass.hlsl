@@ -20,7 +20,7 @@ float4 Frag(Varyings input) : SV_Target
 
     float saturation = lerp(3, 1, hsv.b);
     hsv.g = saturate(hsv.g * saturation);
-    hsv.g = lerp(hsv.g, 2, blur.a);
+    hsv.g = lerp(hsv.g, 1, blur.a);
     blur.rgb = HsvToRgb(hsv);
 
     hsv = RgbToHsv(color.rgb);
