@@ -70,6 +70,8 @@ float4 _ProjectionParams;
 
 float3 _WorldSpaceCameraPos;
 
+float _Time;
+
 struct Output
 {
     float4 color : SV_Target0; // RGBA

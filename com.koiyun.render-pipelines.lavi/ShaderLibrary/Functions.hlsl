@@ -91,3 +91,8 @@ void TexIndexToUV_float(float Index, float2 SheetSize, out float2 UV)
     UV = float2(hang, (lie + 1)) / SheetSize;
     UV.y = 1 - UV.y;
 }
+
+void GetTime_float(out float Time)
+{
+    Time = _Time;
+}

@@ -1,6 +1,8 @@
 using UnityEditor.VFX;
 using UnityEngine;
 using UnityEngine.Rendering;
+using System;
+
 
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
@@ -93,6 +95,9 @@ namespace Koiyun.Render {
         public float OutlineThickness;
         public bool SRPBatch = true;
     #endif
+
+        [NonSerialized]
+        public float Time;
 
         private LaviRenderPipeline renderPipeline;
 
