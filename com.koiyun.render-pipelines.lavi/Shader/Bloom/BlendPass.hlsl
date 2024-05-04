@@ -20,23 +20,13 @@ float4 Frag(Varyings input) : SV_Target
 
     float saturation = lerp(3, 1, hsv.b);
     hsv.g = saturate(hsv.g * saturation);
-    hsv.g = lerp(hsv.g, 1, blur.a);
+    // hsv.g = lerp(hsv.g, 1, blur.a);
     blur.rgb = HsvToRgb(hsv);
 
     hsv = RgbToHsv(color.rgb);
     color.rgb *= lerp(lerp(_OutlineParams.x * 2, _OutlineParams.x * 0.5, hsv.b), 1, 1 - layer);
     
     color.rgb += blur.rgb;
-    
-    // hsv = RgbToHsv(color.rgb);
-    // hsv.g = saturate(hsv.g * lerp(1, 2, layer));
-    // color.rgb = HsvToRgb(hsv);
-
-    /*
-    hsv = RgbToHsv(color.rgb);
-    float layer = 1 - param.g;
-    color.rgb *= lerp(lerp(_OutlineParams.x * 2, _OutlineParams.x * 0.5, hsv.b), 1, layer);
-    */
 
     return color;
 }

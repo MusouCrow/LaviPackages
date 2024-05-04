@@ -52,7 +52,7 @@ void SampleColorTable_float(UnityTexture2D ColorTableMap, float2 UV, float3 Posi
     float index = floor(UV.x / pixel);
     float base = floor(index / 3) * 3;
     float sceneRate = lerp(scene, 1, AntiShadow);
-    float unitRate = 1 - unit;
+    float unitRate = lerp(1 - unit, 0, AntiShadow);
     float2 uv = UV;
     uv.x = (base + 1) * pixel;
     
