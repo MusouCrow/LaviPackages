@@ -85,6 +85,10 @@ namespace UnityEditor.VFX
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField, Tooltip("When enabled, particles will cast shadows.")]
         protected bool castShadows = false;
 
+        // KOIYUN
+        [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField, Tooltip("When enabled, particles will received shadows.")]
+        protected bool receivedShadows = false;
+
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField, Tooltip("When enabled, an exposure weight slider appears in the current output. The slider can be used to control how much influence exposure control will have on the particles.")]
         protected bool useExposureWeight = false;
 
@@ -405,6 +409,10 @@ namespace UnityEditor.VFX
 
                 if (hasShadowCasting)
                     yield return "USE_CAST_SHADOWS_PASS";
+
+                // KOIYUN
+                if (this.receivedShadows)
+                    yield return "_MAIN_LIGHT_SHADOWS";
 
                 if (HasIndirectDraw())
                     yield return "VFX_HAS_INDIRECT_DRAW";
