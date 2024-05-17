@@ -39,6 +39,16 @@ SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
     $SurfaceDescriptionInputs.TangentSpacePositionPredisplacement: output.TangentSpacePositionPredisplacement = float3(0.0f, 0.0f, 0.0f);
     $SurfaceDescriptionInputs.AbsoluteWorldSpacePositionPredisplacement: output.AbsoluteWorldSpacePositionPredisplacement = GetAbsolutePositionWS(input.positionWS);
     $SurfaceDescriptionInputs.ScreenPosition: output.ScreenPosition = input.screenPosition;
+
+    #if UNITY_UV_STARTS_AT_TOP
+    $SurfaceDescriptionInputs.PixelPosition:                            output.PixelPosition = float2(input.positionCS.x, (_ProjectionParams.x < 0) ? (_ScaledScreenParams.y - input.positionCS.y) : input.positionCS.y);
+    #else
+    $SurfaceDescriptionInputs.PixelPosition:                            output.PixelPosition = float2(input.positionCS.x, (_ProjectionParams.x > 0) ? (_ScaledScreenParams.y - input.positionCS.y) : input.positionCS.y);
+    #endif
+
+    $SurfaceDescriptionInputs.NDCPosition:                              output.NDCPosition = output.PixelPosition.xy / _ScaledScreenParams.xy;
+    $SurfaceDescriptionInputs.NDCPosition:                              output.NDCPosition.y = 1.0f - output.NDCPosition.y;
+
     $SurfaceDescriptionInputs.uv0: output.uv0 = input.texCoord0;
     $SurfaceDescriptionInputs.uv1: output.uv1 = input.texCoord1;
     $SurfaceDescriptionInputs.uv2: output.uv2 = input.texCoord2;

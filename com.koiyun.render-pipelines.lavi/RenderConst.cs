@@ -9,6 +9,7 @@ namespace Koiyun.Render {
         public static int SHADOW_STEP_ID = Shader.PropertyToID("_ShadowStep");
         public static int SHADOW_ATTEN_ID = Shader.PropertyToID("_ShadowAttens");
 
+        public static int SCREEN_PARAMS_ID = Shader.PropertyToID("_ScreenParams");
         public static int SCALED_SCREEN_PARAMS_ID = Shader.PropertyToID("_ScaledScreenParams");
         public static int ZBUFFER_PARAMS_ID = Shader.PropertyToID("_ZBufferParams");
         public static int PROJ_PARAMS_ID = Shader.PropertyToID("_ProjectionParams");

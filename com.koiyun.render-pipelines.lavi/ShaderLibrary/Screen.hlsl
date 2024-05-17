@@ -2,6 +2,7 @@
 
 #include "./Input.hlsl"
 
+float4 _ScreenParams; // x: width, y: height, z: 1 + 1.0 / width, w: 1 + 1.0 / height
 float4 _ScaledScreenParams; // x: width, y: height, z: 1 + 1.0 / width, w: 1 + 1.0 / height
 
 #ifdef UNITY_UV_STARTS_AT_TOP

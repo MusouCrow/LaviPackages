@@ -47,8 +47,10 @@ namespace Koiyun.Render {
             var renderScale = this.asset.RenderScale;
             float scaledCameraWidth = (float)pixelRect.width * renderScale;
             float scaledCameraHeight = (float)pixelRect.height * renderScale;
-
+            
             var scaledScreenParams = new Vector4(scaledCameraWidth, scaledCameraHeight, 1.0f + 1.0f / scaledCameraWidth, 1.0f + 1.0f / scaledCameraHeight);
+
+            cmd.SetGlobalVector(RenderConst.SCREEN_PARAMS_ID, scaledScreenParams);
             cmd.SetGlobalVector(RenderConst.SCALED_SCREEN_PARAMS_ID, scaledScreenParams);
             cmd.SetGlobalFloat(RenderConst.RENDER_SCALE_ID, this.asset.RenderScale);
         }
