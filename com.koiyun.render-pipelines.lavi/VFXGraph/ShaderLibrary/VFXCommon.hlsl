@@ -1,6 +1,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
 #include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Core.hlsl"
+#include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/ShaderGraphFunctions.hlsl"
 
 #ifdef VFX_VARYING_PS_INPUTS
     void VFXTransformPSInputs(inout VFX_VARYING_PS_INPUTS input) {}

@@ -47,7 +47,16 @@ namespace UnityEditor.VFX
             Texture2DArray
         }
 
+        // KOIYUN
+        public enum PassType
+        {
+            Transparent,
+            Grab
+        }
 
+        // KOIYUN
+        [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField, Tooltip("Specifies render pass.")]
+        protected PassType renderPass = PassType.Transparent;
 
         [VFXSetting, SerializeField, Tooltip("Specifies how particles are being colored in the pixel shader. They can either use the main texture, or their color and alpha can be remapped with a gradient based on the main texture values."), Header("Particle Options"), FormerlySerializedAs("colorMappingMode")]
         protected ColorMappingMode colorMapping;
@@ -529,6 +538,14 @@ namespace UnityEditor.VFX
                 foreach (var additionnalStencilReplacement in subOutput.GetStencilStateOverridesStr())
                 {
                     yield return additionnalStencilReplacement;
+                }
+
+                // KOIYUN
+                {
+                    var st = new VFXShaderWriter();
+                    st.Write('"' + this.renderPass.ToString() + '"');
+
+                    yield return new KeyValuePair<string, VFXShaderWriter>("${VFXPassForward}", st);
                 }
             }
         }

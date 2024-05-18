@@ -38,7 +38,7 @@ SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
     $SurfaceDescriptionInputs.ViewSpacePositionPredisplacement: output.ViewSpacePositionPredisplacement = TransformWorldToView(input.positionWS);
     $SurfaceDescriptionInputs.TangentSpacePositionPredisplacement: output.TangentSpacePositionPredisplacement = float3(0.0f, 0.0f, 0.0f);
     $SurfaceDescriptionInputs.AbsoluteWorldSpacePositionPredisplacement: output.AbsoluteWorldSpacePositionPredisplacement = GetAbsolutePositionWS(input.positionWS);
-    $SurfaceDescriptionInputs.ScreenPosition: output.ScreenPosition = input.screenPosition;
+    $SurfaceDescriptionInputs.ScreenPosition: output.ScreenPosition = ComputeScreenPos(TransformWorldToHClip(input.positionWS));
 
     #if UNITY_UV_STARTS_AT_TOP
     $SurfaceDescriptionInputs.PixelPosition:                            output.PixelPosition = float2(input.positionCS.x, (_ProjectionParams.x < 0) ? (_ScaledScreenParams.y - input.positionCS.y) : input.positionCS.y);
