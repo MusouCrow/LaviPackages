@@ -1,17 +1,24 @@
+using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Koiyun.Render {
-    public class DrawOpaquePass : RenderPass {
+    public class DrawObjectPass : RenderPass {
         private string lightMode;
+        private bool isOpaque;
+        private bool clearColor;
+        private bool clearDepth;
         private FilteringSettings filteringSettings;
         private RenderTargetIdentifier[] colorRTIs;
         private RenderTexutreRegister depthRTR;
 
-        public DrawOpaquePass(string lightMode, RenderTexutreRegister colorRTR, RenderTexutreRegister paramRTR, RenderTexutreRegister depthRTR) {
+        public DrawObjectPass(string lightMode, bool isOpaque, bool clearColor, bool clearDepth, RenderTexutreRegister colorRTR, RenderTexutreRegister paramRTR, RenderTexutreRegister depthRTR) {
             this.lightMode = lightMode;
+            this.isOpaque = isOpaque;
+            this.clearColor = clearColor;
+            this.clearDepth = clearDepth;
 
-            var renderQueueRange = RenderQueueRange.opaque;
+            var renderQueueRange = isOpaque ? RenderQueueRange.opaque : RenderQueueRange.transparent;
             this.filteringSettings = new FilteringSettings(renderQueueRange);
 
             this.depthRTR = depthRTR;
@@ -22,13 +29,17 @@ namespace Koiyun.Render {
         }
 
         public override void Execute(ref ScriptableRenderContext context, ref RenderData data) {
-            var cmd = CommandBufferPool.Get("DrawOpaquePass");
+            var cmd = CommandBufferPool.Get("DrawObjectPass");
             cmd.SetRenderTarget(this.colorRTIs, this.depthRTR.RTI);
-            cmd.ClearRenderTarget(true, true, Color.clear);
+
+            if (this.clearColor || this.clearDepth) {
+                cmd.ClearRenderTarget(this.clearDepth, this.clearColor, Color.clear);
+            }
+            
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
 
-            var drawingSettings = RenderUtil.CreateDrawingSettings(ref data, this.lightMode, true);
+            var drawingSettings = RenderUtil.CreateDrawingSettings(ref data, this.lightMode, this.isOpaque);
             context.DrawRenderers(data.cullingResults, ref drawingSettings, ref this.filteringSettings);
         }
     }
