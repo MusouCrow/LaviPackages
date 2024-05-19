@@ -55,7 +55,7 @@ namespace Koiyun.Render {
             var outlinePass = new OutlinePass(outlineMaterial, rawParamRTR, rawDepthRTR);
             var drawTransparentPass = new DrawObjectPass("Transparent", false, false, false, rawColorRTR, rawParamRTR, rawDepthRTR);
             var bloomPass = new BloomPass(bloomMaterial, rawColorRTR, bloomRTR, bloomBlurHRTRs, bloomBlurVRTRs);
-            var drawGrabPass = new DrawObjectPass("Grab", false, false, true, rawColorRTR, rawParamRTR, rawDepthRTR);
+            var drawGrabPass = new DrawObjectPass("Grab", false, false, false, rawColorRTR, rawParamRTR, rawDepthRTR);
             var drawErrorPass = new DrawErrorPass("SRPDefaultUnlit", rawColorRTR, rawDepthRTR);
             var drawGizmosPass = new DrawGizmosPass(rawColorRTR, rawDepthRTR);
             var finalBlitPass = new FinalBlitPass(rawColorRTR, blitMaterial);

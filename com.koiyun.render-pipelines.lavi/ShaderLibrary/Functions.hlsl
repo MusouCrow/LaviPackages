@@ -2,8 +2,11 @@
 
 #include "./Shadow.hlsl"
 #include "./View.hlsl"
+#include "./ShaderGraphFunctions.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
+
+float4 _ColorTexture_TexelSize;
 
 void ShadowAttenuation_float(float3 PositionWS, out float Attenuation)
 {
@@ -95,4 +98,21 @@ void TexIndexToUV_float(float Index, float2 SheetSize, out float2 UV)
 void GetTime_float(out float Time)
 {
     Time = _Time;
+}
+
+void RadialBlur_float(float2 UV, float2 Center, float Rate, out float3 RGB)
+{
+    int step = lerp(1, 30, saturate(Rate));
+    float2 dir = (Center - UV) * 100 * _ColorTexture_TexelSize.xy;
+    float2 uv = UV;
+    RGB = 0;
+    
+    [unroll(30)]
+    for (int i = 0; i < step; i++)
+    {
+        RGB += shadergraph_SampleSceneColor_Lavi(uv + dir * i);
+    }
+
+    RGB = RGB / step;
+    // RGB = 1 - shadergraph_SampleSceneColor_Lavi(UV);
 }
