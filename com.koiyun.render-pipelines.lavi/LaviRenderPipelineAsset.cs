@@ -1,4 +1,3 @@
-using UnityEditor.VFX;
 using UnityEngine;
 using UnityEngine.Rendering;
 using System;

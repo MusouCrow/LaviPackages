@@ -19,7 +19,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 // KOIYUN
-[assembly: InternalsVisibleTo("Koiyun.Render")]
+[assembly: InternalsVisibleTo("Koiyun.Render.Editor")]
 
 namespace UnityEditor.VFX
 {

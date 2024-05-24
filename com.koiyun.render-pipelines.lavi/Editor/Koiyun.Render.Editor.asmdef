@@ -1,10 +1,15 @@
 {
-    "name": "Koiyun.Render",
+    "name": "Koiyun.Render.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:df380645f10b7bc4b97d4f5eb6303d95"
+        "GUID:116a4d4dbf5c04973bbf517077a062a1",
+        "GUID:be0903cd8e1546f498710afdc59db5eb",
+        "GUID:df380645f10b7bc4b97d4f5eb6303d95",
+        "GUID:27b76265abdec43c5b5a66852e2a6146"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": false,

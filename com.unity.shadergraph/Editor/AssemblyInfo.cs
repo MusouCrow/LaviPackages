@@ -11,4 +11,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.XR.Quantum.Editor.ShaderGraph")]
 
 // KOIYUN
-[assembly: InternalsVisibleTo("Koiyun.Render")]
+[assembly: InternalsVisibleTo("Koiyun.Render.Editor")]
