@@ -13,5 +13,5 @@ float3 shadergraph_SampleSceneColor_Lavi(float2 uv)
 {
     float4 color = SAMPLE_TEXTURE2D_LOD(_ColorTexture, sampler_LinearClamp, uv, 0);
 
-    return color;
+    return color.rgb;
 }
