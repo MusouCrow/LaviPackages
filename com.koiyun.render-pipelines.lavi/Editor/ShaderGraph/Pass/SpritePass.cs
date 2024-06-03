@@ -63,7 +63,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 },
 
                 // Conditional State
-                renderStates = ShaderPropertyUtil.GetRenderState(subTarget.target, true, true, true, true, true, false),
+                renderStates = ShaderPropertyUtil.GetRenderState(subTarget.target),
                 pragmas = new PragmaCollection() {
                     Pragma.Vertex("Vert"), 
                     Pragma.Fragment("Frag"), 

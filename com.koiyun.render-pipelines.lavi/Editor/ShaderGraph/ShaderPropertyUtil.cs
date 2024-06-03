@@ -68,10 +68,91 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             public static BlockFieldDescriptor Glow = new BlockFieldDescriptor(BlockFields.SurfaceDescription.name, "Glow", "Glow", "SURFACEDESCRIPTION_GLOW",
                     new FloatControl(0), ShaderStage.Fragment);
 
-            public static BlockFieldDescriptor Layer = new BlockFieldDescriptor(BlockFields.SurfaceDescription.name, "Layer", "Layer", "SURFACEDESCRIPTION_LAYER",
+            public static BlockFieldDescriptor Layer = new BlockFieldDescriptor(BlockFields.SurfaceDescription.name, "Layer", "Layer", "SURFACEDESCRI   PTION_LAYER",
                     new FloatControl(0), ShaderStage.Fragment);
         }
 
+        public static RenderStateCollection GetRenderState(LaviTarget target, bool noBlend=false, StencilType stencilType=StencilType.None, bool stencilTest=false) {
+            target.GetBlend(out var srcBlend, out var dstBlend);
+
+            var overrideBlendMode = target.overrideBlendMode ? RenderStateOverride.Override : RenderStateOverride.Current;
+
+            if (noBlend) {
+                overrideBlendMode = RenderStateOverride.None;
+            }
+            
+            var param = new RenderStateParam() {
+                srcBlend = srcBlend,
+                dstBlend = dstBlend,
+                cullMode = target.cullMode,
+                zWrite = target.zWrite ? ZWrite.On : ZWrite.Off,
+                zTest = target.zTest,
+                stencilType = stencilType > StencilType.None ? stencilType : target.stencil,
+                stencilTest = stencilTest,
+                colorMask = false,
+                overrideBlendMode = overrideBlendMode,
+                overrideCullMode = target.overrideCullMode ? RenderStateOverride.Override : RenderStateOverride.Current,
+                overrideZWrite = target.overrideZWrite ? RenderStateOverride.Override : RenderStateOverride.Current,
+                overrideZTest = target.overrideZTest ? RenderStateOverride.Override : RenderStateOverride.Current,
+            };
+
+            return GetRenderState(param);
+        }
+
+        public static RenderStateCollection GetRenderState(RenderStateParam param) {
+            var result = new RenderStateCollection();
+
+            if (param.overrideBlendMode == RenderStateOverride.Override) {
+                var srcBlend = "[" + ShaderGraphConst.SRC_BLEND_PROPERTY + "]";
+                var dstBlend = "[" + ShaderGraphConst.DST_BLEND_PROPERTY + "]";
+                result.Add(RenderState.Blend(srcBlend, dstBlend));
+            }
+            else if (param.overrideBlendMode == RenderStateOverride.Current) {
+                result.Add(RenderState.Blend(param.srcBlend, param.dstBlend));
+            }
+
+            if (param.overrideCullMode == RenderStateOverride.Override) {
+                var value = "[" + ShaderGraphConst.CULL_PROPERTY + "]";
+                result.Add(RenderState.Cull(value));
+            }
+            else if (param.overrideCullMode == RenderStateOverride.Current) {
+                result.Add(RenderState.Cull(param.cullMode.ToString()));
+            }
+
+            if (param.overrideZWrite == RenderStateOverride.Override) {
+                var value = "[" + ShaderGraphConst.ZWRITE_PROPERTY + "]";
+                result.Add(RenderState.ZWrite(value));
+            }
+            else if (param.overrideZWrite == RenderStateOverride.Current) {
+                result.Add(RenderState.ZWrite(param.zWrite));
+            }
+
+            if (param.overrideZTest == RenderStateOverride.Override) {
+                var value = "[" + ShaderGraphConst.ZTEST_PROPERTY + "]";
+                result.Add(RenderState.ZTest(value));
+            }
+            else if (param.overrideZTest == RenderStateOverride.Current) {
+                result.Add(RenderState.ZTest(param.zTest));
+            }
+
+            if (param.stencilType > StencilType.None) {
+                var value = (int)param.stencilType;
+                var desc = new StencilDescriptor() {
+                    Ref = value.ToString(),
+                    Comp = param.stencilTest ? "Equal" : "Always",
+                    Pass = "Replace"
+                };
+
+                result.Add(RenderState.Stencil(desc));
+            }
+
+            if (param.colorMask) {
+                result.Add(RenderState.ColorMask("ColorMask 0"));
+            }
+
+            return result;
+        }
+        /*
         public static RenderStateCollection GetRenderState(LaviTarget target, bool blendMode, bool cullMode, bool zWrite, bool zTest, bool stencil, bool colorMask) {
             var result = new RenderStateCollection();
             
@@ -134,5 +215,6 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             
             return result;
         }
+        */
     }
 }

@@ -6,17 +6,15 @@ namespace Koiyun.Render {
     public class DrawObjectPass : RenderPass {
         private string lightMode;
         private bool isOpaque;
-        private bool clearColor;
-        private bool clearDepth;
+        private RTClearFlags clearFlags;
         private FilteringSettings filteringSettings;
         private RenderTargetIdentifier[] colorRTIs;
         private RenderTexutreRegister depthRTR;
 
-        public DrawObjectPass(string lightMode, bool isOpaque, bool clearColor, bool clearDepth, RenderTexutreRegister colorRTR, RenderTexutreRegister paramRTR, RenderTexutreRegister depthRTR) {
+        public DrawObjectPass(string lightMode, bool isOpaque, RTClearFlags clearFlags, RenderTexutreRegister colorRTR, RenderTexutreRegister paramRTR, RenderTexutreRegister depthRTR) {
             this.lightMode = lightMode;
             this.isOpaque = isOpaque;
-            this.clearColor = clearColor;
-            this.clearDepth = clearDepth;
+            this.clearFlags = clearFlags;
 
             var renderQueueRange = isOpaque ? RenderQueueRange.opaque : RenderQueueRange.transparent;
             this.filteringSettings = new FilteringSettings(renderQueueRange);
@@ -32,8 +30,8 @@ namespace Koiyun.Render {
             var cmd = CommandBufferPool.Get("DrawObjectPass");
             cmd.SetRenderTarget(this.colorRTIs, this.depthRTR.RTI);
 
-            if (this.clearColor || this.clearDepth) {
-                cmd.ClearRenderTarget(this.clearDepth, this.clearColor, Color.clear);
+            if (this.clearFlags > RTClearFlags.None) {
+                cmd.ClearRenderTarget(this.clearFlags, Color.clear, 1, 0);
             }
             
             context.ExecuteCommandBuffer(cmd);

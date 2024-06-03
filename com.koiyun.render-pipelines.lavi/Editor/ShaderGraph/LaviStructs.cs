@@ -1,3 +1,4 @@
+using UnityEngine.Rendering;
 using UnityEditor.ShaderGraph;
 
 namespace Koiyun.Render.ShaderGraph.Editor {
@@ -20,5 +21,26 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 StructFields.Varyings.instanceID,
             }
         };
+    }
+
+    enum RenderStateOverride {
+        None,
+        Current,
+        Override
+    }
+
+    struct RenderStateParam {
+        public Blend srcBlend;
+        public Blend dstBlend;
+        public CullMode cullMode;
+        public ZWrite zWrite;
+        public ZTest zTest;
+        public StencilType stencilType;
+        public bool stencilTest;
+        public bool colorMask;
+        public RenderStateOverride overrideBlendMode;
+        public RenderStateOverride overrideCullMode;
+        public RenderStateOverride overrideZWrite;
+        public RenderStateOverride overrideZTest;
     }
 }
