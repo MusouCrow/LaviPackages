@@ -37,6 +37,13 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             definition = KeywordDefinition.Predefined
         };
 
+        public static KeywordDescriptor OcclusionKeywordDefined = new KeywordDescriptor() {
+            displayName = "Occlusion",
+            referenceName = ShaderGraphConst.OCCLUSION_KEYWORD,
+            type = KeywordType.Boolean,
+            definition = KeywordDefinition.Predefined
+        };
+
         public static KeywordDescriptor NeedAlphaKeyword = new KeywordDescriptor() {
             displayName = "Surface Need Alpha",
             referenceName = "SURFACE_NEED_ALPHA",

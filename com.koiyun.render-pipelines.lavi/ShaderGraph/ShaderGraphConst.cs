@@ -17,5 +17,6 @@ namespace Koiyun.Render.ShaderGraph {
         public static string CULL_PROPERTY = "_Cull";
 
         public static string ADDITIVE_KEYWORD = "_ADDITIVE";
+        public static string OCCLUSION_KEYWORD = "_OCCLUSION";
     }
 }

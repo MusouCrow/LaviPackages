@@ -5,8 +5,12 @@ namespace Koiyun.Render.ShaderGraph.Editor {
     static class SpritePass {
         public static SubShaderDescriptor SubShader(SpriteSubTarget subTarget, string renderType, string renderQueue) {
             var passes = new PassCollection() {
-                Transparent(subTarget)
+                Transparent(subTarget, false)
             };
+
+            if (subTarget.target.occlusion > StencilType.None) {
+                passes.Add(Transparent(subTarget, true));
+            }
             
             return new SubShaderDescriptor() {
                 renderType = renderType,
@@ -16,7 +20,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             };
         }
 
-        public static PassDescriptor Transparent(SpriteSubTarget subTarget) {
+        public static PassDescriptor Transparent(SpriteSubTarget subTarget, bool occlusion) {
             var keywords = new KeywordCollection();
             var defines = new DefineCollection();
             var validPixelBlocks = new List<BlockFieldDescriptor>() {
@@ -32,11 +36,15 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 keywords.Add(ShaderPropertyUtil.AdditiveKeyword);
             }
 
+            if (occlusion) {
+                defines.Add(ShaderPropertyUtil.OcclusionKeywordDefined, 1);
+            }
+
             return new PassDescriptor() {
                 // Definition
-                displayName = "Transparent",
-                referenceName = "SHADERPASS_TRANSPARENT",
-                lightMode = "Transparent",
+                displayName = occlusion ? "OcclusionTransparent" : "Transparent",
+                referenceName = occlusion ? "SHADERPASS_OCCLUSION_TRANSPARENT" : "SHADERPASS_TRANSPARENT",
+                lightMode = occlusion ? "OcclusionTransparent" : "Transparent",
                 useInPreview = true,
 
                 // Template

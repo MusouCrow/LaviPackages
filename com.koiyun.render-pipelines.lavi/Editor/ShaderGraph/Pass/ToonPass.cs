@@ -5,8 +5,12 @@ namespace Koiyun.Render.ShaderGraph.Editor {
     static class ToonPass {
         public static SubShaderDescriptor SubShader(ToonSubTarget subTarget, string renderType, string renderQueue) {
             var passes = new PassCollection() {
-                Opaque(subTarget)
+                Opaque(subTarget, false)
             };
+
+            if (subTarget.target.occlusion > StencilType.None) {
+                passes.Add(Opaque(subTarget, true));
+            }
             
             if (subTarget.shadowCasterPass) {
                 passes.Add(ShadowCaster(subTarget));
@@ -20,16 +24,23 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             };
         }
 
-        public static PassDescriptor Opaque(ToonSubTarget subTarget) {
+        public static PassDescriptor Opaque(ToonSubTarget subTarget, bool occlusion) {
             var keywords = new KeywordCollection();
             var defines = new DefineCollection();
+            var requiredFields = new FieldCollection();
             var validPixelBlocks = new List<BlockFieldDescriptor>() {
                 BlockFields.SurfaceDescription.BaseColor,
                 ShaderPropertyUtil.SurfaceDescription.Glow,
                 ShaderPropertyUtil.SurfaceDescription.Layer
             };
 
-            if (subTarget.alphaClipMode > 0) {
+            if (occlusion) {
+                validPixelBlocks.Add(BlockFields.SurfaceDescription.AlphaClipThreshold);
+                defines.Add(ShaderPropertyUtil.NeedAlphaClipKeyword, 1);
+                defines.Add(ShaderPropertyUtil.OcclusionKeywordDefined, 1);
+                requiredFields.Add(StructFields.Varyings.screenPosition);
+            }
+            else if (subTarget.alphaClipMode > 0) {
                 validPixelBlocks.Add(BlockFields.SurfaceDescription.AlphaClipThreshold);
 
                 if (subTarget.alphaClipMode == AlphaClipMode.Switch) {
@@ -40,16 +51,20 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 }
             }
 
-            if (subTarget.shadowCasterPass) {
+            if (subTarget.shadowCasterPass && !occlusion) {
                 keywords.Add(ShaderPropertyUtil.MainLightShadowsKeyword);
             }
 
+            var stencilType = occlusion ? subTarget.target.occlusion : StencilType.None;
+            var stencilTest = occlusion;
+            var renderState = ShaderPropertyUtil.GetRenderState(subTarget.target, false, stencilType, stencilTest);
+
             return new PassDescriptor() {
                 // Definition
-                displayName = "Opaque",
-                referenceName = "SHADERPASS_OPAQUE",
-                lightMode = "Opaque",
-                useInPreview = true,
+                displayName = occlusion ? "OcclusionOpaque" : "Opaque",
+                referenceName = occlusion ? "SHADERPASS_OCCLUSION_OPAQUE" : "SHADERPASS_OPAQUE",
+                lightMode = occlusion ? "OcclusionOpaque" : "Opaque",
+                useInPreview = !occlusion,
 
                 // Template
                 passTemplatePath = ShaderGraphConst.SHADER_PASS_PATH,
@@ -69,15 +84,13 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                     Structs.SurfaceDescriptionInputs,
                     Structs.VertexDescriptionInputs
                 },
-                requiredFields = new FieldCollection() {
-                    // StructFields.Varyings.normalWS
-                },
+                requiredFields = requiredFields,
                 fieldDependencies = new DependencyCollection() {
                     FieldDependencies.Default
                 },
 
                 // Conditional State
-                renderStates = ShaderPropertyUtil.GetRenderState(subTarget.target),
+                renderStates = renderState,
                 pragmas = new PragmaCollection() {
                     Pragma.Vertex("Vert"), 
                     Pragma.Fragment("Frag"), 
