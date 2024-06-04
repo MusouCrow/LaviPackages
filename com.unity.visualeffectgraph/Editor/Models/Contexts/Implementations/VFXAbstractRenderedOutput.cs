@@ -47,7 +47,8 @@ namespace UnityEditor.VFX
         public enum StencilType
         {
             None = 0,
-            Scene = 1
+            Scene = 1,
+            Unit = 2
         }
 
         [VFXSetting, Header("Render States"), Tooltip("Specifies the transparency and blending method for rendering the particles to the screen.")]
@@ -65,6 +66,10 @@ namespace UnityEditor.VFX
         // KOIYUN
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField]
         protected StencilType stencil = StencilType.None;
+
+        // KOIYUN
+        [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField]
+        protected StencilType occlusionStencil = StencilType.Scene;
 
         [VFXSetting, Tooltip("When enabled, transparent pixels under the specified alpha threshold will be discarded."), SerializeField]
         protected bool useAlphaClipping = false;

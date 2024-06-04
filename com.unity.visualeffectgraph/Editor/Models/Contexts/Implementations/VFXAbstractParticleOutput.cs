@@ -423,6 +423,10 @@ namespace UnityEditor.VFX
                 if (this.receivedShadows)
                     yield return "_MAIN_LIGHT_SHADOWS";
 
+                // KOIYUN
+                if (this.occlusionStencil > 0)
+                    yield return "USE_OCCLUSION_PASS";
+
                 if (HasIndirectDraw())
                     yield return "VFX_HAS_INDIRECT_DRAW";
 
@@ -547,6 +551,24 @@ namespace UnityEditor.VFX
 
                     yield return new KeyValuePair<string, VFXShaderWriter>("${VFXPassForward}", st);
                 }
+
+                // KOIYUN
+                if (this.stencil > 0)
+                {
+                    var st = new VFXShaderWriter();
+                    st.WriteLine("Stencil { Ref " + (int)this.stencil + " Comp Equal Pass Replace Fail Keep ZFail Keep}");
+
+                    yield return new KeyValuePair<string, VFXShaderWriter>("${VFXStencilForward}", st);
+                }
+
+                // KOIYUN
+                if (this.occlusionStencil > 0)
+                {
+                    var st = new VFXShaderWriter();
+                    st.WriteLine("Stencil { Ref " + (int)this.occlusionStencil + " Comp Equal Pass Replace Fail Keep ZFail Keep}");
+
+                    yield return new KeyValuePair<string, VFXShaderWriter>("${VFXStencilOcclusion}", st);
+                }
             }
         }
 
@@ -596,12 +618,6 @@ namespace UnityEditor.VFX
                     case CullMode.Front: rs.WriteLine("Cull Front"); break;
                     case CullMode.Back: rs.WriteLine("Cull Back"); break;
                     case CullMode.Off: rs.WriteLine("Cull Off"); break;
-                }
-
-                // KOIYUN
-                if (this.stencil > 0)
-                {
-                    rs.WriteLine("Stencil { Ref " + (int)this.stencil + " Comp Equal Pass Replace Fail Keep ZFail Keep}");
                 }
 
                 return rs;

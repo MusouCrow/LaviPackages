@@ -3,5 +3,6 @@
 	{
 		${VFXInclude("Shaders/VFXParticleHeader.template")}
         ${VFXInclude("Shaders/ParticleMeshes/PassForward.template")}
+		${VFXInclude("Shaders/ParticleMeshes/PassOcclusion.template"),USE_OCCLUSION_PASS}
 	}
 }

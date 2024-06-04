@@ -160,6 +160,12 @@ ps_output frag(ps_input i)
 #if VFX_USE_GLOW_CURRENT
 	o.param = float4(i.glow, 0, 0, o.color.a);
 #endif
+
+#if IS_OCCLUSION_PASS
+	o.color.a *= 0.1;
+	o.param = float4(0, 0, 0, o.color.a);
+#endif
+
 /*
 #if VFX_FEATURE_MOTION_VECTORS_FORWARD
 	${VFXComputeOutputMotionVector}

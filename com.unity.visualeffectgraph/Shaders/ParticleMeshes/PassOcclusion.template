@@ -1,0 +1,13 @@
+// KOIYUN, Occlusion pass
+Pass
+{		
+	Tags { "LightMode"="OcclusionTransparent" }
+	
+	${VFXStencilOcclusion}
+	
+	HLSLPROGRAM
+	#pragma target 4.5
+	#define IS_OCCLUSION_PASS 1
+	${VFXInclude("Shaders/ParticleMeshes/PassForwardCommon.template")}
+	ENDHLSL
+}
