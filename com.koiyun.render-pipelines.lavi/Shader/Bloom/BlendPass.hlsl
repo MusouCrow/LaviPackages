@@ -18,7 +18,7 @@ float4 Frag(Varyings input) : SV_Target
     float3 hsv = RgbToHsv(blur.rgb); // 色相、飽和度、明度
     hsv.b = hsv.b / (1 + hsv.b * 0.5);
 
-    float saturation = lerp(3, 1, hsv.b);
+    float saturation = lerp(5, 1, hsv.b);
     hsv.g = saturate(hsv.g * saturation);
     // hsv.g = lerp(hsv.g, 1, blur.a);
     blur.rgb = HsvToRgb(hsv);
