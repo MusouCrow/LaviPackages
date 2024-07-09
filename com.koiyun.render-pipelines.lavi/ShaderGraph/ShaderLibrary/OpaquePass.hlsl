@@ -19,13 +19,13 @@ Output Frag(PackedVaryings packedInput)
     UNITY_SETUP_INSTANCE_ID(unpacked);
 
     SurfaceDescription surfaceDescription = BuildSurfaceDescription(unpacked);
-
+    
 #ifdef _OCCLUSION
-    OcclusionOpaque(surfaceDescription, unpacked.screenPosition);
+    OcclusionOpaque(surfaceDescription, unpacked.positionCS);
 #endif
 
     AlphaClip(surfaceDescription);
-
+    
 #ifdef _OCCLUSION
     output.color = float4(surfaceDescription.BaseColor * 0.1, 1);
     output.param = float4(0, 0, 0, 1);

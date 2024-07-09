@@ -9,9 +9,10 @@ void AlphaClip(SurfaceDescription surfaceDescription)
 #endif
 }
 
-void OcclusionOpaque(inout SurfaceDescription surfaceDescription, float4 screenPos)
+void OcclusionOpaque(inout SurfaceDescription surfaceDescription, float4 positionCS)
 {
 #if defined(SURFACE_NEED_ALPHA_CLIP) || defined(_ALPHA_CLIP)
-    surfaceDescription.AlphaClipThreshold = Dither(0.1, screenPos);
+    float4 positionNDC = ComputeNDCPosition(positionCS);
+    surfaceDescription.AlphaClipThreshold = Dither(0.25, positionNDC);
 #endif
 }
