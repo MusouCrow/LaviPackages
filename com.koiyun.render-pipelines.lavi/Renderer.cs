@@ -49,13 +49,19 @@ namespace Koiyun.Render {
             var setupPass = new SetupPass(this.asset, this.rtrs);
             var mainShadowPass = new MainShadowPass(this.asset, sceneShadowRTR, unitShadowRTR);
             
-            var drawOpaquePass = new DrawObjectPass("Opaque", true, RTClearFlags.All, rawColorRTR, rawParamRTR, rawDepthRTR);
+            var clearColorPass = new ClearPass(rawColorRTR, RTClearFlags.Color, true);
+            var clearParamPass = new ClearPass(rawParamRTR, RTClearFlags.Color);
+            var clearDepthPass = new ClearPass(rawDepthRTR, RTClearFlags.DepthStencil);
+
+            var drawOpaquePass = new DrawObjectPass("Opaque", true, rawColorRTR, rawParamRTR, rawDepthRTR);
             var copyColorPass = new CopyTexturePass(copyTextureMaterial, rawColorRTR, colorRTR);
             var copyParamPass = new CopyTexturePass(copyTextureMaterial, rawParamRTR, paramRTR);
             var outlinePass = new OutlinePass(outlineMaterial, rawParamRTR, rawDepthRTR);
-            var drawTransparentPass = new DrawObjectPass("Transparent", false, RTClearFlags.None, rawColorRTR, rawParamRTR, rawDepthRTR);
-            var drawOcclusionOpaquePass = new DrawObjectPass("OcclusionOpaque", true, RTClearFlags.Depth, rawColorRTR, rawParamRTR, rawDepthRTR);
-            var drawOcclusionTransparentPass = new DrawObjectPass("OcclusionTransparent", false, RTClearFlags.None, rawColorRTR, rawParamRTR, rawDepthRTR);
+            var drawTransparentPass = new DrawObjectPass("Transparent", false, rawColorRTR, rawParamRTR, rawDepthRTR);
+            
+            var clearDepthPass2 = new ClearPass(rawDepthRTR, RTClearFlags.Depth);
+            var drawOcclusionOpaquePass = new DrawObjectPass("OcclusionOpaque", true, rawColorRTR, rawParamRTR, rawDepthRTR);
+            var drawOcclusionTransparentPass = new DrawObjectPass("OcclusionTransparent", false, rawColorRTR, rawParamRTR, rawDepthRTR);
 
             var bloomPass = new BloomPass(bloomMaterial, rawColorRTR, bloomRTR, bloomBlurHRTRs, bloomBlurVRTRs);
             var drawErrorPass = new DrawErrorPass("SRPDefaultUnlit", rawColorRTR, rawDepthRTR);
@@ -67,11 +73,17 @@ namespace Koiyun.Render {
             this.passes.Add(setupPass);
             this.passes.Add(mainShadowPass);
 
+            this.passes.Add(clearColorPass);
+            this.passes.Add(clearParamPass);
+            this.passes.Add(clearDepthPass);
+
             this.passes.Add(drawOpaquePass);
             this.passes.Add(copyColorPass);
             this.passes.Add(copyParamPass);
             this.passes.Add(outlinePass);
             this.passes.Add(drawTransparentPass);
+
+            this.passes.Add(clearDepthPass2);
             this.passes.Add(drawOcclusionOpaquePass);
             this.passes.Add(drawOcclusionTransparentPass);
 
@@ -94,7 +106,8 @@ namespace Koiyun.Render {
             var data = new RenderData() {
                 camera = camera,
                 cullingResults = cullingResults,
-                mainLightIndexes = RenderUtil.GetMainLightIndexes(ref cullingResults)
+                mainLightIndexes = RenderUtil.GetMainLightIndexes(ref cullingResults),
+                backgroundColor = this.asset.FogColor
             };
 
             foreach (var pass in this.passes) {

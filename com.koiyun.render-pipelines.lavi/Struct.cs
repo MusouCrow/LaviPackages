@@ -12,6 +12,7 @@ namespace Koiyun.Render {
         public Camera camera;
         public CullingResults cullingResults;
         public List<int> mainLightIndexes;
+        public Color backgroundColor;
     }
 
 #if ODIN_INSPECTOR

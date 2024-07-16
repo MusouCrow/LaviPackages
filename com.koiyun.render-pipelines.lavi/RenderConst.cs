@@ -16,8 +16,8 @@ namespace Koiyun.Render {
         public static int CAMERA_POSWS_ID = Shader.PropertyToID("_WorldSpaceCameraPos");
         public static int SCREEN_TO_WROLD_ID = Shader.PropertyToID("_ScreenToWorld");
         public static int RENDER_SCALE_ID = Shader.PropertyToID("_RenderScale");
-        public static int TIME_ID = Shader.PropertyToID("_Time");
 
+        public static int TIME_ID = Shader.PropertyToID("_Time");
         public static int FOG_RANGE_ID = Shader.PropertyToID("_FogRange");
         public static int FOG_COLOR_ID = Shader.PropertyToID("_FogColor");
 
