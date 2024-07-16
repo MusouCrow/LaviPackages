@@ -2,6 +2,7 @@
 
 #include "./Shadow.hlsl"
 #include "./View.hlsl"
+#include "./Fog.hlsl"
 #include "./ShaderGraphFunctions.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
@@ -115,4 +116,9 @@ void RadialBlur_float(float2 UV, float2 Center, float Rate, out float3 RGB)
 
     RGB = RGB / step;
     // RGB = 1 - shadergraph_SampleSceneColor_Lavi(UV);
+}
+
+void Fog_float(float3 Color, float3 PosiitonWS, out float3 RGB)
+{
+    RGB = HighFog(Color, PosiitonWS);
 }

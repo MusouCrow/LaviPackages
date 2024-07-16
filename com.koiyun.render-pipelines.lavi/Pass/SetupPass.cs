@@ -32,6 +32,7 @@ namespace Koiyun.Render {
             this.SetScreenToWorld(cmd, ref data);
             this.SetOutlineParams(cmd);
             this.SetTimeParams(cmd);
+            this.SetFogParams(cmd);
 
             var cameraPos = data.camera.transform.position;
             cmd.SetGlobalVector(RenderConst.CAMERA_POSWS_ID, cameraPos);
@@ -103,10 +104,14 @@ namespace Koiyun.Render {
         }
 
         private void SetTimeParams(CommandBuffer cmd) {
-            this.asset.Time = Time.time;
             var time = Application.isPlaying ? this.asset.Time : Time.realtimeSinceStartup;
             
             cmd.SetGlobalFloat(RenderConst.TIME_ID, time);
+        }
+
+        private void SetFogParams(CommandBuffer cmd) {
+            cmd.SetGlobalVector(RenderConst.FOG_RANGE_ID, this.asset.FogRange);
+            cmd.SetGlobalColor(RenderConst.FOG_COLOR_ID, this.asset.FogColor);
         }
     }
 }

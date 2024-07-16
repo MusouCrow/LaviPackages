@@ -18,6 +18,9 @@ namespace Koiyun.Render {
         public static int RENDER_SCALE_ID = Shader.PropertyToID("_RenderScale");
         public static int TIME_ID = Shader.PropertyToID("_Time");
 
+        public static int FOG_RANGE_ID = Shader.PropertyToID("_FogRange");
+        public static int FOG_COLOR_ID = Shader.PropertyToID("_FogColor");
+
         public static int OUTLINE_PARAMS_ID = Shader.PropertyToID("_OutlineParams");
 
         public static int COPIED_TEXTURE_ID = Shader.PropertyToID("_CopiedTexture");

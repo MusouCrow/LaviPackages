@@ -98,6 +98,12 @@ namespace Koiyun.Render {
         [NonSerialized]
         public float Time;
 
+        [NonSerialized]
+        public Vector2 FogRange;
+
+        [NonSerialized]
+        public Color FogColor;
+
         private LaviRenderPipeline renderPipeline;
 
         public override Material defaultMaterial {
