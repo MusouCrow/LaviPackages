@@ -8,6 +8,8 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
 
 float4 _ColorTexture_TexelSize;
+float _LightIntensty;
+float4 _LightColor;
 
 void ShadowAttenuation_float(float3 PositionWS, out float Attenuation)
 {
@@ -118,7 +120,20 @@ void RadialBlur_float(float2 UV, float2 Center, float Rate, out float3 RGB)
     // RGB = 1 - shadergraph_SampleSceneColor_Lavi(UV);
 }
 
-void Fog_float(float3 Color, float3 PosiitonWS, out float3 RGB)
+void Fog_float(float3 Color, float3 PosiitonWS, out float3 RGB, out float Rate)
 {
-    RGB = HighFog(Color, PosiitonWS);
+    float4 ret = HighFog(Color, PosiitonWS);
+    RGB = ret.rgb;
+    Rate = ret.a;
+}
+
+void GetLightIntensty_float(out float Out)
+{
+    Out = _LightIntensty;
+}
+
+void GetLightColor_float(out float4 Out, out float Rate)
+{
+    Out = _LightColor;
+    Rate = _LightColor.a;
 }

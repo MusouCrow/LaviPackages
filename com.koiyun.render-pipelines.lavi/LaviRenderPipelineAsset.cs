@@ -104,6 +104,12 @@ namespace Koiyun.Render {
         [NonSerialized]
         public Color FogColor;
 
+        [NonSerialized]
+        public float LightIntensty;
+
+        [NonSerialized]
+        public Color LightColor;
+
         private LaviRenderPipeline renderPipeline;
 
         public override Material defaultMaterial {

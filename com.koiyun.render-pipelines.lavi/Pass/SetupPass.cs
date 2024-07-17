@@ -33,6 +33,7 @@ namespace Koiyun.Render {
             this.SetOutlineParams(cmd);
             this.SetTimeParams(cmd);
             this.SetFogParams(cmd);
+            this.SetLightParams(cmd);
 
             var cameraPos = data.camera.transform.position;
             cmd.SetGlobalVector(RenderConst.CAMERA_POSWS_ID, cameraPos);
@@ -112,6 +113,11 @@ namespace Koiyun.Render {
         private void SetFogParams(CommandBuffer cmd) {
             cmd.SetGlobalVector(RenderConst.FOG_RANGE_ID, this.asset.FogRange);
             cmd.SetGlobalColor(RenderConst.FOG_COLOR_ID, this.asset.FogColor);
+        }
+
+        private void SetLightParams(CommandBuffer cmd) {
+            cmd.SetGlobalFloat(RenderConst.LIGHT_INTENSTY_ID, this.asset.LightIntensty);
+            cmd.SetGlobalColor(RenderConst.LIGHT_COLOR_ID, this.asset.LightColor);
         }
     }
 }
