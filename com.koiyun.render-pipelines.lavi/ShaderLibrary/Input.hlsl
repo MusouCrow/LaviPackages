@@ -68,6 +68,8 @@ float4 _ZBufferParams;
 // w = 1/far plane
 float4 _ProjectionParams;
 
+float4 unity_OrthoParams;
+
 float3 _WorldSpaceCameraPos;
 
 float _Time;

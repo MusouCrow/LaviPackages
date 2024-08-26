@@ -20,3 +20,9 @@ float3 GetOriginSpaceNormalizeViewDir(float3 positionWS)
 
     return normalize(V);
 }
+
+// Returns 'true' if the current view performs a perspective projection.
+bool IsPerspectiveProjection()
+{
+    return (unity_OrthoParams.w == 0);
+}
