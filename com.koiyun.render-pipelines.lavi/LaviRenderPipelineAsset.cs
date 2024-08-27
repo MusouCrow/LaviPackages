@@ -50,6 +50,11 @@ namespace Koiyun.Render {
         public float NormalBias;
 
         [TitleGroup("阴影")]
+        [LabelText("阴影深度范围")]
+        [MinMaxSlider(0, 10, true)]
+        public Vector2 ShadowDepthRange = new Vector2(1, 2.5f);
+
+        [TitleGroup("阴影")]
         [LabelText("阴影刻度")]
         [Range(0, 1)]
         public float ShadowStep;
@@ -85,6 +90,7 @@ namespace Koiyun.Render {
         public ShadowResolution ShadowResolution = ShadowResolution._2048;
         public float ShadowDistance = 50;
         public float DepthBias;
+        public Vector2 ShadowDepthRange = new Vector2(1, 2.5f);
         public float NormalBias;
         public float ShadowStep;
         public Vector2 ShadowAttenRange;

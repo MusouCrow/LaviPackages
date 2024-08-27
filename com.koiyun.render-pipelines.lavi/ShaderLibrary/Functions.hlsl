@@ -11,11 +11,11 @@ float4 _ColorTexture_TexelSize;
 float _LightIntensty;
 float4 _LightColor;
 
-void ShadowAttenuation_float(float3 PositionWS, out float Attenuation)
+void ShadowAttenuation_float(float3 PositionWS, bool HardShadow, bool NoChar, out float Attenuation)
 {
     float4 shadowCoord = TransformWorldToShadowCoord(PositionWS);
-    float scene = SAMPLE_SHADOW(_SceneShadowTexture, shadowCoord);
-    float char = SAMPLE_SHADOW(_UnitShadowTexture, shadowCoord);
+    float scene = SAMPLE_SHADOW(_SceneShadowTexture, shadowCoord, false);
+    float char = NoChar ? 1 : SAMPLE_SHADOW(_UnitShadowTexture, shadowCoord, HardShadow);
     
     Attenuation = lerp(_ShadowAttens.y, 1, scene) * lerp(_ShadowAttens.y, 1, char);
     Attenuation = max(_ShadowAttens.x, Attenuation);
@@ -48,11 +48,11 @@ void HSVToRGB_float(float Hue, float Saturation, float Lightness, out float3 RGB
     RGB = HsvToRgb(hsv);
 }
 
-void SampleColorTable_float(UnityTexture2D ColorTableMap, float2 UV, float3 PositionWS, float AntiShadow, out float4 Color)
+void SampleColorTable_float(UnityTexture2D ColorTableMap, float2 UV, float3 PositionWS, float AntiShadow, bool HardShadow, out float4 Color)
 {
     float4 shadowCoord = TransformWorldToShadowCoord(PositionWS);
-    float scene = SAMPLE_SHADOW(_SceneShadowTexture, shadowCoord);
-    float unit = SAMPLE_SHADOW(_UnitShadowTexture, shadowCoord);
+    float scene = SAMPLE_SHADOW(_SceneShadowTexture, shadowCoord, false);
+    float unit = SAMPLE_SHADOW(_UnitShadowTexture, shadowCoord, HardShadow);
     
     float pixel = ColorTableMap.texelSize.x * 32;
     float index = floor(UV.x / pixel);

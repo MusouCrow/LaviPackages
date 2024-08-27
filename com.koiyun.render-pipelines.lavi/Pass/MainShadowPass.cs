@@ -32,7 +32,7 @@ namespace Koiyun.Render {
                 cmd.SetRenderTarget(this.shadowRTIs[i]);
                 cmd.ClearRenderTarget(true, true, Color.black);
                 cmd.SetViewport(viewport);
-                cmd.SetGlobalDepthBias(1.0f, 2.5f);
+                cmd.SetGlobalDepthBias(this.asset.ShadowDepthRange.x, this.asset.ShadowDepthRange.y);
                 cmd.SetViewProjectionMatrices(viewMatrix, projMatrix);
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();

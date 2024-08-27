@@ -26,7 +26,9 @@ namespace Koiyun.Render {
         [LabelText("2048")]
         _2048 = 2048,
         [LabelText("4096")]
-        _4096 = 4096
+        _4096 = 4096,
+        [LabelText("8192")]
+        _8192 = 8192
     }
 #else
     public enum ShadowResolution {
@@ -34,7 +36,8 @@ namespace Koiyun.Render {
         _512 = 512,
         _1024 = 1024,
         _2048 = 2048,
-        _4096 = 4096
+        _4096 = 4096,
+        _8192 = 8192
     }
 #endif
 
