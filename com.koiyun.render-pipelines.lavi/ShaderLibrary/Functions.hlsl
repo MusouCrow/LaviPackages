@@ -3,6 +3,7 @@
 #include "./Shadow.hlsl"
 #include "./View.hlsl"
 #include "./Fog.hlsl"
+#include "./Render.hlsl"
 #include "./ShaderGraphFunctions.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
@@ -77,12 +78,12 @@ void Gradient_float(float Value, float Power, out float Gradient)
     Gradient = saturate(v);
 }
 
-void Metallic_float(float3 PosiitonWS, float3 NormalWS, float Rate, float Gradient, out float Metallic, out float Glow)
+void Metallic_float(float3 PosiitonWS, float3 NormalWS, float Rate, out float Metallic, out float Glow)
 {
     float3 viewDir = GetWorldSpaceNormalizeViewDir(PosiitonWS);
-    float3 normalDir = normalize(NormalWS - Gradient);
+    float3 normalDir = normalize(NormalWS);
     float3 reflectDir = reflect(-_LightDirection, normalDir);
-    float v = saturate(dot(viewDir, reflectDir) + Gradient);
+    float v = saturate(dot(viewDir, reflectDir));
     v = lerp(-0.5, 1, v);
 
     Metallic = v * Rate;
@@ -136,4 +137,10 @@ void GetLightColor_float(out float4 Out, out float Rate)
 {
     Out = _LightColor;
     Rate = _LightColor.a;
+}
+
+void ParallaxMapping_float(float Height, float Rate, float2 UV, float3 ViewDirTS, out float2 Out)
+{
+    float rate = lerp(0, 0.08, Rate);
+    Out = UV + ParallaxOffset1Step(Height, rate, ViewDirTS);
 }

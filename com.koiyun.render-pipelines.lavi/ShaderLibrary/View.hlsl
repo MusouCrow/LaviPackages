@@ -1,5 +1,7 @@
 #pragma once
 
+#include "./Input.hlsl"
+
 float3 _CameraPosOS;
 
 float3 GetCurrentViewPosition()
@@ -25,4 +27,9 @@ float3 GetOriginSpaceNormalizeViewDir(float3 positionWS)
 bool IsPerspectiveProjection()
 {
     return (unity_OrthoParams.w == 0);
+}
+
+float3 GetViewForwardDir()
+{
+    return -UNITY_MATRIX_V[2].xyz;
 }

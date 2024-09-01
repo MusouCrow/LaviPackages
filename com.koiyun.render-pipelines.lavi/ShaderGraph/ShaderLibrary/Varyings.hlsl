@@ -31,7 +31,7 @@ Varyings BuildVaryings(Attributes input)
     #endif
 
     #ifdef VARYINGS_NEED_TANGENT_WS
-        input.tangentOS = vertexDescription.Tangent;
+        input.tangentOS.xyz = vertexDescription.Tangent.xyz;
     #endif
 #endif
 
