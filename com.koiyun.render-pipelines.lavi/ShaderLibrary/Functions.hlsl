@@ -140,6 +140,6 @@ void GetLightColor_float(out float4 Out, out float Rate)
 
 void ParallaxMapping_float(float Height, float Rate, float2 UV, float3 ViewDirTS, out float2 Out)
 {
-    float rate = lerp(0, 0.08, Rate);
+    float rate = lerp(0, 0.05, Rate);
     Out = UV + ParallaxOffset1Step(Height, rate, ViewDirTS);
 }
