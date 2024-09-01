@@ -84,10 +84,9 @@ void Metallic_float(float3 PosiitonWS, float3 NormalWS, float Rate, out float Me
     float3 normalDir = normalize(NormalWS);
     float3 reflectDir = reflect(-_LightDirection, normalDir);
     float v = saturate(dot(viewDir, reflectDir));
-    v = lerp(-0.5, 1, v);
 
-    Metallic = v * Rate;
-    Glow = v * 0.01 * Rate;
+    Metallic = lerp(-1, 1, v) * Rate;
+    Glow = lerp(0, 0.02, v) * Rate;
 }
 
 void TexIndexToUV_float(float Index, float2 SheetSize, out float2 UV)
