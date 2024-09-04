@@ -85,7 +85,7 @@ void Metallic_float(float3 PosiitonWS, float3 NormalWS, float Rate, out float Me
     float3 reflectDir = reflect(-_LightDirection, normalDir);
     float v = saturate(dot(viewDir, reflectDir));
 
-    Metallic = lerp(-1, 1, v) * Rate;
+    Metallic = lerp(-0.75, 1, v) * Rate;
     Glow = lerp(0, 0.02, v) * Rate;
 }
 
