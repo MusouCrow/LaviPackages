@@ -56,6 +56,7 @@ namespace Koiyun.Render {
         public TextureFormat format;
         public bool global;
         public bool srgb;
+        public bool mipmap;
 
         public RenderTargetIdentifier RTI => new RenderTargetIdentifier(this.tid);
 
@@ -98,6 +99,9 @@ namespace Koiyun.Render {
                 graphicsFormat = this.GraphicsFormat,
                 sRGB = this.srgb
             };
+
+            rtd.autoGenerateMips = this.mipmap;
+            rtd.useMipMap = this.mipmap;
 
             if (this.format == TextureFormat.Depth) {
                 rtd.depthBufferBits = 32;

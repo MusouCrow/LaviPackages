@@ -125,14 +125,15 @@ namespace Koiyun.Render {
             }
         }
 
-        private RenderTexutreRegister NewRTR(string name, TextureFormat format = TextureFormat.LDR, float scale = 1, bool global = false, bool srgb = false, int size = 0) {
+        private RenderTexutreRegister NewRTR(string name, TextureFormat format = TextureFormat.LDR, float scale = 1, bool global = false, bool srgb = false, int size = 0, bool mipmap=false) {
             var rtr = new RenderTexutreRegister() {
                 tid = Shader.PropertyToID(name),
                 size = size,
                 scale = scale,
                 format = format,
                 global = global,
-                srgb = srgb
+                srgb = srgb,
+                mipmap = mipmap
             };
 
             this.rtrs.Add(rtr);

@@ -1,9 +1,10 @@
 #pragma once
 
 #include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Core.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
 
 TEXTURE2D(_MainTex);
-SAMPLER(sampler_LinearClamp);
+float4 _MainTex_TexelSize;
 
 struct Attributes
 {
@@ -28,7 +29,27 @@ Varyings Vert(Attributes input)
 
 half4 Frag(Varyings input) : SV_Target
 {
-    half4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, input.uv);
+    const float2 DX[9] = {
+        {-1, -1},
+        {-1, 1},
+        {1, -1},
+        {1, 1},
+        {1, 0},
+        {-1, 0},
+        {0, -1},
+        {0, 1},
+        {0, 0}
+    };
+
+    float4 color = 0;
+    float2 size = _MainTex_TexelSize.xy;
+
+    for (int i = 0; i < 9; i++)
+    {
+        color += SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_LinearClamp, input.uv + DX[i] * size * 2, 0) / 9;
+    }
+
+    // color = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_LinearClamp, input.uv, 0);
 
     return color;
 }
