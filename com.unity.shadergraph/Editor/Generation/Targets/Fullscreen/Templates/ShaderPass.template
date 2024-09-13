@@ -28,7 +28,6 @@ $splice(GraphKeywords)
 
 // Defines
 $SurfaceType.Transparent:           // UBER SHADER NOW:  #define _SURFACE_TYPE_TRANSPARENT 1
-$Attributes.positionOS: #define ATTRIBUTES_NEED_POSITION // KOIYUN
 $Attributes.normalOS: #define ATTRIBUTES_NEED_NORMAL
 $Attributes.tangentOS: #define ATTRIBUTES_NEED_TANGENT
 $Attributes.uv0: #define ATTRIBUTES_NEED_TEXCOORD0

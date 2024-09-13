@@ -6,7 +6,8 @@ namespace UnityEditor.ShaderGraph
         public struct Attributes
         {
             public static string name = "Attributes";
-            public static FieldDescriptor positionOS = new FieldDescriptor(Attributes.name, "positionOS", "", ShaderValueType.Float3, "POSITION");
+            // KOIYUN
+            public static FieldDescriptor positionOS = new FieldDescriptor(Attributes.name, "positionOS", "ATTRIBUTES_NEED_POSITION", ShaderValueType.Float3, "POSITION");
             public static FieldDescriptor normalOS = new FieldDescriptor(Attributes.name, "normalOS", "ATTRIBUTES_NEED_NORMAL", ShaderValueType.Float3,
                 "NORMAL", subscriptOptions: StructFieldOptions.Optional);
             public static FieldDescriptor tangentOS = new FieldDescriptor(Attributes.name, "tangentOS", "ATTRIBUTES_NEED_TANGENT", ShaderValueType.Float4,

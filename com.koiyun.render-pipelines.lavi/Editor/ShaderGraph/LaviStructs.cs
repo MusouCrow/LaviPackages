@@ -36,7 +36,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         public ZWrite zWrite;
         public ZTest zTest;
         public StencilType stencilType;
-        public bool stencilTest;
+        public CompareFunction stencilComp;
         public bool colorMask;
         public RenderStateOverride overrideBlendMode;
         public RenderStateOverride overrideCullMode;

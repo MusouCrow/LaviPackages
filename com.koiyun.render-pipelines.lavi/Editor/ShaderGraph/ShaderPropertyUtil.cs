@@ -1,5 +1,6 @@
 using UnityEditor.ShaderGraph;
 using UnityEditor.ShaderGraph.Internal;
+using UnityEngine.Rendering;
 
 namespace Koiyun.Render.ShaderGraph.Editor {
     static class ShaderPropertyUtil {
@@ -79,7 +80,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                     new FloatControl(0), ShaderStage.Fragment);
         }
 
-        public static RenderStateCollection GetRenderState(LaviTarget target, bool noBlend=false, StencilType stencilType=StencilType.None, bool stencilTest=false) {
+        public static RenderStateCollection GetRenderState(LaviTarget target, bool noBlend=false, StencilType stencilType=StencilType.None, CompareFunction stencilComp=CompareFunction.Never) {
             target.GetBlend(out var srcBlend, out var dstBlend);
 
             var overrideBlendMode = target.overrideBlendMode ? RenderStateOverride.Override : RenderStateOverride.Current;
@@ -95,7 +96,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 zWrite = target.zWrite ? ZWrite.On : ZWrite.Off,
                 zTest = target.zTest,
                 stencilType = stencilType > StencilType.None ? stencilType : target.stencil,
-                stencilTest = stencilTest,
+                stencilComp = stencilComp != CompareFunction.Never ? stencilComp : target.stencilComp,
                 colorMask = false,
                 overrideBlendMode = overrideBlendMode,
                 overrideCullMode = target.overrideCullMode ? RenderStateOverride.Override : RenderStateOverride.Current,
@@ -146,7 +147,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
                 var value = (int)param.stencilType;
                 var desc = new StencilDescriptor() {
                     Ref = value.ToString(),
-                    Comp = param.stencilTest ? "Equal" : "Always",
+                    Comp = param.stencilComp.ToString(),
                     Pass = "Replace"
                 };
 

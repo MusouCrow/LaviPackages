@@ -24,6 +24,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         public ZTest zTest = ZTest.LEqual;
         public StencilType stencil = StencilType.None;
         public StencilType occlusion = StencilType.None;
+        public CompareFunction stencilComp = CompareFunction.Always;
         public bool overrideBlendMode;
         public bool overrideCullMode;
         public bool overrideZWrite;
@@ -155,6 +156,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             
             this.DrawStencilProperty(ref context, onChange, registerUndo);
             this.DrawOcclusionProperty(ref context, onChange, registerUndo);
+            this.DrawStencilCompProperty(ref context, onChange, registerUndo);
             this.DrawCustomEditorProperty(ref context, onChange, registerUndo);
         }
 
@@ -375,6 +377,22 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
                 registerUndo("Change Occlusion");
                 this.occlusion = value;
+                onChange();
+            });
+        }
+
+        public void DrawStencilCompProperty(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
+            var field = new EnumField(CompareFunction.Always) {value = this.stencilComp};
+            
+            context.AddProperty("Stencil Comp", field, (evt) => {
+                var value = (CompareFunction)evt.newValue;
+
+                if (this.stencilComp == value) {
+                    return;
+                }
+
+                registerUndo("Change Stencil Comp");
+                this.stencilComp = value;
                 onChange();
             });
         }

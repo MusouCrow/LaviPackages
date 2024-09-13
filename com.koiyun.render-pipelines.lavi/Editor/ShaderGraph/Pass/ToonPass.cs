@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEditor.ShaderGraph;
+using UnityEngine.Rendering;
 
 namespace Koiyun.Render.ShaderGraph.Editor {
     static class ToonPass {
@@ -56,8 +57,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             }
 
             var stencilType = occlusion ? subTarget.target.occlusion : StencilType.None;
-            var stencilTest = occlusion;
-            var renderState = ShaderPropertyUtil.GetRenderState(subTarget.target, false, stencilType, stencilTest);
+            var stencilComp = occlusion ? CompareFunction.Equal : CompareFunction.Never;
+            var renderState = ShaderPropertyUtil.GetRenderState(subTarget.target, false, stencilType, stencilComp);
 
             return new PassDescriptor() {
                 // Definition
