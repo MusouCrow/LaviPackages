@@ -24,6 +24,7 @@ namespace Koiyun.Render {
 
             var copyTextureMaterial = this.NewMaterial("Hidden/Lavi RP/CopyTexture");
             var outlineMaterial = this.NewMaterial("Hidden/Lavi RP/Outline");
+            var aoMaterial = this.NewMaterial("Hidden/Lavi RP/AmbientOcclusion");
             var bloomMaterial = this.NewMaterial("Hidden/Lavi RP/Bloom");
             var blitMaterial = this.NewMaterial("Hidden/Lavi RP/Blit");
 
@@ -32,6 +33,7 @@ namespace Koiyun.Render {
             var rawDepthRTR = this.NewRTR("_RawDepthTexture", TextureFormat.Depth, scale, true);
             var rawColorRTR = this.NewRTR("_RawColorTexture", TextureFormat.LDR, scale, false, true);
             var rawParamRTR = this.NewRTR("_RawParamTexture", TextureFormat.LDR, scale, true, false);      
+            var depthRTR = this.NewRTR("_DepthTexture", TextureFormat.Depth, scale, true);
             var colorRTR = this.NewRTR("_ColorTexture", TextureFormat.LDR, scale, true, true);
             var paramRTR = this.NewRTR("_ParamTexture", TextureFormat.LDR, scale, true, false);
             var bloomRTR = this.NewRTR("_BloomTexture", TextureFormat.HDR, scale, false, true);
@@ -54,9 +56,11 @@ namespace Koiyun.Render {
             var clearDepthPass = new ClearPass(rawDepthRTR, RTClearFlags.DepthStencil);
 
             var drawOpaquePass = new DrawObjectPass("Opaque", true, rawColorRTR, rawParamRTR, rawDepthRTR);
+            var copyDepthPass = new CopyTexturePass(copyTextureMaterial, rawDepthRTR, depthRTR);
             var copyColorPass = new CopyTexturePass(copyTextureMaterial, rawColorRTR, colorRTR);
             var copyParamPass = new CopyTexturePass(copyTextureMaterial, rawParamRTR, paramRTR);
             var outlinePass = new OutlinePass(outlineMaterial, rawParamRTR, rawDepthRTR);
+            var ambientOcclusionPass = new AmbientOcclusionPass(aoMaterial, rawColorRTR, rawDepthRTR);
             var drawTransparentPass = new DrawObjectPass("Transparent", false, rawColorRTR, rawParamRTR, rawDepthRTR);
             
             var clearDepthPass2 = new ClearPass(rawDepthRTR, RTClearFlags.Depth);
@@ -78,8 +82,12 @@ namespace Koiyun.Render {
             this.passes.Add(clearDepthPass);
 
             this.passes.Add(drawOpaquePass);
+
+            this.passes.Add(copyDepthPass);
             this.passes.Add(copyColorPass);
             this.passes.Add(copyParamPass);
+
+            this.passes.Add(ambientOcclusionPass);
             this.passes.Add(outlinePass);
             this.passes.Add(drawTransparentPass);
 
@@ -88,7 +96,7 @@ namespace Koiyun.Render {
             this.passes.Add(drawOcclusionTransparentPass);
 
             this.passes.Add(copyColorPass);
-            this.passes.Add(bloomPass);
+            // this.passes.Add(bloomPass);
             this.passes.Add(drawErrorPass);
             this.passes.Add(drawGizmosPass);
             this.passes.Add(finalBlitPass);

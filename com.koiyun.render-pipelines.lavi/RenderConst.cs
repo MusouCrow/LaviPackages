@@ -16,6 +16,11 @@ namespace Koiyun.Render {
         public static int CAMERA_POSWS_ID = Shader.PropertyToID("_WorldSpaceCameraPos");
         public static int SCREEN_TO_WROLD_ID = Shader.PropertyToID("_ScreenToWorld");
         public static int RENDER_SCALE_ID = Shader.PropertyToID("_RenderScale");
+        
+        public static int AO_VP_MATRIX_ID = Shader.PropertyToID("_AOMatrixVP");
+        public static int AO_VIEW_EXTENTX_ID = Shader.PropertyToID("_AOViewExtentX");
+        public static int AO_VIEW_EXTENTY_ID = Shader.PropertyToID("_AOViewExtentY");
+        public static int AO_VIEW_EXTENTZ_ID = Shader.PropertyToID("_AOViewExtentZ");
 
         public static int TIME_ID = Shader.PropertyToID("_Time");
         public static int FOG_RANGE_ID = Shader.PropertyToID("_FogRange");
