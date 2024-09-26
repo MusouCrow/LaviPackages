@@ -74,9 +74,6 @@ namespace Koiyun.Render {
             }
 
             cmd.SetGlobalVector(RenderConst.ZBUFFER_PARAMS_ID, zBufferParams);
-
-            var projectionParams = new Vector4(1, near, far, invFar);
-            cmd.SetGlobalVector(RenderConst.PROJ_PARAMS_ID, projectionParams);
         }
 
         private void SetScreenToWorld(CommandBuffer cmd, ref RenderData data) {
