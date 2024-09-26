@@ -6,11 +6,6 @@ Shader "Hidden/Lavi RP/AmbientOcclusion"
         {
             ZTest Always
             ZWrite Off
-            Stencil
-            {
-                Ref 1
-                Comp Equal
-            }
 
             HLSLPROGRAM
             #pragma vertex Vert
