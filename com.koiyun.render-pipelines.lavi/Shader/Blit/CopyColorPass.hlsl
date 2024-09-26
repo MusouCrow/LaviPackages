@@ -46,7 +46,7 @@ half4 Frag(Varyings input) : SV_Target
 
     for (int i = 0; i < 9; i++)
     {
-        color += SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_LinearClamp, input.uv + DX[i] * size * 2, 0) / 9;
+        color += SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_LinearClamp, input.uv + DX[i] * size, 0) / 9;
     }
 
     // color = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_LinearClamp, input.uv, 0);

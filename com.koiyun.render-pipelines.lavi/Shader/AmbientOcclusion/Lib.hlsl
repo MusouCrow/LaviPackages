@@ -6,7 +6,7 @@
 
 #define SKY_DEPTH 0.00001
 #define RADIUS 3
-#define SAMPLE_COUNT 12
+#define SAMPLE_COUNT 8
 
 float4x4 _AOMatrixVP;
 float4 _AOViewExtentX;

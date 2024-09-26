@@ -37,7 +37,7 @@ Varyings Vert(Attributes input)
 float4 Frag(Varyings input) : SV_TARGET
 {
     float4 color = SAMPLE_TEXTURE2D(_ColorTexture, sampler_LinearClamp, input.uv);
-    float depth = SAMPLE_DEPTH_TEXTURE(_DepthTexture, sampler_PointClamp, input.uv);
+    float depth = SAMPLE_DEPTH_TEXTURE(_DepthTexture, sampler_LinearClamp, input.uv);
     
     if (depth < SKY_DEPTH)
     {
@@ -70,7 +70,7 @@ float4 Frag(Varyings input) : SV_TARGET
         
         float zDist = -dot(UNITY_MATRIX_V[2].xyz, shiftPosVS);
         float2 uv = saturate((shiftPosSS * rcp(zDist) + 1) * 0.5);
-        float depth2 = SAMPLE_DEPTH_TEXTURE(_DepthTexture, sampler_PointClamp, uv);
+        float depth2 = SAMPLE_DEPTH_TEXTURE(_DepthTexture, sampler_LinearClamp, uv);
         float rawDpeth2 = depth2;
         depth2 = LinearEyeDepth(depth2, _ZBufferParams);
 
@@ -85,12 +85,14 @@ float4 Frag(Varyings input) : SV_TARGET
         float a2 = dot(dir, dir) + 0.0001;
         ao += a1 * rcp(a2) * isInsideRadius;
     }
-    
-    // ao *= RADIUS;
-    ao = 1 - ao;
-    ao = pow(ao, 1);
 
-    color.rgb = lerp(color * lerp(_LightColor, 1, ao), color.rgb, ao);
+    float ao2 = 1 - ao;
+    ao2 = pow(ao2, 3);
+    ao = pow(ao, 3);
+
+    float3 colorA = lerp(_LightColor * color.rgb, color.rgb, ao2);
+    float3 colorB = lerp(color.rgb, color.rgb * 0.5, saturate(ao));
+    color.rgb = lerp(colorA, colorB, 0.5);
 
     return color;
 }
