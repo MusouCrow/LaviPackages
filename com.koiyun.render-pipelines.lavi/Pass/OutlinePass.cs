@@ -4,7 +4,6 @@ using UnityEngine.Rendering;
 namespace Koiyun.Render {
     public class OutlinePass : RenderPass {
         private Material material;
-        private RenderTargetIdentifier[] colorRTIs;
         private RenderTexutreRegister paramRTR;
         private RenderTexutreRegister depthRTR;
 
