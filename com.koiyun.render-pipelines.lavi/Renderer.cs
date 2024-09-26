@@ -87,8 +87,8 @@ namespace Koiyun.Render {
             this.passes.Add(copyColorPass);
             this.passes.Add(copyParamPass);
 
-            this.passes.Add(ambientOcclusionPass);
             this.passes.Add(outlinePass);
+            this.passes.Add(ambientOcclusionPass);
             this.passes.Add(drawTransparentPass);
 
             this.passes.Add(clearDepthPass2);
@@ -96,7 +96,7 @@ namespace Koiyun.Render {
             this.passes.Add(drawOcclusionTransparentPass);
 
             this.passes.Add(copyColorPass);
-            // this.passes.Add(bloomPass);
+            this.passes.Add(bloomPass);
             this.passes.Add(drawErrorPass);
             this.passes.Add(drawGizmosPass);
             this.passes.Add(finalBlitPass);
