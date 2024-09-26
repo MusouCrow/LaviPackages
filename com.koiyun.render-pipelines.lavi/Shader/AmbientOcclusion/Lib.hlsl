@@ -5,15 +5,15 @@
 #include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Screen.hlsl"
 
 #define SKY_DEPTH 0.00001
-#define RADIUS 1
-#define SAMPLE_COUNT 16
+#define RADIUS 3
+#define SAMPLE_COUNT 12
 
 float4x4 _AOMatrixVP;
 float4 _AOViewExtentX;
 float4 _AOViewExtentY;
 float4 _AOViewExtentZ;
 
-static half SSAORandomUV[40] =
+static float SSAORandomUV[40] =
 {
     0.00000000,  // 00
     0.33984375,  // 01
@@ -62,7 +62,7 @@ float3 ReconstructViewPosition(float2 uv, float linearDepth)
 {
     uv.y = 1.0 - uv.y;
 
-    float zScale = linearDepth * 1.0 / _ProjectionParams.y; // divide by near plane
+    float zScale = linearDepth * (1.0 / _ProjectionParams.y); // divide by near plane
     float3 positionVS = _AOViewExtentX.xyz + _AOViewExtentY.xyz * uv.x + _AOViewExtentZ.xyz * uv.y;
     positionVS *= zScale;
 
@@ -74,21 +74,21 @@ float3 ReconstructNormal(float3 positionVS)
     return float3(normalize(cross(ddy(positionVS), ddx(positionVS))));
 }
 
-half GetRandomVal(half u, half sampleIndex)
+float GetRandomVal(float u, float sampleIndex)
 {
     return SSAORandomUV[u * 20 + sampleIndex];
 }
 
-float3 PickSamplePoint(float2 uv, int index, half indexHalf, half rcpCount, float3 normalVS)
+float3 PickSamplePoint(float2 uv, int index, float index2, float rcpCount, float3 normalVS)
 {
-    float2 positionSS = uv * _ScaledScreenParams.xy;
+    float2 positionSS = uv * _ScreenParams.xy;
     float noise = InterleavedGradientNoise(positionSS, index);
     float u = frac(GetRandomVal(0, index) + noise) * 2 - 1;
     float theta = (GetRandomVal(1, index) + noise) * 6.28318530717958647693;
     float u2 = sqrt(1 - u * u);
 
     float3 v = float3(u2 * cos(theta), u2 * sin(theta), u);
-    v *= sqrt((indexHalf + 1.0) * rcpCount);
+    v *= sqrt((index2 + 1.0) * rcpCount);
     v = faceforward(v, -normalVS, v);
     v *= RADIUS;
     
