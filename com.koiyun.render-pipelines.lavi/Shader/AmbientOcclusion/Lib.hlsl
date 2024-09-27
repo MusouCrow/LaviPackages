@@ -5,8 +5,8 @@
 #include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Screen.hlsl"
 
 #define SKY_DEPTH 0.00001
-#define RADIUS 3
-#define SAMPLE_COUNT 8
+#define RADIUS 2
+#define SAMPLE_COUNT 6
 
 float4x4 _AOMatrixVP;
 float4 _AOViewExtentX;

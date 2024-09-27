@@ -39,11 +39,6 @@ float4 Frag(Varyings input) : SV_TARGET
     float4 color = SAMPLE_TEXTURE2D(_ColorTexture, sampler_LinearClamp, input.uv);
     float depth = SAMPLE_DEPTH_TEXTURE(_DepthTexture, sampler_LinearClamp, input.uv);
     
-    if (depth < SKY_DEPTH)
-    {
-        return color;
-    }
-    
     depth = LinearEyeDepth(depth, _ZBufferParams);
     
     float3 positionVS = ReconstructViewPosition(input.uv, depth);
@@ -83,16 +78,10 @@ float4 Frag(Varyings input) : SV_TARGET
         float dotVal = dot(dir, normalVS) - 0.004 * depth;
         float a1 = max(dotVal, 0);
         float a2 = dot(dir, dir) + 0.0001;
-        ao += a1 * rcp(a2) * isInsideRadius;
+        ao += a1 * rcp(a2);
     }
-
-    float ao2 = 1 - ao;
-    ao2 = pow(ao2, 3);
-    ao = pow(ao, 3);
-
-    float3 colorA = lerp(_LightColor * color.rgb, color.rgb, ao2);
-    float3 colorB = lerp(color.rgb, color.rgb * 0.5, saturate(ao));
-    color.rgb = lerp(colorA, colorB, 0.5);
+    
+    color.rgb = lerp(color.rgb, _LightColor * color.rgb, ao);
 
     return color;
 }

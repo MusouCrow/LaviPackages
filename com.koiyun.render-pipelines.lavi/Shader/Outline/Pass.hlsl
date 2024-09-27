@@ -41,7 +41,7 @@ float SobelLayer(float2 uv)
         -1, -1
     };
 
-    float scale = (_ParamTexture_TexelSize.w / (1080 * _RenderScale)) * _OutlineParams.y;
+    float scale = (_ParamTexture_TexelSize.w / (1080 * 2)) * _OutlineParams.y;
     float edge = 0;
 
     for (int i = 0; i < 9; i++) {

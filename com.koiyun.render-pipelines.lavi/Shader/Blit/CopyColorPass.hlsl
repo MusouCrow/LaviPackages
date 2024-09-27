@@ -41,15 +41,16 @@ half4 Frag(Varyings input) : SV_Target
         {0, 0}
     };
 
-    float4 color = 0;
     float2 size = _MainTex_TexelSize.xy;
-
+    float2 uv = lerp(0.02, 0.98, input.uv);
+    float4 color = 0;
+    
     for (int i = 0; i < 9; i++)
     {
-        color += SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_LinearClamp, input.uv + DX[i] * size, 0) / 9;
+        color += SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_LinearClamp, uv + DX[i] * size, 0) / 9;
     }
-
-    // color = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_LinearClamp, input.uv, 0);
+    
+    // color = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_LinearClamp, uv, 0);
 
     return color;
 }

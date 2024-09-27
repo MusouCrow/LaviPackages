@@ -33,7 +33,7 @@ namespace Koiyun.Render {
             var rawDepthRTR = this.NewRTR("_RawDepthTexture", TextureFormat.Depth, scale, true);
             var rawColorRTR = this.NewRTR("_RawColorTexture", TextureFormat.LDR, scale, false, true);
             var rawParamRTR = this.NewRTR("_RawParamTexture", TextureFormat.LDR, scale, true, false);      
-            var depthRTR = this.NewRTR("_DepthTexture", TextureFormat.Depth, scale, true);
+            var depthRTR = this.NewRTR("_DepthTexture", TextureFormat.Depth, 0.5f, true);
             var colorRTR = this.NewRTR("_ColorTexture", TextureFormat.LDR, scale, true, true);
             var paramRTR = this.NewRTR("_ParamTexture", TextureFormat.LDR, scale, true, false);
             var bloomRTR = this.NewRTR("_BloomTexture", TextureFormat.HDR, scale, false, true);
