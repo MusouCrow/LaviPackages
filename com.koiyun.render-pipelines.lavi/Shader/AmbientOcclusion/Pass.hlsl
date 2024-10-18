@@ -5,11 +5,8 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
 #include "./Lib.hlsl"
 
-TEXTURE2D(_ColorTexture);
 TEXTURE2D_FLOAT(_DepthTexture);
 
-float4 _ColorTexture_TexelSize;
-float4 _DepthTexture_TexelSize;
 float4 _LightColor;
 
 struct Attributes
@@ -36,9 +33,7 @@ Varyings Vert(Attributes input)
 
 float4 Frag(Varyings input) : SV_TARGET
 {
-    float4 color = SAMPLE_TEXTURE2D(_ColorTexture, sampler_LinearClamp, input.uv);
     float depth = SAMPLE_DEPTH_TEXTURE(_DepthTexture, sampler_LinearClamp, input.uv);
-    
     depth = LinearEyeDepth(depth, _ZBufferParams);
     
     float3 positionVS = ReconstructViewPosition(input.uv, depth);
@@ -78,10 +73,8 @@ float4 Frag(Varyings input) : SV_TARGET
         float dotVal = dot(dir, normalVS) - 0.004 * depth;
         float a1 = max(dotVal, 0);
         float a2 = dot(dir, dir) + 0.0001;
-        ao += a1 * rcp(a2);
+        ao += a1 * rcp(a2) * isInsideRadius;
     }
-    
-    color.rgb = lerp(color.rgb, _LightColor * color.rgb, ao);
 
-    return color;
+    return ao;
 }

@@ -29,6 +29,10 @@ Varyings Vert(Attributes input)
 
 half4 Frag(Varyings input) : SV_Target
 {
+    float2 size = _MainTex_TexelSize.xy;
+    float2 uv = lerp(0.02, 0.98, input.uv);
+
+    /*
     const float2 DX[9] = {
         {-1, -1},
         {-1, 1},
@@ -49,8 +53,8 @@ half4 Frag(Varyings input) : SV_Target
     {
         color += SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_LinearClamp, uv + DX[i] * size, 0) / 9;
     }
-    
-    // color = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_LinearClamp, uv, 0);
+    */
+    float4 color = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_LinearClamp, uv, 0);
 
     return color;
 }

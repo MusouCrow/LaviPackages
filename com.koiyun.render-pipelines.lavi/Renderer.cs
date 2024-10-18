@@ -36,6 +36,7 @@ namespace Koiyun.Render {
             var depthRTR = this.NewRTR("_DepthTexture", TextureFormat.Depth, 0.5f, true);
             var colorRTR = this.NewRTR("_ColorTexture", TextureFormat.LDR, scale, true, true);
             var paramRTR = this.NewRTR("_ParamTexture", TextureFormat.LDR, scale, true, false);
+            var ambientOcclusionRTR = this.NewRTR("_AmbientOcclusionTexture", TextureFormat.LDR, scale, true, false, 0, true);
             var bloomRTR = this.NewRTR("_BloomTexture", TextureFormat.HDR, scale, false, true);
             var bloomBlurHRTRs = new RenderTexutreRegister[RenderConst.BLOOM_STEP];
             var bloomBlurVRTRs = new RenderTexutreRegister[RenderConst.BLOOM_STEP];
@@ -54,13 +55,14 @@ namespace Koiyun.Render {
             var clearColorPass = new ClearPass(rawColorRTR, RTClearFlags.Color, true);
             var clearParamPass = new ClearPass(rawParamRTR, RTClearFlags.Color);
             var clearDepthPass = new ClearPass(rawDepthRTR, RTClearFlags.DepthStencil);
+            var clearAOPass = new ClearPass(ambientOcclusionRTR, RTClearFlags.Color);
 
             var drawOpaquePass = new DrawObjectPass("Opaque", true, rawColorRTR, rawParamRTR, rawDepthRTR);
             var copyDepthPass = new CopyTexturePass(copyTextureMaterial, rawDepthRTR, depthRTR);
             var copyColorPass = new CopyTexturePass(copyTextureMaterial, rawColorRTR, colorRTR);
             var copyParamPass = new CopyTexturePass(copyTextureMaterial, rawParamRTR, paramRTR);
             var outlinePass = new OutlinePass(outlineMaterial, rawParamRTR, rawDepthRTR);
-            var ambientOcclusionPass = new AmbientOcclusionPass(aoMaterial, rawColorRTR, rawDepthRTR);
+            var ambientOcclusionPass = new AmbientOcclusionPass(aoMaterial, ambientOcclusionRTR, rawDepthRTR);
             var drawTransparentPass = new DrawObjectPass("Transparent", false, rawColorRTR, rawParamRTR, rawDepthRTR);
             
             var clearDepthPass2 = new ClearPass(rawDepthRTR, RTClearFlags.Depth);
@@ -80,6 +82,7 @@ namespace Koiyun.Render {
             this.passes.Add(clearColorPass);
             this.passes.Add(clearParamPass);
             this.passes.Add(clearDepthPass);
+            this.passes.Add(clearAOPass);
 
             this.passes.Add(drawOpaquePass);
 
