@@ -11,6 +11,7 @@
 float4 _ColorTexture_TexelSize;
 float _LightIntensty;
 float4 _LightColor;
+float _GlobalDeepRate;
 
 void ShadowAttenuation_float(float3 PositionWS, bool HardShadow, bool NoChar, out float Attenuation)
 {
@@ -142,4 +143,17 @@ void ParallaxMapping_float(float Height, float Rate, float2 UV, float3 ViewDirTS
 {
     float rate = lerp(0, 0.08, Rate);
     Out = UV + ParallaxOffset1Step(Height, rate, ViewDirTS);
+}
+
+void GetGlobalDeepRate_float(out float Deep)
+{
+    Deep = _GlobalDeepRate;
+}
+
+void Contrast_float(float4 Color, float Contrast, out float4 Out)
+{
+    float3 rgb = Color.rgb;
+    rgb = lerp(0.5, rgb, Contrast);
+    
+    Out = float4(rgb, Color.a);
 }
