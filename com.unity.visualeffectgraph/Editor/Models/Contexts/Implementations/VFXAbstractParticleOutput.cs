@@ -51,7 +51,7 @@ namespace UnityEditor.VFX
         public enum PassType
         {
             Transparent,
-            Grab
+            UI
         }
 
         // KOIYUN

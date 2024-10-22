@@ -64,12 +64,14 @@ namespace Koiyun.Render {
             var outlinePass = new OutlinePass(outlineMaterial, rawParamRTR, rawDepthRTR);
             var ambientOcclusionPass = new AmbientOcclusionPass(aoMaterial, ambientOcclusionRTR, rawDepthRTR);
             var drawTransparentPass = new DrawObjectPass("Transparent", false, rawColorRTR, rawParamRTR, rawDepthRTR);
-            
+            /*
             var clearDepthPass2 = new ClearPass(rawDepthRTR, RTClearFlags.Depth);
             var drawOcclusionOpaquePass = new DrawObjectPass("OcclusionOpaque", true, rawColorRTR, rawParamRTR, rawDepthRTR);
             var drawOcclusionTransparentPass = new DrawObjectPass("OcclusionTransparent", false, rawColorRTR, rawParamRTR, rawDepthRTR);
-
+            */
             var bloomPass = new BloomPass(bloomMaterial, rawColorRTR, bloomRTR, bloomBlurHRTRs, bloomBlurVRTRs);
+            var drawUIPass = new DrawObjectPass("UI", false, rawColorRTR, rawParamRTR, rawDepthRTR);
+
             var drawErrorPass = new DrawErrorPass("SRPDefaultUnlit", rawColorRTR, rawDepthRTR);
             var drawGizmosPass = new DrawGizmosPass(rawColorRTR, rawDepthRTR);
             var finalBlitPass = new FinalBlitPass(rawColorRTR, blitMaterial);
@@ -100,6 +102,8 @@ namespace Koiyun.Render {
             */
             this.passes.Add(copyColorPass);
             this.passes.Add(bloomPass);
+            this.passes.Add(drawUIPass);
+
             this.passes.Add(drawErrorPass);
             this.passes.Add(drawGizmosPass);
             this.passes.Add(finalBlitPass);
