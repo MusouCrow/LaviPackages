@@ -56,7 +56,7 @@ float4 Frag(Varyings input) : SV_Target
     hsv = RgbToHsv(color.rgb);
     color.rgb *= lerp(lerp(_OutlineParams.x * 2, _OutlineParams.x * 0.5, hsv.b), 1, layer);
     
-    ao = saturate(pow(ao, 2) + pow(ao, 0.6));
+    // ao = saturate(pow(ao, 2) + pow(ao, 0.6));
     color.rgb = lerp(color.rgb, _LightColor * color.rgb, ao);
     color.rgb += blur.rgb;
 
