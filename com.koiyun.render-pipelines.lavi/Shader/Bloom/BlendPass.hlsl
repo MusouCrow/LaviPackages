@@ -39,9 +39,11 @@ float SampleAO(float2 uv)
 */
 float4 Frag(Varyings input) : SV_Target
 {
-    float4 color = SAMPLE_TEXTURE2D_LOD(_ColorTexture, sampler_LinearClamp, input.uv, 0);
-    float4 param = SAMPLE_TEXTURE2D_LOD(_RawParamTexture, sampler_LinearClamp, input.uv, 0);
-    float4 blur = SAMPLE_TEXTURE2D_LOD(_BloomBlurTexture, sampler_LinearClamp, input.uv, 0);
+    float2 uv = lerp(0.02, 0.98, input.uv);
+    // float2 uv = input.uv;
+    float4 color = SAMPLE_TEXTURE2D_LOD(_ColorTexture, sampler_LinearClamp, uv, 0);
+    float4 param = SAMPLE_TEXTURE2D_LOD(_RawParamTexture, sampler_LinearClamp, uv, 0);
+    float4 blur = SAMPLE_TEXTURE2D_LOD(_BloomBlurTexture, sampler_LinearClamp, uv, 0);
     float layer = 1 - param.g;
     float ao = blur.a;
     

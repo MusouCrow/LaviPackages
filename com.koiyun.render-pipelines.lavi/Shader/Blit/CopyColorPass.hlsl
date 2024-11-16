@@ -30,8 +30,8 @@ Varyings Vert(Attributes input)
 half4 Frag(Varyings input) : SV_Target
 {
     float2 size = _MainTex_TexelSize.xy;
-    float2 uv = lerp(0.02, 0.98, input.uv);
-
+    // float2 uv = lerp(0.02, 0.98, input.uv);
+    float2 uv = input.uv;
     /*
     const float2 DX[9] = {
         {-1, -1},
