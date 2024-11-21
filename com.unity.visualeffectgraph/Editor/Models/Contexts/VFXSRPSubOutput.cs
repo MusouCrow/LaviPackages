@@ -47,6 +47,7 @@ namespace UnityEditor.VFX
 
         public virtual string GetRenderQueueStr()
         {
+            /*
             var baseRenderQueue = string.Empty;
             switch (owner.blendMode)
             {
@@ -64,10 +65,14 @@ namespace UnityEditor.VFX
                 default:
                     throw new NotImplementedException("Unknown blend mode");
             }
+            */
 
-            int rawMaterialSortingPriority = owner.GetMaterialSortingPriority();
-            int queueOffset = Mathf.Clamp(rawMaterialSortingPriority, -50, +50);
-            return baseRenderQueue + queueOffset.ToString("+#;-#;+0");
+            // int rawMaterialSortingPriority = owner.GetMaterialSortingPriority();
+            // int queueOffset = Mathf.Clamp(rawMaterialSortingPriority, -50, +50);
+            // return baseRenderQueue + queueOffset.ToString("+#;-#;+0");
+
+            // KOIYUN
+            return "Background+" + owner.GetMaterialSortingPriority();
         }
 
         public virtual IEnumerable<KeyValuePair<string, VFXShaderWriter>> GetStencilStateOverridesStr()

@@ -18,6 +18,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         private JsonData<SubTarget> activeSubTarget;
 
         public SurfaceType surfaceType = SurfaceType.Opaque;
+        public RenderQueues renderQueue = RenderQueues.Scene;
         public BlendMode blendMode = BlendMode.Alpha;
         public CullMode cullMode = CullMode.Back;
         public bool zWrite = true;
@@ -25,7 +26,6 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         public StencilType stencil = StencilType.None;
         public StencilType occlusion = StencilType.None;
         public CompareFunction stencilComp = CompareFunction.Always;
-        public bool ui = false;
         public bool overrideBlendMode;
         public bool overrideCullMode;
         public bool overrideZWrite;
@@ -44,11 +44,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
         public string RenderQueue {
             get {
-                if (this.surfaceType == SurfaceType.Opaque) {
-                    return $"{UnityEditor.ShaderGraph.RenderQueue.Geometry}";
-                }
-
-                return $"{UnityEditor.ShaderGraph.RenderQueue.Transparent}";
+                return "Background+" + (int)this.renderQueue;
             }
         }
 
@@ -158,7 +154,6 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             this.DrawStencilProperty(ref context, onChange, registerUndo);
             this.DrawOcclusionProperty(ref context, onChange, registerUndo);
             this.DrawStencilCompProperty(ref context, onChange, registerUndo);
-            this.DrawUIProperty(ref context, onChange, registerUndo);
             this.DrawCustomEditorProperty(ref context, onChange, registerUndo);
         }
 
@@ -225,6 +220,22 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
                 registerUndo("Change Surface");
                 this.surfaceType = value;
+                onChange();
+            });
+        }
+
+        public void DrawRenderQueueProperty(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
+            var field = new EnumField(RenderQueues.Scene) {value = this.renderQueue};
+            
+            context.AddProperty("Render Queue", field, (evt) => {
+                var value = (RenderQueues)evt.newValue;
+
+                if (this.renderQueue == value) {
+                    return;
+                }
+
+                registerUndo("Change Render Queue");
+                this.renderQueue = value;
                 onChange();
             });
         }
@@ -395,20 +406,6 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
                 registerUndo("Change Stencil Comp");
                 this.stencilComp = value;
-                onChange();
-            });
-        }
-
-        public void DrawUIProperty(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
-            var toggle = new Toggle() {value = this.ui};
-
-            context.AddProperty("UI", toggle, (evt) => {
-                if (this.ui == evt.newValue) {
-                    return;
-                }
-
-                registerUndo("Change UI");
-                this.ui = evt.newValue;
                 onChange();
             });
         }

@@ -62,9 +62,9 @@ namespace Koiyun.Render.ShaderGraph.Editor {
 
             return new PassDescriptor() {
                 // Definition
-                displayName = occlusion ? "OcclusionOpaque" : "Opaque",
-                referenceName = occlusion ? "SHADERPASS_OCCLUSION_OPAQUE" : "SHADERPASS_OPAQUE",
-                lightMode = occlusion ? "OcclusionOpaque" : "Opaque",
+                displayName = occlusion ? "Occlusion" : "Forward",
+                referenceName = occlusion ? "SHADERPASS_OCCLUSION" : "SHADERPASS_FORWARD",
+                lightMode = occlusion ? "Occlusion" : "Forward",
                 useInPreview = !occlusion,
 
                 // Template

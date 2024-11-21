@@ -33,7 +33,7 @@ namespace Koiyun.Render {
             var rawDepthRTR = this.NewRTR("_RawDepthTexture", TextureFormat.Depth, scale, true);
             var rawColorRTR = this.NewRTR("_RawColorTexture", TextureFormat.LDR, scale, false, true);
             var rawParamRTR = this.NewRTR("_RawParamTexture", TextureFormat.LDR, scale, true, false);      
-            var depthRTR = this.NewRTR("_DepthTexture", TextureFormat.Depth, 0.5f, true);
+            var depthRTR = this.NewRTR("_DepthTexture", TextureFormat.Depth, scale, true, false, 0, true);
             var colorRTR = this.NewRTR("_ColorTexture", TextureFormat.LDR, scale, true, true);
             var paramRTR = this.NewRTR("_ParamTexture", TextureFormat.LDR, scale, true, false);
             var ambientOcclusionRTR = this.NewRTR("_AmbientOcclusionTexture", TextureFormat.LDR, scale, true, false, 0, true);
@@ -58,20 +58,20 @@ namespace Koiyun.Render {
             var clearDepthPass = new ClearPass(rawDepthRTR, RTClearFlags.DepthStencil);
             var clearAOPass = new ClearPass(ambientOcclusionRTR, RTClearFlags.Color);
 
-            var drawOpaquePass = new DrawObjectPass("Opaque", true, rawColorRTR, rawParamRTR, rawDepthRTR);
+            var drawOpaquePass = new DrawObjectPass("Forward", true, new RenderQueueRange(2000, 3500), rawColorRTR, rawParamRTR, rawDepthRTR);
             var copyDepthPass = new CopyTexturePass(copyTextureMaterial, rawDepthRTR, depthRTR);
             var copyColorPass = new CopyTexturePass(copyTextureMaterial, rawColorRTR, colorRTR);
             var copyParamPass = new CopyTexturePass(copyTextureMaterial, rawParamRTR, paramRTR);
             var outlinePass = new OutlinePass(outlineMaterial, rawParamRTR, rawDepthRTR);
             var ambientOcclusionPass = new AmbientOcclusionPass(aoMaterial, ambientOcclusionRTR, rawDepthRTR);
-            var drawTransparentPass = new DrawObjectPass("Transparent", false, rawColorRTR, rawParamRTR, rawDepthRTR);
+            var drawTransparentPass = new DrawObjectPass("Forward", false, new RenderQueueRange(4000, 4000), rawColorRTR, rawParamRTR, rawDepthRTR);
             /*
             var clearDepthPass2 = new ClearPass(rawDepthRTR, RTClearFlags.Depth);
-            var drawOcclusionOpaquePass = new DrawObjectPass("OcclusionOpaque", true, rawColorRTR, rawParamRTR, rawDepthRTR);
-            var drawOcclusionTransparentPass = new DrawObjectPass("OcclusionTransparent", false, rawColorRTR, rawParamRTR, rawDepthRTR);
+            var drawOcclusionOpaquePass = new DrawObjectPass("Occlusion", true, new RenderQueueRange(3000, 3500), rawColorRTR, rawParamRTR, rawDepthRTR);
+            var drawOcclusionTransparentPass = new DrawObjectPass("Occlusion", false, new RenderQueueRange(4000, 4000), rawColorRTR, rawParamRTR, rawDepthRTR);
             */
             var bloomPass = new BloomPass(bloomMaterial, rawColorRTR, bloomRTR, bloomBlurHRTRs, bloomBlurVRTRs);
-            var drawUIPass = new DrawObjectPass("UI", false, rawColorRTR, rawParamRTR, rawDepthRTR);
+            var drawUIPass = new DrawObjectPass("Forward", false, new RenderQueueRange(4500, 4500), rawColorRTR, rawParamRTR, rawDepthRTR);
 
             var drawErrorPass = new DrawErrorPass("SRPDefaultUnlit", rawColorRTR, rawDepthRTR);
             var drawGizmosPass = new DrawGizmosPass(rawColorRTR, rawDepthRTR);

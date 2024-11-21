@@ -51,6 +51,16 @@ namespace UnityEditor.VFX
             Unit = 2
         }
 
+        // KOIYUN
+        public enum RenderQueues {
+            Effect = 3000,
+            UI = 3500
+        }
+
+        // KOIYUN
+        [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField, Tooltip("Specifies render queue.")]
+        public RenderQueues renderQueues = RenderQueues.Effect;
+
         [VFXSetting, Header("Render States"), Tooltip("Specifies the transparency and blending method for rendering the particles to the screen.")]
         public BlendMode blendMode = BlendMode.Alpha;
 
@@ -87,7 +97,8 @@ namespace UnityEditor.VFX
 
         public virtual int GetMaterialSortingPriority()
         {
-            return sortingPriority;
+            // KOIYUN
+            return (int)this.renderQueues + sortingPriority;
         }
 
         public virtual bool hasMotionVector

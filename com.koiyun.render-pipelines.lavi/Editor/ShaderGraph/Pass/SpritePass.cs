@@ -39,14 +39,12 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             if (occlusion) {
                 defines.Add(ShaderPropertyUtil.OcclusionKeywordDefined, 1);
             }
-            
-            var lightMode = subTarget.target.ui ? "UI" : "Transparent";
 
             return new PassDescriptor() {
                 // Definition
-                displayName = occlusion ? "OcclusionTransparent" : "Transparent",
-                referenceName = occlusion ? "SHADERPASS_OCCLUSION_TRANSPARENT" : "SHADERPASS_TRANSPARENT",
-                lightMode = occlusion ? "Occlusion" + lightMode : lightMode,
+                displayName = occlusion ? "Occlusion" : "Forward",
+                referenceName = occlusion ? "SHADERPASS_OCCLUSION" : "SHADERPASS_FORWARD",
+                lightMode = occlusion ? "Occlusion" : "Forward",
                 useInPreview = true,
 
                 // Template

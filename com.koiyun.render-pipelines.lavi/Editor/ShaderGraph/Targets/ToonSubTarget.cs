@@ -44,6 +44,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         }
 
         public override void GetPropertiesGUI(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
+            this.target.DrawRenderQueueProperty(ref context, onChange, registerUndo);
             this.target.DrawCullModeProperty(ref context, onChange, registerUndo);
             this.target.DrawZWriteProperty(ref context, onChange, registerUndo);
             this.target.DrawZTestProperty(ref context, onChange, registerUndo);

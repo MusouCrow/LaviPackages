@@ -3,7 +3,6 @@
 #include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Core.hlsl"
 #include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Depth.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
 #include "./Lib.hlsl"
 
 float4 _LightColor;
@@ -32,7 +31,7 @@ Varyings Vert(Attributes input)
 
 float4 Frag(Varyings input) : SV_TARGET
 {
-    float depth = SampleDepth(input.uv);
+    float depth = SampleDepth(input.uv, 3);
     depth = LinearEyeDepth(depth, _ZBufferParams);
     
     float3 positionVS = ReconstructViewPosition(input.uv, depth);
@@ -59,7 +58,7 @@ float4 Frag(Varyings input) : SV_TARGET
         
         float zDist = -dot(UNITY_MATRIX_V[2].xyz, shiftPosVS);
         float2 uv = saturate((shiftPosSS * rcp(zDist) + 1) * 0.5);
-        float depth2 = SAMPLE_DEPTH_TEXTURE(_DepthTexture, sampler_LinearClamp, uv);
+        float depth2 = SampleDepth(uv, 3);
         float rawDpeth2 = depth2;
         depth2 = LinearEyeDepth(depth2, _ZBufferParams);
 

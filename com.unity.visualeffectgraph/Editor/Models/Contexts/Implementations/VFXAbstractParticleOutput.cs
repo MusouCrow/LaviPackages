@@ -47,17 +47,6 @@ namespace UnityEditor.VFX
             Texture2DArray
         }
 
-        // KOIYUN
-        public enum PassType
-        {
-            Transparent,
-            UI
-        }
-
-        // KOIYUN
-        [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField, Tooltip("Specifies render pass.")]
-        protected PassType renderPass = PassType.Transparent;
-
         [VFXSetting, SerializeField, Tooltip("Specifies how particles are being colored in the pixel shader. They can either use the main texture, or their color and alpha can be remapped with a gradient based on the main texture values."), Header("Particle Options"), FormerlySerializedAs("colorMappingMode")]
         protected ColorMappingMode colorMapping;
 
@@ -126,8 +115,7 @@ namespace UnityEditor.VFX
         public bool needsOwnSort = false;
 
         public SortCriteria GetSortCriterion() { return sortMode; }
-
-
+        
         public virtual VFXOutputUpdate.Features outputUpdateFeatures
         {
             get
@@ -547,7 +535,7 @@ namespace UnityEditor.VFX
                 // KOIYUN
                 {
                     var st = new VFXShaderWriter();
-                    st.Write('"' + this.renderPass.ToString() + '"');
+                    st.Write('"' + "Forward" + '"');
 
                     yield return new KeyValuePair<string, VFXShaderWriter>("${VFXPassForward}", st);
                 }

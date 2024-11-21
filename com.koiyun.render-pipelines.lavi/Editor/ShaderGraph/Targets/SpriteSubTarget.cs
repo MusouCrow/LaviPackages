@@ -1,5 +1,4 @@
 using System;
-using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEditor.ShaderGraph;
 
@@ -37,6 +36,7 @@ namespace Koiyun.Render.ShaderGraph.Editor {
         }
 
         public override void GetPropertiesGUI(ref TargetPropertyGUIContext context, Action onChange, Action<String> registerUndo) {
+            this.target.DrawRenderQueueProperty(ref context, onChange, registerUndo);
             this.target.DrawBlendModeProperty(ref context, onChange, registerUndo);
             this.target.DrawCullModeProperty(ref context, onChange, registerUndo);
             this.target.DrawZWriteProperty(ref context, onChange, registerUndo);

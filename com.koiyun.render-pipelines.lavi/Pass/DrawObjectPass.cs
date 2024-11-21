@@ -9,12 +9,10 @@ namespace Koiyun.Render {
         private RenderTargetIdentifier[] colorRTIs;
         private RenderTexutreRegister depthRTR;
 
-        public DrawObjectPass(string lightMode, bool isOpaque, RenderTexutreRegister colorRTR, RenderTexutreRegister paramRTR, RenderTexutreRegister depthRTR) {
+        public DrawObjectPass(string lightMode, bool isOpaque, RenderQueueRange renderQueue, RenderTexutreRegister colorRTR, RenderTexutreRegister paramRTR, RenderTexutreRegister depthRTR) {
             this.lightMode = lightMode;
             this.isOpaque = isOpaque;
-
-            var renderQueueRange = isOpaque ? RenderQueueRange.opaque : RenderQueueRange.transparent;
-            this.filteringSettings = new FilteringSettings(renderQueueRange);
+            this.filteringSettings = new FilteringSettings(renderQueue);
 
             this.depthRTR = depthRTR;
             this.colorRTIs = new RenderTargetIdentifier[] {

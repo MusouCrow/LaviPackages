@@ -86,7 +86,9 @@ namespace UnityEditor.VFX
                 }
             }
         }
-
+        
+        // KOIYUN
+        /*
         public override void OnInspectorGUI()
         {
             if (targets.OfType<VFXShaderGraphParticleOutput>().Any(context => context.GetOrRefreshShaderGraphObject() == null))
@@ -154,6 +156,7 @@ namespace UnityEditor.VFX
                 }
             }
         }
+        */
     }
 
     class VFXShaderGraphParticleOutput : VFXAbstractParticleOutput
@@ -216,6 +219,8 @@ namespace UnityEditor.VFX
             }
         }
 
+        // KOIYUN
+        /*
         public override int GetMaterialSortingPriority()
         {
             var shaderGraph = GetOrRefreshShaderGraphObject();
@@ -228,7 +233,8 @@ namespace UnityEditor.VFX
             }
             return sortingPriority;
         }
-
+        */
+        
         public override bool SupportsMotionVectorPerVertex(out uint vertsCount)
         {
             var support = base.SupportsMotionVectorPerVertex(out vertsCount);
