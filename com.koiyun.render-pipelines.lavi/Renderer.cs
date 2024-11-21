@@ -51,6 +51,7 @@ namespace Koiyun.Render {
             
             var setupPass = new SetupPass(this.asset, this.rtrs);
             var mainShadowPass = new MainShadowPass(this.asset, sceneShadowRTR, unitShadowRTR);
+            var viewPass = new ViewPass(this.asset);
             
             var clearColorPass = new ClearPass(rawColorRTR, RTClearFlags.Color, true);
             var clearParamPass = new ClearPass(rawParamRTR, RTClearFlags.Color);
@@ -80,6 +81,7 @@ namespace Koiyun.Render {
             
             this.passes.Add(setupPass);
             this.passes.Add(mainShadowPass);
+            this.passes.Add(viewPass);
 
             this.passes.Add(clearColorPass);
             this.passes.Add(clearParamPass);
@@ -116,7 +118,6 @@ namespace Koiyun.Render {
             cullingParameters.shadowDistance = this.asset.ShadowDistance;
 
             var cullingResults = context.Cull(ref cullingParameters);
-            context.SetupCameraProperties(camera);
             
             var data = new RenderData() {
                 camera = camera,

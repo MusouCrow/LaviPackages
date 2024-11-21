@@ -8,6 +8,12 @@ struct ps_input
 	#if VFX_NEEDS_COLOR_INTERPOLATOR
 	nointerpolation float4 color : COLOR0;
 	#endif
+
+	// KOIYUN
+	#if VFX_USE_GLOW_CURRENT
+	nointerpolation float glow : COLOR2;
+	#endif
+
 	#if USE_ALPHA_TEST || USE_FLIPBOOK || USE_EXPOSURE_WEIGHT
 	// x: alpha threshold
 	// y: texture index
@@ -47,6 +53,8 @@ struct ps_input
 struct ps_output
 {
 	float4 color : SV_Target0;
+// KOIYUN
+	float4 param : SV_Target1;
 };
 
 #define VFX_VARYING_PS_INPUTS ps_input
@@ -135,14 +143,15 @@ ps_output frag(ps_input i)
 
     float3 elementPos = mul(worldToElement, worldPos).xyz * 2.0f;
 
-	const float bias = 0.0f;
-	clip(1.0f - abs(elementPos) + bias);
+	// KOIYUN
+	float3 decalSpaceHardNormal = normalize(cross(ddx(elementPos), ddy(elementPos)));
+	float bias = decalSpaceHardNormal.z > 0.2 ? 0 : 1;
+	clip(1.0f - abs(elementPos) - bias);
 
 	float2 uv = elementPos.xy * 0.5f + 0.5f;
 
 	#define VFX_TEXTURE_COLOR VFXGetTextureColorWithProceduralUV(VFX_SAMPLER(mainTexture),i,uv)
 	${VFXApplyColor}
-
 	o.color = VFXApplyPreExposure(o.color, i);
 	o.color = VFXApplyFog(o.color,i);
 	VFXClipFragmentColor(o.color.a,i);
@@ -156,5 +165,11 @@ ps_output frag(ps_input i)
 	o.color.a = saturate(o.color.a);
 	o.color = VFXTransformFinalColor(o.color);
 #endif
+
+	// KOIYUN
+#if VFX_USE_GLOW_CURRENT
+	o.param = float4(i.glow, 0, 0, o.color.a);
+#endif
+
 	return o;
 }

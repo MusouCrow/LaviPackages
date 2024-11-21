@@ -80,6 +80,9 @@ namespace UnityEditor.VFX
                 yield return new VFXAttributeInfo(VFXAttribute.ScaleY, VFXAttributeMode.Read);
                 yield return new VFXAttributeInfo(VFXAttribute.ScaleZ, VFXAttributeMode.Read);
 
+                // KOIYUN
+                yield return new VFXAttributeInfo(VFXAttribute.Glow, VFXAttributeMode.Read);
+
                 if (usesFlipbook)
                     yield return new VFXAttributeInfo(VFXAttribute.TexIndex, VFXAttributeMode.Read);
             }

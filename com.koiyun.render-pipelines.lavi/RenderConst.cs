@@ -2,6 +2,8 @@ using UnityEngine;
 
 namespace Koiyun.Render {
     public static class RenderConst {
+        public static int VIEW_PROJ_INV_MTX_ID = Shader.PropertyToID("unity_MatrixInvVP");
+
         public static int WORLD_TO_SHADOW_MTX_ID = Shader.PropertyToID("_WorldToShadowMatrix");
         public static int MAIN_LIGHT_DIRECTION_ID = Shader.PropertyToID("_LightDirection");
         

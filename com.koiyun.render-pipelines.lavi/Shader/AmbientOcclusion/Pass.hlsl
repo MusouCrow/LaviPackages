@@ -1,11 +1,10 @@
 #pragma once
 
 #include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Core.hlsl"
+#include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Depth.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
 #include "./Lib.hlsl"
-
-TEXTURE2D_FLOAT(_DepthTexture);
 
 float4 _LightColor;
 
@@ -33,7 +32,7 @@ Varyings Vert(Attributes input)
 
 float4 Frag(Varyings input) : SV_TARGET
 {
-    float depth = SAMPLE_DEPTH_TEXTURE(_DepthTexture, sampler_LinearClamp, input.uv);
+    float depth = SampleDepth(input.uv);
     depth = LinearEyeDepth(depth, _ZBufferParams);
     
     float3 positionVS = ReconstructViewPosition(input.uv, depth);

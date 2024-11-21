@@ -30,7 +30,7 @@ Varyings Vert(Attributes input)
 
 float Frag(Varyings input) : SV_DEPTH
 {
-    float depth = SAMPLE_DEPTH_TEXTURE_LOD(_CopiedTexture, sampler_PointClamp, input.uv, 0);
+    float depth = SAMPLE_DEPTH_TEXTURE(_CopiedTexture, sampler_PointClamp, input.uv);
 
     return depth;
 }

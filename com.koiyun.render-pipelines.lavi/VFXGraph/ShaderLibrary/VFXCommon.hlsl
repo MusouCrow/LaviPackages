@@ -1,6 +1,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
 #include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Core.hlsl"
+#include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Depth.hlsl"
 #include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/ShaderGraphFunctions.hlsl"
 
 #ifdef VFX_VARYING_PS_INPUTS
@@ -138,10 +139,11 @@ float4x4 VFXGetViewToWorldMatrix()
     }
 #endif
 
-// TODO
 float VFXSampleDepth(float4 positionSS)
 {
-    return 0;
+    float2 uv = GetNormalizedScreenSpaceUV(positionSS.xy);
+
+    return SampleDepth(uv);
 }
 
 // TODO
