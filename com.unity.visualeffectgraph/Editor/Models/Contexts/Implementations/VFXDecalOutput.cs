@@ -7,7 +7,8 @@ namespace UnityEditor.VFX
 {
     [VFXHelpURL("Context-OutputForwardDecal")]
     [VFXInfo]
-    class VFXDecalOutput : VFXAbstractParticleOutput
+    // KOIYUN
+    class VFXDecalOutput : VFXShaderGraphParticleOutput
     {
         public override string name { get { return "Output Particle Forward Decal"; } }
         public override string codeGeneratorTemplate { get { return RenderPipeTemplate("VFXParticleDecal"); } }
@@ -16,14 +17,25 @@ namespace UnityEditor.VFX
         public override CullMode defaultCullMode { get { return CullMode.Back; } }
         public override bool hasShadowCasting { get { return false; } }
 
+        // KOIYUN
+        protected IEnumerable<VFXPropertyWithValue> optionalInputProperties
+        {
+            get
+            {
+                yield return new VFXPropertyWithValue(new VFXProperty(GetFlipbookType(), "mainTexture", new TooltipAttribute("Specifies the base color (RGB) and opacity (A) of the particle.")), (usesFlipbook ? null : VFXResources.defaultResources.particleTexture));
+            }
+        }
+
+        // KOIYUN
         protected override IEnumerable<VFXPropertyWithValue> inputProperties
         {
             get
             {
-                foreach (var input in base.inputProperties)
-                    yield return input;
-
-                yield return new VFXPropertyWithValue(new VFXProperty(GetFlipbookType(), "mainTexture", new TooltipAttribute("Specifies the base color (RGB) and opacity (A) of the particle.")), (usesFlipbook ? null : VFXResources.defaultResources.particleTexture));
+                IEnumerable<VFXPropertyWithValue> properties = base.inputProperties;
+                if (GetOrRefreshShaderGraphObject() == null)
+                    properties = properties.Concat(optionalInputProperties);
+                
+                return properties;
             }
         }
 
@@ -49,12 +61,15 @@ namespace UnityEditor.VFX
             }
         }
 
+        // KOIYUN
         protected override IEnumerable<VFXNamedExpression> CollectGPUExpressions(IEnumerable<VFXNamedExpression> slotExpressions)
         {
             foreach (var exp in base.CollectGPUExpressions(slotExpressions))
                 yield return exp;
-
-            yield return slotExpressions.First(o => o.name == "mainTexture");
+            if (GetOrRefreshShaderGraphObject() == null)
+            {
+                yield return slotExpressions.First(o => o.name == "mainTexture");
+            }
         }
 
         public override IEnumerable<VFXAttributeInfo> attributes

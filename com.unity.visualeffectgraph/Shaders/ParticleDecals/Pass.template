@@ -14,6 +14,9 @@ struct ps_input
 	nointerpolation float glow : COLOR2;
 	#endif
 
+	// KOIYUN
+	float2 uv : TEXCOORD1;
+
 	#if USE_ALPHA_TEST || USE_FLIPBOOK || USE_EXPOSURE_WEIGHT
 	// x: alpha threshold
 	// y: texture index
@@ -40,6 +43,9 @@ struct ps_input
 	#if VFX_NEEDS_POSWS_INTERPOLATOR
 	float3 posWS : TEXCOORD5;
 	#endif
+
+	// KOIYUN
+	${VFXAdditionalInterpolantsDeclaration}
 
 	UNITY_VERTEX_OUTPUT_STEREO
 
@@ -113,6 +119,11 @@ int _PassValue;
 float4 _SelectionID;
 #endif
 
+// KOIYUN
+#if VFX_SHADERGRAPH
+${SHADERGRAPH_PIXEL_CODE_TRANSPARENT}
+#endif
+
 #pragma fragment frag
 ps_output frag(ps_input i)
 {
@@ -148,12 +159,36 @@ ps_output frag(ps_input i)
 	float bias = decalSpaceHardNormal.z > 0.2 ? 0 : 1;
 	clip(1.0f - abs(elementPos) - bias);
 
-	float2 uv = elementPos.xy * 0.5f + 0.5f;
+	i.uv = elementPos.xy * 0.5f + 0.5f;
 
-	#define VFX_TEXTURE_COLOR VFXGetTextureColorWithProceduralUV(VFX_SAMPLER(mainTexture),i,uv)
+// KOIYUN
+#if VFX_SHADERGRAPH
+	VFXUVData uvData = GetUVData(i, i.uv);
+	i.uv = uvData.uvs.xy;
+
+	${VFXAdditionalInterpolantsPreparation}
+	${SHADERGRAPH_PIXEL_CALL_TRANSPARENT}
+	o.color = VFXGetFragmentColor(i);
+
+	#if HAS_SHADERGRAPH_PARAM_BASECOLOR
+		o.color.rgb *= OUTSG.${SHADERGRAPH_PARAM_BASECOLOR}.rgb;
+		o.color = VFXApplyPreExposure(o.color, i);
+	#endif
+	
+	#if HAS_SHADERGRAPH_PARAM_ALPHA
+		o.color.a *= OUTSG.${SHADERGRAPH_PARAM_ALPHA};
+	#endif
+
+	#if HAS_SHADERGRAPH_PARAM_GLOW
+		i.glow *= OUTSG.${SHADERGRAPH_PARAM_GLOW};
+	#endif
+#else
+	#define VFX_TEXTURE_COLOR VFXGetTextureColorWithProceduralUV(VFX_SAMPLER(mainTexture),i,i.uv)
 	${VFXApplyColor}
 	o.color = VFXApplyPreExposure(o.color, i);
 	o.color = VFXApplyFog(o.color,i);
+#endif
+
 	VFXClipFragmentColor(o.color.a,i);
 
 #if VFX_PASSDEPTH == VFX_PASSDEPTH_SELECTION
