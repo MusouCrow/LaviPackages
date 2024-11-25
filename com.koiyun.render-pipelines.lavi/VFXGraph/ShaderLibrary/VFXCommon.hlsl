@@ -143,7 +143,7 @@ float VFXSampleDepth(float4 positionSS)
 {
     float2 uv = GetNormalizedScreenSpaceUV(positionSS.xy);
 
-    return SampleDepth(uv, 0);
+    return SampleDepth(uv, 2);
 }
 
 // TODO
