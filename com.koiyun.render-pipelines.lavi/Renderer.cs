@@ -64,7 +64,7 @@ namespace Koiyun.Render {
             var copyParamPass = new CopyTexturePass(copyTextureMaterial, rawParamRTR, paramRTR);
             var outlinePass = new OutlinePass(outlineMaterial, rawParamRTR, rawDepthRTR);
             var ambientOcclusionPass = new AmbientOcclusionPass(aoMaterial, ambientOcclusionRTR, rawDepthRTR);
-            var drawTransparentPass = new DrawObjectPass("Forward", false, new RenderQueueRange(4000, 4000), rawColorRTR, rawParamRTR, rawDepthRTR);
+            var drawTransparentPass = new DrawObjectPass("Forward", false, new RenderQueueRange(4000 - 50, 4000 + 50), rawColorRTR, rawParamRTR, rawDepthRTR);
             /*
             var clearDepthPass2 = new ClearPass(rawDepthRTR, RTClearFlags.Depth);
             var drawOcclusionOpaquePass = new DrawObjectPass("Occlusion", true, new RenderQueueRange(3000, 3500), rawColorRTR, rawParamRTR, rawDepthRTR);
