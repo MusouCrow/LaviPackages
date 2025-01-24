@@ -12,6 +12,7 @@ float4 _ColorTexture_TexelSize;
 float _LightIntensty;
 float4 _LightColor;
 float _GlobalDeepRate;
+float4 _SceneColor;
 
 void ShadowAttenuation_float(float3 PositionWS, bool HardShadow, bool NoChar, out float Attenuation)
 {
@@ -156,4 +157,9 @@ void Contrast_float(float4 Color, float Contrast, out float4 Out)
     rgb = lerp(0.5, rgb, Contrast);
     
     Out = float4(rgb, Color.a);
+}
+
+void GetSceneColor_float(out float4 Out)
+{
+    Out = _SceneColor;
 }
