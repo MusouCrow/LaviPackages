@@ -1,9 +1,9 @@
 #pragma once
 
 #include "./Include.hlsl"
+#include "Packages/com.koiyun.render-pipelines.lavi/ShaderLibrary/Shadow.hlsl"
 
 float2 _OutlineParams; // OutlineBrightness, OutlineThickness
-float4 _LightColor;
 
 TEXTURE2D(_ColorTexture);
 TEXTURE2D(_AmbientOcclusionTexture);
@@ -58,8 +58,8 @@ float4 Frag(Varyings input) : SV_Target
     hsv = RgbToHsv(color.rgb);
     color.rgb *= lerp(lerp(_OutlineParams.x * 2, _OutlineParams.x * 0.5, hsv.b), 1, layer);
     
-    // ao = saturate(pow(ao, 2) + pow(ao, 0.6));
-    color.rgb = lerp(color.rgb, _LightColor * color.rgb, ao);
+    ao = saturate(pow(ao, 2) + pow(ao, 0.6));
+    color.rgb = lerp(color.rgb, _ShadowAttens.y * color.rgb, ao);
     color.rgb += blur.rgb;
 
     return color;
