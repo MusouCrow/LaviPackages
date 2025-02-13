@@ -114,9 +114,19 @@ namespace Koiyun.Render {
         }
 
         public void Render(ref ScriptableRenderContext context, Camera camera) {
-            camera.TryGetCullingParameters(out var cullingParameters);
-            cullingParameters.shadowDistance = this.asset.ShadowDistance;
+            bool cull = camera.TryGetCullingParameters(out var cullingParameters);
 
+            if (!cull) {
+                return;
+            }
+
+        #if UNITY_EDITOR
+            if (camera.cameraType == CameraType.SceneView) {
+                ScriptableRenderContext.EmitWorldGeometryForSceneView(camera);
+            } 
+        #endif
+
+            cullingParameters.shadowDistance = this.asset.ShadowDistance;
             var cullingResults = context.Cull(ref cullingParameters);
             
             var data = new RenderData() {

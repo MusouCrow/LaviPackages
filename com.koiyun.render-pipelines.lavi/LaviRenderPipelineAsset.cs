@@ -130,6 +130,12 @@ namespace Koiyun.Render {
             }
         }
 
+        public override Material defaultUIMaterial {
+            get {
+                return this.DefaultSpriteMaterial;
+            }
+        }
+
         public override Shader defaultShader {
             get {
                 return this.DefaultShader;
