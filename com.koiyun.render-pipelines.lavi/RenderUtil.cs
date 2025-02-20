@@ -4,6 +4,8 @@ using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
 
 namespace Koiyun.Render {
+    using ShaderGraph;
+
     public static class RenderUtil {
         private static List<int> MainLightIndexes = new List<int>();
 
@@ -60,6 +62,14 @@ namespace Koiyun.Render {
             }
             
             return new Vector2(depthBias, normalBias);
+        }
+
+        public static RenderQueueRange GetRenderQueueRange(RenderQueues a, RenderQueues b, int range=0) {
+            return new RenderQueueRange((int)a + 1000 - range, (int)b + 1000 + range);
+        }
+
+        public static RenderQueueRange GetRenderQueueRange(int a, int b) {
+            return new RenderQueueRange(a + 1000, b + 1000);
         }
     }
 }
