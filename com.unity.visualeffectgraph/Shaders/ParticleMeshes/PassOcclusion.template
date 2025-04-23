@@ -1,7 +1,7 @@
 // KOIYUN, Occlusion pass
 Pass
 {		
-	Tags { "LightMode"="OcclusionTransparent" }
+	Tags { "LightMode"="Occlusion" }
 	
 	${VFXStencilOcclusion}
 	

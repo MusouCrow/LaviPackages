@@ -70,7 +70,7 @@ namespace Koiyun.Render {
 
             var clearDepthPass2 = new ClearPass(rawDepthRTR, RTClearFlags.Depth);
             var drawOcclusionOpaquePass = new DrawObjectPass("Occlusion", true, RenderUtil.GetRenderQueueRange(RenderQueues.Unit, RenderQueues.UnitClip), rawColorRTR, rawParamRTR, rawDepthRTR);
-            // var drawOcclusionTransparentPass = new DrawObjectPass("Occlusion", false, new RenderQueueRange(4000, 4000), rawColorRTR, rawParamRTR, rawDepthRTR);
+            var drawOcclusionTransparentPass = new DrawObjectPass("Occlusion", false, RenderUtil.GetRenderQueueRange(RenderQueues.Effect, RenderQueues.Effect, 50), rawColorRTR, rawParamRTR, rawDepthRTR);
 
             var bloomPass = new BloomPass(bloomMaterial, rawColorRTR, bloomRTR, bloomBlurHRTRs, bloomBlurVRTRs);
             var drawUIPass = new DrawObjectPass("Forward", false, RenderUtil.GetRenderQueueRange(RenderQueues.UI, RenderQueues.UI), rawColorRTR, rawParamRTR, rawDepthRTR);
@@ -102,7 +102,7 @@ namespace Koiyun.Render {
             
             this.passes.Add(clearDepthPass2);
             this.passes.Add(drawOcclusionOpaquePass);
-            // this.passes.Add(drawOcclusionTransparentPass);
+            this.passes.Add(drawOcclusionTransparentPass);
             
             this.passes.Add(copyColorPass);
             this.passes.Add(bloomPass);
