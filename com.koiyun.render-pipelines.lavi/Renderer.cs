@@ -73,7 +73,7 @@ namespace Koiyun.Render {
             var drawOcclusionTransparentPass = new DrawObjectPass("Occlusion", false, RenderUtil.GetRenderQueueRange(RenderQueues.Effect, RenderQueues.Effect, 50), rawColorRTR, rawParamRTR, rawDepthRTR);
 
             var bloomPass = new BloomPass(bloomMaterial, rawColorRTR, bloomRTR, bloomBlurHRTRs, bloomBlurVRTRs);
-            var drawUIPass = new DrawObjectPass("Forward", false, RenderUtil.GetRenderQueueRange(RenderQueues.UI, RenderQueues.UI), rawColorRTR, rawParamRTR, rawDepthRTR);
+            var drawUIPass = new DrawObjectPass("Forward", false, RenderUtil.GetRenderQueueRange(RenderQueues.UI, RenderQueues.UI, 50), rawColorRTR, rawParamRTR, rawDepthRTR);
             
             var drawErrorPass = new DrawErrorPass("SRPDefaultUnlit", rawColorRTR, rawDepthRTR);
             var drawGizmosPass = new DrawGizmosPass(rawColorRTR, rawDepthRTR);
