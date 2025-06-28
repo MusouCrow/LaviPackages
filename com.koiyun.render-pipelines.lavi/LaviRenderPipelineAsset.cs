@@ -23,14 +23,6 @@ namespace Koiyun.Render {
         [LabelText("默认精灵材质")]
         public Material DefaultSpriteMaterial;
 
-        [TitleGroup("初始资源")]
-        [LabelText("面片特效模型")]
-        public Mesh QuadEffectMesh;
-
-        [TitleGroup("初始资源")]
-        [LabelText("刀光特效模型")]
-        public Mesh SlashEffectMesh;
-
         [TitleGroup("阴影")]
         [LabelText("阴影分辨率")]
         public ShadowResolution ShadowResolution = ShadowResolution._2048;
@@ -82,22 +74,50 @@ namespace Koiyun.Render {
         [LabelText("SRP批处理")]
         public bool SRPBatch = true;
     #else
+        [Header("初始着色器")]
         public Shader DefaultShader;
+        
+        [Header("默认材质")]
         public Material DefaultMaterial;
+
+        [Header("默认精灵材质")]
         public Material DefaultSpriteMaterial;
-        public Mesh QuadEffectMesh;
-        public Mesh SlashEffectMesh;
+
+        [Header("阴影分辨率")]
         public ShadowResolution ShadowResolution = ShadowResolution._2048;
+        
+        [Header("阴影距离")]
         public float ShadowDistance = 50;
+
+        [Header("深度偏移")]
+        [Range(0, 2)]
         public float DepthBias;
-        public Vector2 ShadowDepthRange = new Vector2(1, 2.5f);
+
+        [Header("法线偏移")]
+        [Range(0, 3)]
         public float NormalBias;
+
+        [Header("阴影深度范围(0 - 10)")]
+        public Vector2 ShadowDepthRange = new Vector2(1, 2.5f);
+
+        [Header("阴影刻度")]
+        [Range(0, 1)]
         public float ShadowStep;
+
+        [Header("阴影强度范围(0 - 1)")]
         public Vector2 ShadowAttenRange;
+
+        [Header("阴影强度范围（明暗面）(0 - 1)")]
         public Vector2 DarkBrightAttenRange;
+
+        [Header("描边明度")]
         [Range(0, 1)]
         public float OutlineBrightness;
+
+        [Header("描边粗细")]
         public float OutlineThickness;
+
+        [Header("SRP批处理")]
         public bool SRPBatch = true;
     #endif
 
