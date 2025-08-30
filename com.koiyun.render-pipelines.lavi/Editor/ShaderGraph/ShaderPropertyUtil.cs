@@ -17,8 +17,8 @@ namespace Koiyun.Render.ShaderGraph.Editor {
             displayName = "Alpha Clip",
             referenceName = "_ALPHA_CLIP",
             type = KeywordType.Boolean,
-            definition = KeywordDefinition.ShaderFeature,
-            scope = KeywordScope.Local,
+            definition = KeywordDefinition.MultiCompile,
+            scope = KeywordScope.Global,
             stages = KeywordShaderStage.Fragment,
         };
 
